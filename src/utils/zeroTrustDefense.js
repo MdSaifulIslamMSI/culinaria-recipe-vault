@@ -1,83 +1,11 @@
 /**
- * Zero-Trust Maximum Hardening & Runtime Armor Engine
- * Implements:
- * 1. Global Prototype Immutability (Object.freeze on base prototypes)
- * 2. Trusted Types Policy (W3C Trusted Types API)
- * 3. Anti-DOM Clobbering Isolation
- * 4. Cryptographic Storage Integrity Guard (HMAC-style validation)
- * 5. Strict Schema Validator for In-Flight Objects
+ * Zero-Trust Data Integrity & Schema Validation Engine
+ * Provides safe cryptographic signing and strict schema assertions
+ * without mutating global browser built-in prototypes or window properties.
  */
 
 // ---------------------------------------------------------------------------
-// 1. Prototype Immutability Armor (Blocks all runtime prototype poisoning)
-// ---------------------------------------------------------------------------
-export function enforcePrototypeImmutability() {
-  try {
-    Object.freeze(Object.prototype);
-    Object.freeze(Array.prototype);
-    Object.freeze(Function.prototype);
-    Object.freeze(String.prototype);
-    Object.freeze(Number.prototype);
-    Object.freeze(Boolean.prototype);
-  } catch (e) {
-    console.warn('[SECURITY] Prototype freeze notice:', e.message);
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 2. W3C Trusted Types API Policy (Restricts innerHTML assignments)
-// ---------------------------------------------------------------------------
-let trustedTypesPolicy = null;
-
-export function initTrustedTypes() {
-  if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.createPolicy) {
-    try {
-      trustedTypesPolicy = window.trustedTypes.createPolicy('culinaria-security-policy', {
-        createHTML: (string) => {
-          // Strict escape filter
-          return String(string)
-            .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-            .replace(/on\w+\s*=\s*(['"]).*?\1/gi, '');
-        },
-        createScriptURL: (string) => {
-          // Only allow approved CDNs
-          const allowedPrefixes = ['https://www.youtube-nocookie.com/embed/', 'https://cdn.jsdelivr.net/'];
-          if (allowedPrefixes.some(prefix => string.startsWith(prefix))) {
-            return string;
-          }
-          throw new TypeError(`[SECURITY] Blocked untrusted script URL: ${string}`);
-        }
-      });
-    } catch (e) {
-      // Policy already created or unsupported
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
-// 3. Anti-DOM Clobbering Defense
-// ---------------------------------------------------------------------------
-export function preventDOMClobbering() {
-  if (typeof window === 'undefined') return;
-
-  const reservedProperties = ['document', 'location', 'cookie', 'window', 'localStorage', 'sessionStorage', 'history'];
-  
-  // Guard window properties from being overwritten by element IDs
-  reservedProperties.forEach(prop => {
-    try {
-      const descriptor = Object.getOwnPropertyDescriptor(window, prop);
-      if (descriptor && descriptor.configurable) {
-        Object.defineProperty(window, prop, {
-          configurable: false,
-          writable: false
-        });
-      }
-    } catch (e) {}
-  });
-}
-
-// ---------------------------------------------------------------------------
-// 4. Cryptographic Storage Integrity Guard
+// 1. Cryptographic Storage Integrity Guard
 // ---------------------------------------------------------------------------
 const INTEGRITY_SALT = 'culinaria_entropy_v1_' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
 
@@ -102,14 +30,14 @@ export function verifySignedData(envelope) {
   }
   const recalculated = signData(envelope.payload).sig;
   if (recalculated !== envelope.sig) {
-    console.error('[SECURITY] Storage tampering detected! Integrity signature mismatch.');
+    console.warn('[SECURITY] Storage integrity check: using safe fallback.');
     return null;
   }
   return envelope.payload;
 }
 
 // ---------------------------------------------------------------------------
-// 5. Strict Zero-Trust Recipe Schema Validator
+// 2. Strict Zero-Trust Recipe Schema Validator
 // ---------------------------------------------------------------------------
 export function validateRecipeSchema(recipe) {
   if (!recipe || typeof recipe !== 'object') return null;
@@ -128,8 +56,3 @@ export function validateRecipeSchema(recipe) {
     youtubeId: recipe.youtubeId ? String(recipe.youtubeId).replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 20) : null
   };
 }
-
-// Auto-initialize runtime defenses
-enforcePrototypeImmutability();
-initTrustedTypes();
-preventDOMClobbering();
