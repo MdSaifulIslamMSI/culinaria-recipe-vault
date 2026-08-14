@@ -1,10 +1,10 @@
 /* ==========================================================================
-   Culinaria Luxury Design System Tokens
+   Culinaria Luxury Design System Tokens & 10 Gourmet Culinary Color Themes
    Editorial Michelin-star aesthetic with warm culinary tones & tactile glassmorphism
    ========================================================================== */
 
 :root {
-  /* Color Palette - Warm Linen Canvas */
+  /* Default: Saffron Terracotta - Warm Linen Canvas */
   --bg-app: #FAF8F5;
   --bg-surface: #FFFFFF;
   --bg-surface-subtle: #F4EFEB;
@@ -63,7 +63,7 @@
   --header-height: 78px;
 }
 
-/* Dark Theme Overrides - Obsidian Truffle */
+/* Default Dark Theme Overrides - Saffron Terracotta */
 [data-theme="dark"] {
   --bg-app: #0D0F0E;
   --bg-surface: #151816;
@@ -98,4 +98,266 @@
   --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.75);
   --shadow-hover: 0 16px 40px rgba(230, 108, 44, 0.28);
   --gold-glow: 0 0 30px rgba(229, 163, 46, 0.35);
+}
+
+/* ==========================================================================
+   PALETTE 1: 🫒 Tuscan Olive & Warm Linen
+   ========================================================================== */
+[data-palette="olive"] {
+  --bg-app: #F5EFE6;
+  --bg-surface: #FCFAF6;
+  --bg-surface-subtle: #EDE4D8;
+  --bg-surface-hover: #E3D8C8;
+  --bg-card: #FCFAF6;
+  --border-subtle: #DDD1BE;
+  --border-strong: #C4B49C;
+  --accent-primary: #385E46;
+  --accent-primary-hover: #294834;
+  --accent-primary-light: #E7F0E9;
+  --accent-gold: #B8860B;
+}
+[data-palette="olive"][data-theme="dark"] {
+  --bg-app: #101712;
+  --bg-surface: #17211A;
+  --bg-surface-subtle: #1E2B22;
+  --bg-surface-hover: #26382C;
+  --bg-card: #18221B;
+  --border-subtle: #293B2F;
+  --border-strong: #3B5343;
+  --accent-primary: #4F8663;
+  --accent-primary-hover: #62A47B;
+  --accent-primary-light: #162B1D;
+}
+
+/* ==========================================================================
+   PALETTE 2: 🍷 Bordeaux Merlot & Velvet
+   ========================================================================== */
+[data-palette="merlot"] {
+  --bg-app: #FAF4F5;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F4E8EB;
+  --bg-surface-hover: #EBD9DD;
+  --bg-card: #FFFFFF;
+  --border-subtle: #E2CDD2;
+  --border-strong: #CBAAB2;
+  --accent-primary: #852238;
+  --accent-primary-hover: #6E1A2D;
+  --accent-primary-light: #FBEAEE;
+  --accent-gold: #D4AF37;
+}
+[data-palette="merlot"][data-theme="dark"] {
+  --bg-app: #140A0E;
+  --bg-surface: #1E0F16;
+  --bg-surface-subtle: #29151E;
+  --bg-surface-hover: #361C28;
+  --bg-card: #1F1017;
+  --border-subtle: #3D1E2D;
+  --border-strong: #592B42;
+  --accent-primary: #BA3A56;
+  --accent-primary-hover: #D04C6A;
+  --accent-primary-light: #33101B;
+}
+
+/* ==========================================================================
+   PALETTE 3: 🌊 Santorini Azure & Aegean Sea
+   ========================================================================== */
+[data-palette="santorini"] {
+  --bg-app: #F0F5FA;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #E3EDF7;
+  --bg-surface-hover: #D3E2F2;
+  --bg-card: #FFFFFF;
+  --border-subtle: #C9DBED;
+  --border-strong: #A8C4E0;
+  --accent-primary: #0F5E9C;
+  --accent-primary-hover: #0B4878;
+  --accent-primary-light: #E6F1FA;
+  --accent-gold: #E5A32E;
+}
+[data-palette="santorini"][data-theme="dark"] {
+  --bg-app: #08111B;
+  --bg-surface: #0E1A29;
+  --bg-surface-subtle: #142539;
+  --bg-surface-hover: #1A314C;
+  --bg-card: #101E2E;
+  --border-subtle: #1D3551;
+  --border-strong: #2A4C73;
+  --accent-primary: #2185D0;
+  --accent-primary-hover: #3A9BE5;
+  --accent-primary-light: #0C2843;
+}
+
+/* ==========================================================================
+   PALETTE 4: 🍵 Kyoto Matcha & Hinoki Wood
+   ========================================================================== */
+[data-palette="matcha"] {
+  --bg-app: #F5F6EE;
+  --bg-surface: #FCFCF7;
+  --bg-surface-subtle: #E9EBD8;
+  --bg-surface-hover: #DDE0C5;
+  --bg-card: #FCFCF7;
+  --border-subtle: #D2D6B5;
+  --border-strong: #B5BB90;
+  --accent-primary: #466E3C;
+  --accent-primary-hover: #375730;
+  --accent-primary-light: #EBF2E8;
+  --accent-gold: #C29238;
+}
+[data-palette="matcha"][data-theme="dark"] {
+  --bg-app: #0F1610;
+  --bg-surface: #162017;
+  --bg-surface-subtle: #1D2A1F;
+  --bg-surface-hover: #263828;
+  --bg-card: #172118;
+  --border-subtle: #293B2B;
+  --border-strong: #3B533E;
+  --accent-primary: #5E9452;
+  --accent-primary-hover: #72B064;
+  --accent-primary-light: #162B18;
+}
+
+/* ==========================================================================
+   PALETTE 5: ☕ Espresso Roast & Steamed Crema
+   ========================================================================== */
+[data-palette="espresso"] {
+  --bg-app: #F9F5EF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #EFE7DB;
+  --bg-surface-hover: #E4D7C4;
+  --bg-card: #FFFFFF;
+  --border-subtle: #D8C7B0;
+  --border-strong: #BEA78A;
+  --accent-primary: #8C4E28;
+  --accent-primary-hover: #723E1E;
+  --accent-primary-light: #F8ECE4;
+  --accent-gold: #D4A045;
+}
+[data-palette="espresso"][data-theme="dark"] {
+  --bg-app: #130D0A;
+  --bg-surface: #1C130E;
+  --bg-surface-subtle: #261B14;
+  --bg-surface-hover: #33241B;
+  --bg-card: #1E140F;
+  --border-subtle: #3A291E;
+  --border-strong: #523B2B;
+  --accent-primary: #B66D3D;
+  --accent-primary-hover: #CF814D;
+  --accent-primary-light: #2F1A0E;
+}
+
+/* ==========================================================================
+   PALETTE 6: 🌿 Nordic Sage & Pale Birch
+   ========================================================================== */
+[data-palette="sage"] {
+  --bg-app: #F2F6F3;
+  --bg-surface: #FAFDFB;
+  --bg-surface-subtle: #E3EDE5;
+  --bg-surface-hover: #D4E2D7;
+  --bg-card: #FAFDFB;
+  --border-subtle: #C4D6C8;
+  --border-strong: #A3BDA8;
+  --accent-primary: #45735D;
+  --accent-primary-hover: #355B49;
+  --accent-primary-light: #E8F2EC;
+  --accent-gold: #D4AF37;
+}
+[data-palette="sage"][data-theme="dark"] {
+  --bg-app: #0E1511;
+  --bg-surface: #141E19;
+  --bg-surface-subtle: #1C2B24;
+  --bg-surface-hover: #253930;
+  --bg-card: #16201B;
+  --border-subtle: #273D32;
+  --border-strong: #385747;
+  --accent-primary: #5B9B7D;
+  --accent-primary-hover: #70B896;
+  --accent-primary-light: #132E22;
+}
+
+/* ==========================================================================
+   PALETTE 7: 🌶️ Oaxacan Saffron & Smoked Paprika
+   ========================================================================== */
+[data-palette="saffron"] {
+  --accent-primary: #D35418;
+  --accent-primary-hover: #B8430D;
+}
+
+/* ==========================================================================
+   PALETTE 8: 🫐 Midnight Truffle & Caviar Gold
+   ========================================================================== */
+[data-palette="truffle"] {
+  --bg-app: #F5F6F8;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #E8EBF0;
+  --bg-surface-hover: #D9DFE8;
+  --bg-card: #FFFFFF;
+  --border-subtle: #CBD3E0;
+  --border-strong: #AAB7CB;
+  --accent-primary: #B8860B;
+  --accent-primary-hover: #996E06;
+  --accent-primary-light: #FCF8EB;
+  --accent-gold: #D4AF37;
+}
+[data-palette="truffle"][data-theme="dark"] {
+  --bg-app: #0C0E12;
+  --bg-surface: #13171E;
+  --bg-surface-subtle: #1B212B;
+  --bg-surface-hover: #242C3A;
+  --bg-card: #141921;
+  --border-subtle: #263040;
+  --border-strong: #38465C;
+  --accent-primary: #D4AF37;
+  --accent-primary-hover: #E6C55C;
+  --accent-primary-light: #2B2410;
+}
+
+/* ==========================================================================
+   PALETTE 9: 🌸 Provence Lavender & Wild Honey
+   ========================================================================== */
+[data-palette="lavender"] {
+  --bg-app: #FAF5FF;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F3E8FF;
+  --bg-surface-hover: #E9D5FF;
+  --bg-card: #FFFFFF;
+  --border-subtle: #DDD6FE;
+  --border-strong: #C4B5FD;
+  --accent-primary: #7C3AED;
+  --accent-primary-hover: #6D28D9;
+  --accent-primary-light: #F5F3FF;
+  --accent-gold: #EAB308;
+}
+[data-palette="lavender"][data-theme="dark"] {
+  --bg-app: #120A1C;
+  --bg-surface: #1C102C;
+  --bg-surface-subtle: #26163C;
+  --bg-surface-hover: #331D50;
+  --bg-card: #1E112F;
+  --border-subtle: #391F5A;
+  --border-strong: #522D80;
+  --accent-primary: #A78BFA;
+  --accent-primary-hover: #C4B5FD;
+  --accent-primary-light: #281544;
+}
+
+/* ==========================================================================
+   PALETTE 10: 🌙 Midnight Chef OLED Pure Stealth
+   ========================================================================== */
+[data-palette="obsidian"] {
+  --bg-app: #000000;
+  --bg-surface: #0A0A0A;
+  --bg-surface-subtle: #141414;
+  --bg-surface-hover: #1E1E1E;
+  --bg-card: #0D0D0D;
+  --border-subtle: #222222;
+  --border-strong: #333333;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-tertiary: #787878;
+  --accent-primary: #F59E0B;
+  --accent-primary-hover: #FBBF24;
+  --accent-primary-light: #2A1F0A;
+  --accent-gold: #F59E0B;
+  --glass-bg: rgba(10, 10, 10, 0.95);
+  --glass-border: rgba(255, 255, 255, 0.08);
 }

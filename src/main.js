@@ -31,6 +31,7 @@ import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
 import { PreferencesDrawer } from './components/PreferencesDrawer.js';
+import { getActivePaletteId, setActivePalette } from './services/paletteService.js';
 
 // Arm real-time defenses, error boundary, and offline network monitor
 initErrorBoundary();
@@ -145,6 +146,7 @@ class CulinariaApp {
 
     const currentTheme = document.documentElement.getAttribute('data-theme') || getStoredTheme();
     syncThemeUI(currentTheme);
+    setActivePalette(getActivePaletteId());
 
     themeToggle?.addEventListener('click', () => {
       const active = document.documentElement.getAttribute('data-theme') || 'light';
