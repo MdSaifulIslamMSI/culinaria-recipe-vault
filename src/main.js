@@ -3,6 +3,9 @@
  */
 import './utils/zeroTrustDefense.js';
 import { sanitizeHtml } from './utils/securitySanitizer.js';
+import { initDomWatchdog } from './utils/domWatchdog.js';
+import { exportAuditReport, getAuditLedger } from './utils/securityAuditLedger.js';
+import { encryptPayload, decryptPayload } from './utils/cryptoEngine.js';
 import {
   searchRecipes,
   getRecipeById,
@@ -23,6 +26,19 @@ import { CookingStudioModal } from './components/CookingStudioModal.js';
 import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
+
+// Arm real-time DOM mutation watchdog
+initDomWatchdog();
+
+// Expose security diagnostic interface for audit verification
+if (typeof window !== 'undefined') {
+  window.__CULINARIA_SECURITY__ = {
+    exportAuditReport,
+    getAuditLedger,
+    encryptPayload,
+    decryptPayload
+  };
+}
 
 class CulinariaApp {
   constructor() {

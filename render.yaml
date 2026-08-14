@@ -24,6 +24,12 @@ services:
         name: Strict-Transport-Security
         value: max-age=31536000; includeSubDomains; preload
       - path: /*
+        name: Cross-Origin-Opener-Policy
+        value: same-origin
+      - path: /*
+        name: Cross-Origin-Resource-Policy
+        value: same-origin
+      - path: /*
         name: Content-Security-Policy
         value: "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';"
     routes:

@@ -3,6 +3,7 @@
  * Protects against XSS, Prototype Pollution, Tabnabbing, and Input Tampering
  * Complies with OWASP Top 10 client-side security guidelines.
  */
+import { logSecurityEvent, SecurityEventType, SecuritySeverity } from './securityAuditLedger.js';
 
 // Disallowed dangerous protocol schemes
 const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data|file):/i;
@@ -19,11 +20,27 @@ const POLLUTION_KEYS = new Set([
 ]);
 
 /**
+ * W3C Trusted Types Policy Initialization
+ */
+let trustedPolicy = null;
+if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.createPolicy) {
+  try {
+    trustedPolicy = window.trustedTypes.createPolicy('culinaria-policy', {
+      createHTML: (string) => sanitizeHtml(string),
+      createScriptURL: (string) => sanitizeUrl(string)
+    });
+    logSecurityEvent(SecurityEventType.TRUSTED_TYPE_INITIALIZED, { policy: 'culinaria-policy' });
+  } catch (e) {
+    // Policy may already be registered
+  }
+}
+
+/**
  * Escapes raw strings for safe DOM insertion
  */
 export function sanitizeHtml(str) {
   if (str === null || str === undefined) return '';
-  return String(str)
+  const clean = String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
@@ -31,6 +48,8 @@ export function sanitizeHtml(str) {
     .replace(/'/g, '&#039;')
     .replace(/`/g, '&#96;')
     .replace(/=/g, '&#61;');
+  
+  return clean;
 }
 
 /**
@@ -41,6 +60,7 @@ export function sanitizeUrl(url, fallback = '#') {
   const trimmed = url.trim();
   
   if (DANGEROUS_PROTOCOLS.test(trimmed)) {
+    logSecurityEvent(SecurityEventType.XSS_PAYLOAD_BLOCKED, { url: trimmed }, SecuritySeverity.HIGH);
     console.warn(`[SECURITY] Blocked dangerous protocol in URL: ${trimmed}`);
     return fallback;
   }
@@ -115,6 +135,7 @@ class RateLimiter {
     const now = Date.now();
     this.timestamps = this.timestamps.filter(t => now - t < this.intervalMs);
     if (this.timestamps.length >= this.maxEvents) {
+      logSecurityEvent(SecurityEventType.RATE_LIMIT_EXCEEDED, { limit: this.maxEvents }, SecuritySeverity.MEDIUM);
       console.warn('[SECURITY] Storage rate limit reached. Throttling excessive mutations.');
       return false;
     }
