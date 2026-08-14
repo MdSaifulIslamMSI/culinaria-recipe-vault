@@ -2469,14 +2469,89 @@ a {
   color: #fff;
   padding: 0.85rem 1.6rem;
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-lg);
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 0.88rem;
+  font-weight: 600;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
   display: flex;
   align-items: center;
-  gap: 0.65rem;
-  animation: toastIn 300ms cubic-bezier(0.16, 1, 0.3, 1);
-  pointer-events: auto;
+  gap: 0.6rem;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  animation: slideUpFade 0.3s ease;
+  white-space: normal;
+  max-width: 90vw;
+  text-align: center;
+}
+
+/* ==========================================================================
+   Global Error Boundary & Recovery Overlay
+   ========================================================================== */
+.error-boundary-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(13, 15, 14, 0.92);
+  backdrop-filter: blur(8px);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+.error-boundary-overlay.hidden {
+  display: none !important;
+}
+
+.recovery-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.recovery-icon {
+  font-size: 3.2rem;
+  margin-bottom: 0.75rem;
+}
+
+.recovery-title {
+  font-family: var(--font-serif);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.65rem;
+}
+
+.recovery-desc {
+  font-size: 0.92rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
+.recovery-error-preview {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 1rem;
+  font-size: 0.8rem;
+  color: var(--text-tertiary);
+  margin-bottom: 1.5rem;
+  word-break: break-all;
+  font-family: monospace;
+}
+
+.recovery-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 [data-theme="dark"] .toast {

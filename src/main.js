@@ -4,6 +4,8 @@
 import './utils/zeroTrustDefense.js';
 import { sanitizeHtml } from './utils/securitySanitizer.js';
 import { initDomWatchdog } from './utils/domWatchdog.js';
+import { initErrorBoundary, renderRecoveryScreen } from './utils/errorBoundary.js';
+import { initNetworkMonitor } from './utils/networkMonitor.js';
 import { exportAuditReport, getAuditLedger } from './utils/securityAuditLedger.js';
 import { encryptPayload, decryptPayload } from './utils/cryptoEngine.js';
 import {
@@ -28,8 +30,10 @@ import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
 
-// Arm real-time DOM mutation watchdog
+// Arm real-time defenses, error boundary, and offline network monitor
+initErrorBoundary();
 initDomWatchdog();
+initNetworkMonitor();
 
 // Expose security diagnostic interface for audit verification
 if (typeof window !== 'undefined') {
@@ -37,7 +41,8 @@ if (typeof window !== 'undefined') {
     exportAuditReport,
     getAuditLedger,
     encryptPayload,
-    decryptPayload
+    decryptPayload,
+    renderRecoveryScreen
   };
 }
 
