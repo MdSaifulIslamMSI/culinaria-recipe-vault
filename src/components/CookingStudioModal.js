@@ -1,7 +1,7 @@
 /**
  * CookingStudioModal Component
  * Interactive Recipe Studio, Servings Scaler, Unit Converter,
- * Hands-Free Voice-Guided Cook Mode, Sommelier Pairing & Nutrition
+ * Hands-Free Voice-Guided Cook Mode, Sommelier Pairing, Nutrition & Social Share
  */
 import { scaleMeasurement } from '../services/unitScaler.js';
 import { estimateNutrition } from '../services/nutritionCalculator.js';
@@ -118,10 +118,11 @@ export class CookingStudioModal {
     const nutrition = estimateNutrition(r, this.currentServings);
     const pairing = getCulinaryPairing(r);
     const ratio = this.currentServings / this.baseServings;
+    const fallbackCover = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80';
 
     this.modalContent.innerHTML = `
       <div class="modal-hero-cover">
-        <img src="${r.thumbnail}" alt="${r.title}" class="modal-hero-img" />
+        <img src="${r.thumbnail || fallbackCover}" alt="${r.title}" class="modal-hero-img" onerror="this.src='${fallbackCover}'" />
         <div class="modal-hero-gradient"></div>
       </div>
 
@@ -143,7 +144,7 @@ export class CookingStudioModal {
         </div>
       </div>
 
-      <!-- Interactive Action Controls (Servings Scaler & Units) -->
+      <!-- Interactive Action Controls (Servings Scaler, Units, Share, Print) -->
       <div class="modal-actions-bar">
         <div class="serving-scaler-wrap">
           <span class="scaler-label">Servings:</span>
@@ -165,6 +166,9 @@ export class CookingStudioModal {
           </button>
           <button class="btn-icon-action" id="btnModalFav" title="${isFav ? 'Remove Favorite' : 'Save Favorite'}">
             ${isFav ? '❤️' : '🤍'}
+          </button>
+          <button class="btn-icon-action" id="btnModalShare" title="Share Recipe">
+            🔗
           </button>
           <button class="btn-icon-action" id="btnModalPrint" title="Print Recipe">
             🖨️
@@ -304,6 +308,7 @@ export class CookingStudioModal {
     const unitImperial = document.getElementById('btnUnitImperial');
     const btnLaunchCook = document.getElementById('btnLaunchCookMode');
     const btnModalFav = document.getElementById('btnModalFav');
+    const btnModalShare = document.getElementById('btnModalShare');
     const btnModalPrint = document.getElementById('btnModalPrint');
     const btnAddAllCart = document.getElementById('btnAddAllToCart');
 
@@ -339,6 +344,22 @@ export class CookingStudioModal {
       const isFav = toggleFavorite(this.currentRecipe);
       btnModalFav.innerHTML = isFav ? '❤️' : '🤍';
       btnModalFav.title = isFav ? 'Remove Favorite' : 'Save Favorite';
+    });
+
+    btnModalShare?.addEventListener('click', () => {
+      const shareData = {
+        title: `Culinaria - ${this.currentRecipe.title}`,
+        text: `Check out this delicious recipe for ${this.currentRecipe.title} on Culinaria!`,
+        url: window.location.href
+      };
+
+      if (navigator.share) {
+        navigator.share(shareData).catch(() => {});
+      } else {
+        navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`).then(() => {
+          window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '🔗 Recipe link copied to clipboard!' } }));
+        });
+      }
     });
 
     btnModalPrint?.addEventListener('click', () => {

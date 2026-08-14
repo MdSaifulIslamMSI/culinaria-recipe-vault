@@ -12,12 +12,12 @@ export function createRecipeCard(recipe, options = {}) {
   card.className = 'recipe-card';
   card.dataset.id = recipe.id;
 
-  // Placeholder high-quality meal images if thumbnail fails
-  const imgUrl = recipe.thumbnail || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+  const fallbackImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
+  const imgUrl = recipe.thumbnail || fallbackImg;
 
   card.innerHTML = `
     <div class="recipe-image-wrap">
-      <img src="${imgUrl}" alt="${recipe.title}" class="recipe-image" loading="lazy" />
+      <img src="${imgUrl}" alt="${recipe.title}" class="recipe-image" loading="lazy" onerror="this.src='${fallbackImg}'" />
       <div class="card-badges-top">
         <span class="card-cat-badge">${recipe.category || 'Dish'}</span>
         ${recipe.area && recipe.area !== 'Global' ? `<span class="card-area-badge">${recipe.area}</span>` : ''}
