@@ -1,0 +1,101 @@
+/* ==========================================================================
+   Culinaria Luxury Design System Tokens
+   Editorial Michelin-star aesthetic with warm culinary tones & tactile glassmorphism
+   ========================================================================== */
+
+:root {
+  /* Color Palette - Warm Linen Canvas */
+  --bg-app: #FAF8F5;
+  --bg-surface: #FFFFFF;
+  --bg-surface-subtle: #F4EFEB;
+  --bg-surface-hover: #ECE4DC;
+  --bg-card: #FFFFFF;
+  --border-subtle: #E8E0D5;
+  --border-strong: #D6C8B8;
+
+  /* Typography Colors */
+  --text-primary: #181614;
+  --text-secondary: #58534C;
+  --text-tertiary: #8C8478;
+  --text-inverse: #FFFFFF;
+
+  /* Editorial Accents */
+  --accent-primary: #D35418;        /* Burnt Saffron Terracotta */
+  --accent-primary-hover: #B8430D;
+  --accent-primary-light: #FDF0E7;
+  --accent-gold: #C98A1E;           /* Aged Culinary Gold */
+  --accent-gold-light: #FEF8EC;
+  --accent-fresh: #246B3E;          /* Rosemary Herb Green */
+  --accent-fresh-light: #EBF7EE;
+  --accent-wine: #7E1E2B;           /* Burgundy Wine */
+  --accent-wine-light: #FBF0F2;
+  --accent-crimson: #C0392B;
+  --accent-crimson-light: #FDEDEC;
+
+  /* Glassmorphism & Elevations */
+  --glass-bg: rgba(255, 255, 255, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.6);
+  --shadow-xs: 0 1px 3px rgba(24, 22, 20, 0.04);
+  --shadow-sm: 0 4px 12px rgba(24, 22, 20, 0.06);
+  --shadow-md: 0 10px 28px rgba(24, 22, 20, 0.08);
+  --shadow-lg: 0 22px 50px rgba(24, 22, 20, 0.12);
+  --shadow-hover: 0 16px 36px rgba(211, 84, 24, 0.18);
+  --gold-glow: 0 0 25px rgba(201, 138, 30, 0.25);
+
+  /* Typography Families */
+  --font-serif: 'Fraunces', 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  /* Radius */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
+  --radius-xl: 32px;
+  --radius-full: 9999px;
+
+  /* Transitions */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-smooth: 450ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --max-width: 1360px;
+  --header-height: 78px;
+}
+
+/* Dark Theme Overrides - Obsidian Truffle */
+[data-theme="dark"] {
+  --bg-app: #0D0F0E;
+  --bg-surface: #151816;
+  --bg-surface-subtle: #1C211E;
+  --bg-surface-hover: #242B27;
+  --bg-card: #161A17;
+  --border-subtle: #273029;
+  --border-strong: #3A473D;
+
+  --text-primary: #F7F5F0;
+  --text-secondary: #AFAAA0;
+  --text-tertiary: #7D786E;
+  --text-inverse: #0D0F0E;
+
+  --accent-primary: #E66C2C;
+  --accent-primary-hover: #F27D3E;
+  --accent-primary-light: #2D1B11;
+  --accent-gold: #E5A32E;
+  --accent-gold-light: #2A2111;
+  --accent-fresh: #3BAF64;
+  --accent-fresh-light: #12281B;
+  --accent-wine: #A83647;
+  --accent-wine-light: #2B1116;
+  --accent-crimson: #E74C3C;
+  --accent-crimson-light: #2E1515;
+
+  --glass-bg: rgba(21, 24, 22, 0.88);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --shadow-xs: 0 2px 4px rgba(0, 0, 0, 0.35);
+  --shadow-sm: 0 6px 16px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 12px 32px rgba(0, 0, 0, 0.6);
+  --shadow-lg: 0 24px 60px rgba(0, 0, 0, 0.75);
+  --shadow-hover: 0 16px 40px rgba(230, 108, 44, 0.28);
+  --gold-glow: 0 0 30px rgba(229, 163, 46, 0.35);
+}

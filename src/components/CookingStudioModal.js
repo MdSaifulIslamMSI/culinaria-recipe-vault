@@ -1,0 +1,475 @@
+/**
+ * CookingStudioModal Component
+ * Interactive Recipe Studio, Servings Scaler, Unit Converter,
+ * Hands-Free Voice-Guided Cook Mode, Sommelier Pairing & Nutrition
+ */
+import { scaleMeasurement } from '../services/unitScaler.js';
+import { estimateNutrition } from '../services/nutritionCalculator.js';
+import { getCulinaryPairing } from '../services/sommelierService.js';
+import { voiceAssistant } from '../services/voiceAssistant.js';
+import { isFavorite, toggleFavorite, addToShoppingList } from '../services/storageService.js';
+import { activeTimer } from '../services/timerManager.js';
+import confetti from 'canvas-confetti';
+
+export class CookingStudioModal {
+  constructor() {
+    this.modalBackdrop = document.getElementById('recipeModalBackdrop');
+    this.modalContent = document.getElementById('modalRecipeContent');
+    this.closeBtn = document.getElementById('btnCloseRecipeModal');
+
+    // Cook mode elements
+    this.cookOverlay = document.getElementById('cookModeOverlay');
+    this.cookTitle = document.getElementById('cookModeTitle');
+    this.cookStepCard = document.getElementById('cookStepCard');
+    this.cookStepNum = document.getElementById('cookStepNum');
+    this.cookStepText = document.getElementById('cookStepText');
+    this.cookProgressPill = document.getElementById('cookProgressPill');
+    this.cookProgressBar = document.getElementById('cookProgressBar');
+    this.stepTimerContainer = document.getElementById('stepTimerContainer');
+    this.stepTimerLabel = document.getElementById('stepTimerLabel');
+    this.btnStartStepTimer = document.getElementById('btnStartStepTimer');
+    this.btnCookPrev = document.getElementById('btnCookPrevStep');
+    this.btnCookNext = document.getElementById('btnCookNextStep');
+    this.btnExitCookMode = document.getElementById('btnExitCookMode');
+    this.btnToggleVoice = document.getElementById('btnToggleVoice');
+
+    this.currentRecipe = null;
+    this.currentServings = 4;
+    this.baseServings = 4;
+    this.unitSystem = 'metric';
+    this.currentCookStepIndex = 0;
+    this.voiceActive = true;
+    this.checkedIngredientNames = new Set();
+
+    this.initEvents();
+  }
+
+  initEvents() {
+    this.closeBtn.addEventListener('click', () => this.close());
+    this.modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === this.modalBackdrop) this.close();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (this.cookOverlay.classList.contains('open')) {
+          this.closeCookMode();
+        } else if (this.modalBackdrop.classList.contains('open')) {
+          this.close();
+        }
+      }
+      if (this.cookOverlay.classList.contains('open')) {
+        if (e.key === 'ArrowRight' || e.key === ' ') {
+          e.preventDefault();
+          this.nextCookStep();
+        } else if (e.key === 'ArrowLeft') {
+          e.preventDefault();
+          this.prevCookStep();
+        }
+      }
+    });
+
+    // Cook mode buttons
+    this.btnExitCookMode.addEventListener('click', () => this.closeCookMode());
+    this.btnCookNext.addEventListener('click', () => this.nextCookStep());
+    this.btnCookPrev.addEventListener('click', () => this.prevCookStep());
+
+    this.btnToggleVoice?.addEventListener('click', () => {
+      this.voiceActive = !this.voiceActive;
+      if (this.voiceActive) {
+        this.btnToggleVoice.classList.add('active');
+        this.btnToggleVoice.querySelector('.voice-label').textContent = 'Voice On';
+        this.speakCurrentStep();
+      } else {
+        this.btnToggleVoice.classList.remove('active');
+        this.btnToggleVoice.querySelector('.voice-label').textContent = 'Voice Muted';
+        voiceAssistant.stop();
+      }
+    });
+
+    this.btnStartStepTimer.addEventListener('click', () => {
+      const minutes = parseInt(this.btnStartStepTimer.dataset.minutes, 10) || 5;
+      activeTimer.start(minutes * 60, `${this.currentRecipe.title} (Step ${this.currentCookStepIndex + 1})`);
+      window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: `⏱️ Started ${minutes}-minute timer!` } }));
+    });
+  }
+
+  open(recipe) {
+    if (!recipe) return;
+    this.currentRecipe = recipe;
+    this.baseServings = recipe.servings || 4;
+    this.currentServings = this.baseServings;
+    this.unitSystem = 'metric';
+    this.checkedIngredientNames.clear();
+
+    this.render();
+    this.modalBackdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+
+  close() {
+    this.modalBackdrop.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  render() {
+    const r = this.currentRecipe;
+    const isFav = isFavorite(r.id);
+    const nutrition = estimateNutrition(r, this.currentServings);
+    const pairing = getCulinaryPairing(r);
+    const ratio = this.currentServings / this.baseServings;
+
+    this.modalContent.innerHTML = `
+      <div class="modal-hero-cover">
+        <img src="${r.thumbnail}" alt="${r.title}" class="modal-hero-img" />
+        <div class="modal-hero-gradient"></div>
+      </div>
+
+      <div class="modal-header-meta">
+        <div class="modal-tags-row">
+          <span class="modal-tag tag-cat">🍽️ ${r.category}</span>
+          <span class="modal-tag tag-area">🌍 ${r.area} Tradition</span>
+          <span class="modal-tag tag-time">⏱️ ${r.estimatedTime || 30} mins</span>
+          <span class="modal-tag tag-cal">🔥 ~${nutrition.calories} kcal / portion</span>
+          ${r.youtubeId ? '<span class="modal-tag tag-time">🎥 HD Video Masterclass</span>' : ''}
+        </div>
+
+        <h1 class="modal-dish-title">${r.title}</h1>
+
+        <!-- Flavor Profile Tags -->
+        <div class="flavor-profile-bar">
+          <span class="flavor-bar-label">Flavor Profile:</span>
+          ${pairing.flavorProfile.map(f => `<span class="flavor-tag">✨ ${f}</span>`).join('')}
+        </div>
+      </div>
+
+      <!-- Interactive Action Controls (Servings Scaler & Units) -->
+      <div class="modal-actions-bar">
+        <div class="serving-scaler-wrap">
+          <span class="scaler-label">Servings:</span>
+          <div class="scaler-control">
+            <button class="scaler-btn" id="btnScaleDown" aria-label="Decrease servings" ${this.currentServings <= 1 ? 'disabled' : ''}>−</button>
+            <span class="scaler-num" id="currentServingsText">${this.currentServings}</span>
+            <button class="scaler-btn" id="btnScaleUp" aria-label="Increase servings" ${this.currentServings >= 16 ? 'disabled' : ''}>+</button>
+          </div>
+        </div>
+
+        <div class="unit-switch-group">
+          <button class="unit-btn ${this.unitSystem === 'metric' ? 'active' : ''}" id="btnUnitMetric">Metric (g / ml)</button>
+          <button class="unit-btn ${this.unitSystem === 'imperial' ? 'active' : ''}" id="btnUnitImperial">US (cups / oz)</button>
+        </div>
+
+        <div class="modal-cta-group">
+          <button class="btn-cook-mode" id="btnLaunchCookMode">
+            <span>👨‍🍳 Start Cook Mode</span>
+          </button>
+          <button class="btn-icon-action" id="btnModalFav" title="${isFav ? 'Remove Favorite' : 'Save Favorite'}">
+            ${isFav ? '❤️' : '🤍'}
+          </button>
+          <button class="btn-icon-action" id="btnModalPrint" title="Print Recipe">
+            🖨️
+          </button>
+        </div>
+      </div>
+
+      <!-- 2-Column Content Grid: Ingredients & Method -->
+      <div class="modal-grid-body">
+        <!-- Column 1: Ingredients & Sommelier Card -->
+        <div class="modal-ingredients-col">
+          <h2 class="modal-section-title">
+            <span>Ingredients (${r.ingredients.length})</span>
+            <button class="add-all-cart-btn" id="btnAddAllToCart">+ Add to Grocery</button>
+          </h2>
+
+          <ul class="ingredients-list" id="ingredientsListContainer">
+            ${r.ingredients.map(ing => {
+              const scaledMeasure = scaleMeasurement(ing.measure, ratio, this.unitSystem);
+              const isChecked = this.checkedIngredientNames.has(ing.name.toLowerCase());
+              return `
+                <li class="ingredient-item ${isChecked ? 'checked' : ''}">
+                  <label class="ing-check-wrap">
+                    <input type="checkbox" class="ing-checkbox" data-name="${ing.name}" ${isChecked ? 'checked' : ''} />
+                    <span class="ing-name">${ing.name}</span>
+                  </label>
+                  <span class="ing-measure">${scaledMeasure}</span>
+                </li>
+              `;
+            }).join('')}
+          </ul>
+
+          <!-- Sommelier Pairing Card -->
+          <div class="sommelier-card">
+            <div class="sommelier-header">
+              <span class="sommelier-icon">🍷</span>
+              <div>
+                <h3 class="sommelier-title">Sommelier Pairing</h3>
+                <span class="sommelier-sub">Curated by our Master Cellar</span>
+              </div>
+            </div>
+            <div class="sommelier-body">
+              <div class="pairing-item">
+                <span class="pairing-label">Wine Selection:</span>
+                <p class="pairing-text highlight">${pairing.wine}</p>
+                <small class="pairing-note">${pairing.wineNote}</small>
+              </div>
+              <div class="pairing-item" style="margin-top: 0.75rem;">
+                <span class="pairing-label">Artisanal Beverage:</span>
+                <p class="pairing-text">${pairing.beverage}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Chef Tip Box -->
+          <div class="chef-tip-box">
+            <div class="chef-tip-header">
+              <span>👨‍🍳 Chef's Secret Technique</span>
+            </div>
+            <p class="chef-tip-text">"${pairing.chefTip}"</p>
+          </div>
+
+          <!-- Nutrition Macro Card -->
+          <div class="nutrition-breakdown-box">
+            <h3 class="modal-section-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Estimated Macros / Portion</h3>
+            <div class="nutrition-grid">
+              <div class="nutri-card">
+                <div class="nutri-val">${nutrition.calories}</div>
+                <div class="nutri-lbl">Calories</div>
+              </div>
+              <div class="nutri-card">
+                <div class="nutri-val">${nutrition.protein}g</div>
+                <div class="nutri-lbl">Protein</div>
+              </div>
+              <div class="nutri-card">
+                <div class="nutri-val">${nutrition.carbs}g</div>
+                <div class="nutri-lbl">Carbs</div>
+              </div>
+              <div class="nutri-card">
+                <div class="nutri-val">${nutrition.fat}g</div>
+                <div class="nutri-lbl">Fat</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Step-by-Step Instructions -->
+        <div class="modal-method-col">
+          <h2 class="modal-section-title">Preparation & Technique</h2>
+          
+          <div class="instructions-list">
+            ${r.steps.map((step, idx) => {
+              const highlightedStep = this.highlightTimers(step);
+              return `
+                <div class="step-row">
+                  <div class="step-number-circle">${idx + 1}</div>
+                  <div class="step-body">
+                    <p class="step-text">${highlightedStep}</p>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          ${r.youtubeId ? `
+            <div class="video-section-wrap">
+              <h3 class="modal-section-title" style="font-size: 1.15rem; margin-bottom: 0.75rem;">Video Cooking Masterclass</h3>
+              <div class="video-frame-container">
+                <iframe 
+                  src="https://www.youtube-nocookie.com/embed/${r.youtubeId}" 
+                  title="${r.title} Video Guide" 
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  allowfullscreen>
+                </iframe>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    `;
+
+    this.attachModalInteractiveEvents();
+  }
+
+  highlightTimers(stepText) {
+    return stepText.replace(/\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/gi, (match, num, unit) => {
+      let mins = parseInt(num, 10);
+      if (/hour|hr/i.test(unit)) mins *= 60;
+      return `<button class="clickable-timer-btn" data-minutes="${mins}" title="Click to start ${mins}-min timer">⏱️ ${match}</button>`;
+    });
+  }
+
+  attachModalInteractiveEvents() {
+    const scaleUp = document.getElementById('btnScaleUp');
+    const scaleDown = document.getElementById('btnScaleDown');
+    const unitMetric = document.getElementById('btnUnitMetric');
+    const unitImperial = document.getElementById('btnUnitImperial');
+    const btnLaunchCook = document.getElementById('btnLaunchCookMode');
+    const btnModalFav = document.getElementById('btnModalFav');
+    const btnModalPrint = document.getElementById('btnModalPrint');
+    const btnAddAllCart = document.getElementById('btnAddAllToCart');
+
+    scaleUp?.addEventListener('click', () => {
+      if (this.currentServings < 16) {
+        this.currentServings += 1;
+        this.render();
+      }
+    });
+
+    scaleDown?.addEventListener('click', () => {
+      if (this.currentServings > 1) {
+        this.currentServings -= 1;
+        this.render();
+      }
+    });
+
+    unitMetric?.addEventListener('click', () => {
+      if (this.unitSystem !== 'metric') {
+        this.unitSystem = 'metric';
+        this.render();
+      }
+    });
+
+    unitImperial?.addEventListener('click', () => {
+      if (this.unitSystem !== 'imperial') {
+        this.unitSystem = 'imperial';
+        this.render();
+      }
+    });
+
+    btnModalFav?.addEventListener('click', () => {
+      const isFav = toggleFavorite(this.currentRecipe);
+      btnModalFav.innerHTML = isFav ? '❤️' : '🤍';
+      btnModalFav.title = isFav ? 'Remove Favorite' : 'Save Favorite';
+    });
+
+    btnModalPrint?.addEventListener('click', () => {
+      window.print();
+    });
+
+    btnAddAllCart?.addEventListener('click', () => {
+      const ratio = this.currentServings / this.baseServings;
+      const items = this.currentRecipe.ingredients.map(i => ({
+        name: i.name,
+        measure: scaleMeasurement(i.measure, ratio, this.unitSystem),
+        recipeTitle: this.currentRecipe.title
+      }));
+      addToShoppingList(items);
+      window.dispatchEvent(new CustomEvent('culinaria:toast', {
+        detail: { message: `🛒 Added ${items.length} ingredients to your Grocery List!` }
+      }));
+    });
+
+    this.modalContent.querySelectorAll('.clickable-timer-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mins = parseInt(btn.dataset.minutes, 10);
+        activeTimer.start(mins * 60, `${this.currentRecipe.title}`);
+        window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: `⏱️ Started ${mins}-minute timer!` } }));
+      });
+    });
+
+    // Checkbox toggles with state preservation
+    this.modalContent.querySelectorAll('.ing-checkbox').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const item = e.target.closest('.ingredient-item');
+        const name = (cb.dataset.name || '').toLowerCase();
+        if (e.target.checked) {
+          this.checkedIngredientNames.add(name);
+          item?.classList.add('checked');
+        } else {
+          this.checkedIngredientNames.delete(name);
+          item?.classList.remove('checked');
+        }
+      });
+    });
+
+    btnLaunchCook?.addEventListener('click', () => {
+      this.openCookMode();
+    });
+  }
+
+  /* ==========================================================================
+     Guided Hands-Free Cook Mode with Voice
+     ========================================================================== */
+  openCookMode() {
+    this.currentCookStepIndex = 0;
+    this.cookTitle.textContent = this.currentRecipe.title;
+    this.cookOverlay.classList.add('open');
+    this.btnToggleVoice.classList.add('active');
+    this.btnToggleVoice.querySelector('.voice-label').textContent = 'Voice On';
+    this.voiceActive = true;
+    this.renderCurrentCookStep();
+  }
+
+  closeCookMode() {
+    voiceAssistant.stop();
+    this.cookOverlay.classList.remove('open');
+  }
+
+  renderCurrentCookStep() {
+    const steps = this.currentRecipe.steps;
+    const total = steps.length;
+    const current = this.currentCookStepIndex;
+
+    this.cookStepNum.textContent = `Step ${current + 1} of ${total}`;
+    this.cookProgressPill.textContent = `${Math.round(((current + 1) / total) * 100)}% Complete`;
+    this.cookProgressBar.style.width = `${((current + 1) / total) * 100}%`;
+
+    const stepText = steps[current];
+    this.cookStepText.textContent = stepText;
+
+    const timerMatch = stepText.match(/\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/i);
+    if (timerMatch) {
+      let mins = parseInt(timerMatch[1], 10);
+      if (/hour|hr/i.test(timerMatch[2])) mins *= 60;
+      this.stepTimerLabel.textContent = `Detected timer for this step:`;
+      this.btnStartStepTimer.textContent = `Start Timer (${mins} min)`;
+      this.btnStartStepTimer.dataset.minutes = mins;
+      this.stepTimerContainer.classList.remove('hidden');
+    } else {
+      this.stepTimerContainer.classList.add('hidden');
+    }
+
+    this.btnCookPrev.disabled = current === 0;
+    if (current === total - 1) {
+      this.btnCookNext.textContent = '🎉 Finish & Enjoy!';
+    } else {
+      this.btnCookNext.textContent = 'Next Step →';
+    }
+
+    if (this.voiceActive) {
+      this.speakCurrentStep();
+    }
+  }
+
+  speakCurrentStep() {
+    const current = this.currentCookStepIndex;
+    const stepText = this.currentRecipe.steps[current];
+    voiceAssistant.speak(`Step ${current + 1}. ${stepText}`);
+  }
+
+  nextCookStep() {
+    const total = this.currentRecipe.steps.length;
+    if (this.currentCookStepIndex < total - 1) {
+      this.currentCookStepIndex++;
+      this.renderCurrentCookStep();
+    } else {
+      voiceAssistant.speak(`Congratulations! You have perfected ${this.currentRecipe.title}. Bon appetit!`);
+      confetti({
+        particleCount: 160,
+        spread: 100,
+        origin: { y: 0.6 }
+      });
+      window.dispatchEvent(new CustomEvent('culinaria:toast', {
+        detail: { message: `👨‍🍳 Bon Appétit! You completed ${this.currentRecipe.title}!` }
+      }));
+      setTimeout(() => this.closeCookMode(), 1500);
+    }
+  }
+
+  prevCookStep() {
+    if (this.currentCookStepIndex > 0) {
+      this.currentCookStepIndex--;
+      this.renderCurrentCookStep();
+    }
+  }
+}

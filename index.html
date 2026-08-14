@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Culinaria — World-Class Recipe Discovery & Gourmet Cooking Studio</title>
+  <meta name="description" content="Discover thousands of world-class recipes, dynamic ingredient scalers, sommelier pairings, pantry matching, voice-guided kitchen cook mode, and interactive shopping lists.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./src/styles/design-tokens.css">
+  <link rel="stylesheet" href="./src/styles/main.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
+</head>
+<body>
+  <div id="app" class="app-container">
+    <!-- Top Navigation Header -->
+    <header class="app-header" id="appHeader">
+      <div class="header-inner">
+        <div class="brand-group">
+          <a href="#" class="brand-logo" id="navHome">
+            <span class="logo-emblem">🍲</span>
+            <div class="brand-text">
+              <span class="brand-title">Culinaria</span>
+              <span class="brand-subtitle">Michelin Gourmet Studio</span>
+            </div>
+          </a>
+        </div>
+
+        <nav class="nav-links" id="mainNav">
+          <button class="nav-btn active" data-view="explore" id="tabExplore">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <span>Explore</span>
+          </button>
+          <button class="nav-btn" data-view="pantry" id="tabPantry">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span>Pantry Matcher</span>
+            <span class="badge-dot"></span>
+          </button>
+          <button class="nav-btn" data-view="favorites" id="tabFavorites">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+            <span>Cookbook</span>
+            <span class="fav-count-pill" id="favCountPill">0</span>
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button class="action-btn roulette-trigger" id="btnRoulette" title="Surprise Me / Chef's Roulette">
+            <span class="sparkle-spin">🎲</span>
+            <span class="btn-text">Chef's Surprise</span>
+          </button>
+
+          <button class="action-btn shopping-trigger" id="btnShoppingList" title="Grocery Shopping List">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            <span class="cart-badge" id="cartCountBadge">0</span>
+          </button>
+
+          <button class="theme-toggle" id="themeToggle" title="Toggle Light/Dark Theme" aria-label="Toggle light and dark theme">
+            <span class="theme-icon light-icon">☀️</span>
+            <span class="theme-icon dark-icon">🌙</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content" id="mainContent">
+      <!-- VIEW: EXPLORE & SEARCH -->
+      <section class="view-panel active" id="viewExplore">
+        <!-- Hero Section -->
+        <div class="hero-section">
+          <div class="hero-backdrop-glow"></div>
+          <div class="hero-content">
+            <div class="hero-curated-badge">
+              <span class="sparkle">✨</span> The World's Open-Source Haute Cuisine Vault
+            </div>
+            <h1 class="hero-title">
+              What culinary masterpiece <br><em>will you create today?</em>
+            </h1>
+            <p class="hero-subtitle">
+              Explore authentic global recipes with real-time portion scaling, sommelier pairings, guided voice cooking, and instant pantry discovery.
+            </p>
+
+            <!-- Search Bar Component with Auto-Suggestions -->
+            <div class="search-box-wrapper">
+              <div class="search-box" id="searchBoxContainer">
+                <span class="search-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+                </span>
+                <input 
+                  type="text" 
+                  id="recipeSearchInput" 
+                  class="search-input" 
+                  placeholder="Search 3,000+ recipes, ingredients, or cuisines (e.g., Teriyaki, Carbonara, Salmon, Birria)..." 
+                  autocomplete="off"
+                />
+                <button class="clear-search-btn hidden" id="clearSearchBtn" aria-label="Clear search">✕</button>
+                <button class="search-submit-btn" id="searchSubmitBtn">
+                  <span>Explore</span>
+                </button>
+              </div>
+
+              <!-- Live Auto-Suggestions Dropdown -->
+              <div class="search-suggestions-dropdown hidden" id="searchSuggestionsDropdown">
+                <!-- Populated dynamically via JS -->
+              </div>
+
+              <!-- Quick trending tag chips -->
+              <div class="trending-pills">
+                <span class="trending-label">Trending:</span>
+                <button class="trend-chip" data-query="Pasta">🍝 Al Dente Pasta</button>
+                <button class="trend-chip" data-query="Salmon">🐟 Pan-Seared Salmon</button>
+                <button class="trend-chip" data-query="Chicken">🍗 Teriyaki Glazed</button>
+                <button class="trend-chip" data-query="Chocolate">🍫 Molten Lava Cake</button>
+                <button class="trend-chip" data-query="Tacos">🌮 Crispy Birria</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Bar: Categories & Global Cuisines -->
+        <div class="filters-container" id="filtersContainer">
+          <div class="filters-sticky-wrap">
+            <!-- Category Scroll Pill Tabs -->
+            <div class="categories-scroll-wrapper">
+              <div class="categories-nav" id="categoryNav">
+                <button class="cat-pill active" data-category="all">
+                  <span class="cat-icon">🍽️</span>
+                  <span>All Dishes</span>
+                </button>
+                <!-- Injected dynamically via JS -->
+              </div>
+            </div>
+
+            <!-- Cuisine Area Dropdown & Quick Filters Row -->
+            <div class="sub-filter-row">
+              <div class="filter-dropdown-group">
+                <label for="cuisineSelect" class="filter-label">🌍 Region / Cuisine:</label>
+                <select id="cuisineSelect" class="styled-select">
+                  <option value="all">All World Traditions</option>
+                  <!-- Injected dynamically -->
+                </select>
+              </div>
+
+              <div class="quick-toggles-group">
+                <button class="toggle-filter-btn" data-filter="under30" id="filterUnder30">
+                  <span class="toggle-icon">⏱️</span>
+                  <span>Under 30 mins</span>
+                </button>
+                <button class="toggle-filter-btn" data-filter="vegetarian" id="filterVeg">
+                  <span class="toggle-icon">🌱</span>
+                  <span>Vegetarian / Plant</span>
+                </button>
+                <button class="toggle-filter-btn" data-filter="highprotein" id="filterProtein">
+                  <span class="toggle-icon">💪</span>
+                  <span>High Protein</span>
+                </button>
+              </div>
+
+              <div class="results-stats" id="resultsCount">
+                Showing recipes
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe Grid Area -->
+        <div class="recipes-grid-section">
+          <!-- Loading State -->
+          <div class="loading-state hidden" id="gridLoading">
+            <div class="culinary-spinner"></div>
+            <p class="loading-text">Simmering artisanal recipes for you...</p>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state hidden" id="gridEmpty">
+            <div class="empty-icon">🍳</div>
+            <h3 class="empty-title">No matching culinary creations found</h3>
+            <p class="empty-desc">Try exploring another ingredient, dish name, or resetting your cuisine filters.</p>
+            <button class="secondary-btn" id="btnResetFilters">Reset All Filters</button>
+          </div>
+
+          <!-- Active Cards Grid -->
+          <div class="recipe-cards-grid" id="recipeCardsGrid">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </section>
+
+      <!-- VIEW: PANTRY / WHAT'S IN MY FRIDGE -->
+      <section class="view-panel" id="viewPantry">
+        <div class="pantry-hero">
+          <div class="pantry-badge">🥕 Zero Food Waste Gastronomy</div>
+          <h2 class="section-title">What's in your pantry & fridge?</h2>
+          <p class="section-subtitle">
+            Select 2 or more ingredients you have at home. We'll cross-reference our database to calculate the highest-ranked dishes you can prepare right now.
+          </p>
+
+          <div class="pantry-builder-card">
+            <!-- Ingredient Input & Quick Suggestions -->
+            <div class="pantry-input-box">
+              <span class="pantry-input-icon">🔍</span>
+              <input 
+                type="text" 
+                id="pantryIngredientInput" 
+                placeholder="Type an ingredient (e.g., Chicken, Eggs, Tomato, Garlic, Spinach)..."
+                autocomplete="off"
+              />
+              <button class="primary-btn" id="btnAddPantryItem">+ Add Item</button>
+            </div>
+
+            <!-- Quick Add Suggestions -->
+            <div class="pantry-quick-suggestions">
+              <span class="quick-label">Kitchen Staples:</span>
+              <div class="quick-staples" id="quickStaplesContainer">
+                <button class="staple-chip" data-ingredient="Chicken">🍗 Chicken</button>
+                <button class="staple-chip" data-ingredient="Eggs">🥚 Eggs</button>
+                <button class="staple-chip" data-ingredient="Tomato">🍅 Tomato</button>
+                <button class="staple-chip" data-ingredient="Garlic">🧄 Garlic</button>
+                <button class="staple-chip" data-ingredient="Onion">🧅 Onion</button>
+                <button class="staple-chip" data-ingredient="Cheese">🧀 Cheese</button>
+                <button class="staple-chip" data-ingredient="Rice">🍚 Rice</button>
+                <button class="staple-chip" data-ingredient="Salmon">🐟 Salmon</button>
+                <button class="staple-chip" data-ingredient="Pasta">🍝 Pasta</button>
+                <button class="staple-chip" data-ingredient="Beef">🥩 Beef</button>
+              </div>
+            </div>
+
+            <!-- Selected Pantry Basket -->
+            <div class="pantry-basket-header">
+              <div class="basket-title">
+                <span>Your Pantry Basket (<span id="pantryBasketCount">0</span>)</span>
+              </div>
+              <button class="text-btn clear-pantry-btn" id="btnClearPantry">Clear All</button>
+            </div>
+
+            <div class="pantry-chips-box" id="pantryChipsBox">
+              <p class="pantry-empty-hint" id="pantryEmptyHint">No ingredients added yet. Pick staples above or type any ingredient!</p>
+            </div>
+
+            <div class="pantry-actions">
+              <button class="primary-btn pulse-on-ready" id="btnFindPantryRecipes" disabled>
+                <span>Find Matching Recipes</span>
+                <span class="btn-arrow">→</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pantry Results Grid -->
+        <div class="pantry-results-area" id="pantryResultsArea">
+          <div class="pantry-results-header hidden" id="pantryResultsHeader">
+            <h3 class="pantry-results-title" id="pantryResultsCount">Recipes You Can Make</h3>
+          </div>
+          <div class="recipe-cards-grid" id="pantryCardsGrid"></div>
+        </div>
+      </section>
+
+      <!-- VIEW: FAVORITES & SAVED RECIPES -->
+      <section class="view-panel" id="viewFavorites">
+        <div class="favorites-header-section">
+          <div class="fav-badge">❤️ Personal Cookbook</div>
+          <h2 class="section-title">Your Private Culinary Vault</h2>
+          <p class="section-subtitle">All your curated favorites saved offline for instant, distraction-free kitchen prep.</p>
+        </div>
+
+        <div class="recipe-cards-grid" id="favoritesGrid">
+          <!-- Populated dynamically -->
+        </div>
+
+        <div class="empty-state hidden" id="favoritesEmpty">
+          <div class="empty-icon">📖</div>
+          <h3 class="empty-title">Your cookbook is empty</h3>
+          <p class="empty-desc">Click the heart icon on any recipe to save it to your personal kitchen collection.</p>
+          <button class="primary-btn" id="btnExploreFromFavs">Discover Recipes</button>
+        </div>
+      </section>
+    </main>
+
+    <!-- Floating Kitchen Timer Bar (Always accessible during cooking) -->
+    <aside class="floating-timer-bar hidden" id="floatingTimerBar">
+      <div class="timer-inner">
+        <div class="timer-icon-wrap">⏱️</div>
+        <div class="timer-info">
+          <span class="timer-title" id="timerDishTitle">Kitchen Timer</span>
+          <span class="timer-display" id="timerDigits">00:00</span>
+        </div>
+        <div class="timer-controls">
+          <button class="timer-btn" id="timerToggleBtn" title="Play/Pause">⏸️</button>
+          <button class="timer-btn" id="timerResetBtn" title="Reset">🔄</button>
+          <button class="timer-btn close-timer" id="timerDismissBtn" title="Dismiss">✕</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Slide-over Grocery Shopping List Drawer -->
+    <div class="drawer-overlay" id="shoppingDrawerOverlay"></div>
+    <aside class="shopping-drawer" id="shoppingDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title-wrap">
+          <span class="drawer-icon">🛒</span>
+          <div>
+            <h3 class="drawer-title">Gourmet Grocery List</h3>
+            <span class="drawer-count" id="shoppingItemCount">0 items</span>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="btnCloseShoppingDrawer">✕</button>
+      </div>
+
+      <div class="drawer-input-row">
+        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." />
+        <button class="primary-btn" id="btnAddManualGrocery">+</button>
+      </div>
+
+      <div class="drawer-body" id="shoppingListItems">
+        <div class="empty-drawer" id="shoppingEmptyState">
+          <div class="empty-cart-icon">🛒</div>
+          <p>Your grocery list is empty.</p>
+          <small>Add missing ingredients from any recipe with one click!</small>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="secondary-btn" id="btnCopyShoppingList">📋 Copy to Clipboard</button>
+        <button class="danger-text-btn" id="btnClearShoppingList">Clear All</button>
+      </div>
+    </aside>
+
+    <!-- Modal: Interactive Recipe Studio & Scaler -->
+    <div class="modal-backdrop" id="recipeModalBackdrop">
+      <div class="recipe-modal" id="recipeModal">
+        <button class="modal-close-btn" id="btnCloseRecipeModal" aria-label="Close recipe details">✕</button>
+        <div class="modal-scroll-body" id="modalRecipeContent">
+          <!-- Injected dynamically -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Fullscreen Hands-Free Guided Cook Mode with Voice Narration -->
+    <div class="cook-mode-overlay" id="cookModeOverlay">
+      <div class="cook-mode-container">
+        <!-- Cook Mode Header -->
+        <div class="cook-mode-header">
+          <div class="cook-mode-dish-info">
+            <span class="cook-mode-tag">👨‍🍳 Michelin Guided Cook Mode</span>
+            <h2 class="cook-mode-title" id="cookModeTitle">Recipe Title</h2>
+          </div>
+          <div class="cook-mode-top-actions">
+            <!-- Voice speech narration toggle -->
+            <button class="cook-voice-btn" id="btnToggleVoice" title="Hands-free Voice Narration">
+              <span class="voice-icon">🔊</span>
+              <span class="voice-label">Read Aloud</span>
+            </button>
+            <div class="cook-progress-pill" id="cookProgressPill">Step 1 of 6</div>
+            <button class="cook-mode-exit-btn" id="btnExitCookMode">Exit ✕</button>
+          </div>
+        </div>
+
+        <!-- Step Progress Bar -->
+        <div class="cook-progress-track">
+          <div class="cook-progress-fill" id="cookProgressBar" style="width: 15%;"></div>
+        </div>
+
+        <!-- Active Step Main Display -->
+        <div class="cook-mode-body">
+          <div class="cook-step-card" id="cookStepCard">
+            <div class="step-num-badge" id="cookStepNum">Step 1</div>
+            <div class="step-instruction-text" id="cookStepText">
+              Preheat oven to 375°F (190°C) and prepare a baking sheet with parchment paper.
+            </div>
+            
+            <!-- Dynamic Timer Suggestion inside step if time detected -->
+            <div class="step-detected-timer hidden" id="stepTimerContainer">
+              <span class="timer-hint-icon">⏱️</span>
+              <span class="timer-hint-text" id="stepTimerLabel">Detected timer:</span>
+              <button class="timer-action-chip" id="btnStartStepTimer">Start Timer (15 min)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cook Mode Navigation Bottom Bar -->
+        <div class="cook-mode-footer">
+          <button class="cook-nav-btn prev" id="btnCookPrevStep">← Previous Step</button>
+          <div class="cook-voice-indicator">
+            <span>Tip: Press <kbd>→</kbd> or <kbd>Space</kbd> for next step</span>
+          </div>
+          <button class="cook-nav-btn next" id="btnCookNextStep">Next Step →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Chef's Roulette (Surprise Me) -->
+    <div class="modal-backdrop" id="rouletteModalBackdrop">
+      <div class="roulette-modal" id="rouletteModal">
+        <button class="modal-close-btn" id="btnCloseRouletteModal">✕</button>
+        <div class="roulette-header">
+          <span class="roulette-emoji">✨🎲</span>
+          <h3 class="roulette-title">Chef's Culinary Roulette</h3>
+          <p class="roulette-subtitle">Can't decide what to savor? Let the gourmet fates choose your next feast!</p>
+        </div>
+        <div class="roulette-stage" id="rouletteStage">
+          <div class="roulette-dish-preview" id="rouletteDishPreview">
+            <div class="roulette-placeholder">
+              <div class="spinning-fork">🍴</div>
+              <p>Spinning the culinary globe...</p>
+            </div>
+          </div>
+        </div>
+        <div class="roulette-actions">
+          <button class="primary-btn roulette-spin-btn" id="btnSpinAgain">🎲 Spin Another Dish</button>
+          <button class="secondary-btn" id="btnOpenRouletteDish" disabled>View Recipe & Cook</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <span class="footer-logo">🍲 Culinaria</span>
+          <p class="footer-tagline">Crafted for gourmets, home chefs, and culinary artists. Powered by TheMealDB Open Source API.</p>
+        </div>
+        <div class="footer-links">
+          <span>🌿 Real-time portion scaler</span>
+          <span>•</span>
+          <span>🍷 Sommelier wine pairings</span>
+          <span>•</span>
+          <span>🔊 Voice guided cook mode</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
