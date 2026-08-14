@@ -9,6 +9,7 @@ import { getCulinaryPairing } from '../services/sommelierService.js';
 import { voiceAssistant } from '../services/voiceAssistant.js';
 import { isFavorite, toggleFavorite, addToShoppingList } from '../services/storageService.js';
 import { activeTimer } from '../services/timerManager.js';
+import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
 import confetti from 'canvas-confetti';
 
 export class CookingStudioModal {
@@ -278,9 +279,12 @@ export class CookingStudioModal {
               <h3 class="modal-section-title" style="font-size: 1.15rem; margin-bottom: 0.75rem;">Video Cooking Masterclass</h3>
               <div class="video-frame-container">
                 <iframe 
-                  src="https://www.youtube-nocookie.com/embed/${r.youtubeId}" 
-                  title="${r.title} Video Guide" 
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                  src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.youtubeId)}" 
+                  title="${sanitizeHtml(r.title)} Video Guide" 
+                  sandbox="allow-scripts allow-same-origin allow-presentation"
+                  loading="lazy"
+                  referrerpolicy="strict-origin-when-cross-origin"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
                   allowfullscreen>
                 </iframe>
               </div>

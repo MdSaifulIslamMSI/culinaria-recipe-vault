@@ -1,7 +1,15 @@
 /**
  * Storage Service
- * LocalStorage wrapper for persistent Favorites (Cookbook), Shopping List & User Preferences
+ * LocalStorage wrapper with prototype pollution defense, rate limiting, and integrity checking
  */
+import {
+  sanitizeObject,
+  sanitizeIdentifier,
+  sanitizeTextInput,
+  sanitizeUrl,
+  computeIntegrityHash,
+  storageRateLimiter
+} from '../utils/securitySanitizer.js';
 
 const STORAGE_KEYS = {
   FAVORITES: 'culinaria_favorites_v1',
@@ -17,18 +25,21 @@ function safeGet(key, fallback = []) {
     const parsed = JSON.parse(item);
     if (parsed === null || parsed === undefined) return fallback;
     if (Array.isArray(fallback) && !Array.isArray(parsed)) return fallback;
-    return parsed;
+    // Deep clean parsed object against prototype pollution
+    return sanitizeObject(parsed);
   } catch (e) {
-    console.warn(`Error parsing ${key} from localStorage, resetting to fallback:`, e);
+    console.warn(`[SECURITY] Error parsing ${key} from localStorage, resetting to fallback:`, e);
     return fallback;
   }
 }
 
 function safeSet(key, value) {
+  if (!storageRateLimiter.canExecute()) return;
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    const cleanValue = sanitizeObject(value);
+    localStorage.setItem(key, JSON.stringify(cleanValue));
   } catch (e) {
-    console.error(`Error saving ${key} to localStorage:`, e);
+    console.error(`[SECURITY] Error saving ${key} to localStorage:`, e);
   }
 }
 
@@ -48,7 +59,8 @@ export function isFavorite(recipeId) {
 
 export function toggleFavorite(recipe) {
   if (!recipe) return false;
-  const recipeId = String(recipe.id || recipe.idMeal || '');
+  const rawId = String(recipe.id || recipe.idMeal || '');
+  const recipeId = sanitizeIdentifier(rawId);
   if (!recipeId) return false;
 
   const favs = getFavorites();
@@ -62,16 +74,16 @@ export function toggleFavorite(recipe) {
     // Save full recipe snapshot for instantaneous offline access in Cookbook
     favs.unshift({
       id: recipeId,
-      title: recipe.title || recipe.strMeal || 'Gourmet Creation',
-      thumbnail: recipe.thumbnail || recipe.strMealThumb || '',
-      category: recipe.category || recipe.strCategory || 'Miscellaneous',
-      area: recipe.area || recipe.strArea || 'Global',
-      estimatedTime: recipe.estimatedTime || 30,
-      ingredients: recipe.ingredients || [],
-      steps: recipe.steps || [],
-      instructions: recipe.instructions || recipe.strInstructions || '',
-      youtubeId: recipe.youtubeId || null,
-      servings: recipe.servings || 4,
+      title: sanitizeTextInput(recipe.title || recipe.strMeal || 'Gourmet Creation', 100),
+      thumbnail: sanitizeUrl(recipe.thumbnail || recipe.strMealThumb || ''),
+      category: sanitizeTextInput(recipe.category || recipe.strCategory || 'Miscellaneous', 50),
+      area: sanitizeTextInput(recipe.area || recipe.strArea || 'Global', 50),
+      estimatedTime: Math.max(5, parseInt(recipe.estimatedTime, 10) || 30),
+      ingredients: sanitizeObject(recipe.ingredients || []),
+      steps: sanitizeObject(recipe.steps || []),
+      instructions: sanitizeTextInput(recipe.instructions || recipe.strInstructions || '', 5000),
+      youtubeId: sanitizeIdentifier(recipe.youtubeId || null),
+      servings: Math.max(1, Math.min(16, parseInt(recipe.servings, 10) || 4)),
       savedAt: Date.now()
     });
     isFav = true;
@@ -94,23 +106,27 @@ export function addToShoppingList(items) {
   const itemsToAdd = Array.isArray(items) ? items : [items];
 
   itemsToAdd.forEach(newItem => {
-    const name = typeof newItem === 'string' ? newItem : newItem.name;
-    const measure = typeof newItem === 'string' ? '' : newItem.measure || '';
-    const recipeTitle = typeof newItem === 'string' ? 'Custom item' : newItem.recipeTitle || '';
+    const rawName = typeof newItem === 'string' ? newItem : newItem.name;
+    const rawMeasure = typeof newItem === 'string' ? '' : newItem.measure || '';
+    const rawRecipeTitle = typeof newItem === 'string' ? 'Custom item' : newItem.recipeTitle || '';
 
-    if (!name || !name.trim()) return;
+    const name = sanitizeTextInput(rawName, 80);
+    const measure = sanitizeTextInput(rawMeasure, 40);
+    const recipeTitle = sanitizeTextInput(rawRecipeTitle, 80);
 
-    // Check if duplicate already exists
-    const existingIndex = currentList.findIndex(i => i.name.toLowerCase() === name.trim().toLowerCase());
-    if (existingIndex >= 0) {
-      if (measure) {
-        currentList[existingIndex].measure = measure.trim();
+    if (!name) return;
+
+    const existing = currentList.find(i => i.name.toLowerCase() === name.toLowerCase() && !i.checked);
+
+    if (existing) {
+      if (measure && !existing.measure.includes(measure)) {
+        existing.measure = `${existing.measure} + ${measure}`.trim();
       }
     } else {
       currentList.push({
-        id: `shop-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
-        name: name.trim(),
-        measure: measure.trim(),
+        id: 'shop_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+        name,
+        measure,
         recipeTitle,
         checked: false,
         addedAt: Date.now()
@@ -119,58 +135,59 @@ export function addToShoppingList(items) {
   });
 
   safeSet(STORAGE_KEYS.SHOPPING_LIST, currentList);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { list: currentList } }));
-  return currentList;
+  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: currentList } }));
 }
 
 export function toggleShoppingItem(itemId) {
-  const currentList = getShoppingList();
-  const item = currentList.find(i => i.id === itemId);
+  const cleanId = sanitizeTextInput(itemId, 50);
+  const list = getShoppingList();
+  const item = list.find(i => i.id === cleanId);
   if (item) {
     item.checked = !item.checked;
-    safeSet(STORAGE_KEYS.SHOPPING_LIST, currentList);
-    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { list: currentList } }));
+    safeSet(STORAGE_KEYS.SHOPPING_LIST, list);
+    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
   }
 }
 
 export function removeShoppingItem(itemId) {
-  const currentList = getShoppingList().filter(i => i.id !== itemId);
-  safeSet(STORAGE_KEYS.SHOPPING_LIST, currentList);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { list: currentList } }));
-  return currentList;
+  const cleanId = sanitizeTextInput(itemId, 50);
+  let list = getShoppingList();
+  list = list.filter(i => i.id !== cleanId);
+  safeSet(STORAGE_KEYS.SHOPPING_LIST, list);
+  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
 }
 
 export function clearShoppingList() {
   safeSet(STORAGE_KEYS.SHOPPING_LIST, []);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { list: [] } }));
+  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: [] } }));
 }
 
 /* ==========================================================================
    Pantry Basket Persistence
    ========================================================================== */
-export function getPantryBasket() {
-  return safeGet(STORAGE_KEYS.PANTRY_BASKET, ['Chicken', 'Garlic', 'Tomato']);
+export function getStoredPantryBasket() {
+  return safeGet(STORAGE_KEYS.PANTRY_BASKET, ['chicken', 'garlic', 'tomatoes', 'pasta']);
 }
 
-export function savePantryBasket(items) {
-  safeSet(STORAGE_KEYS.PANTRY_BASKET, items);
+export function setStoredPantryBasket(basket) {
+  if (Array.isArray(basket)) {
+    const cleanBasket = basket.map(item => sanitizeTextInput(item, 50)).filter(Boolean);
+    safeSet(STORAGE_KEYS.PANTRY_BASKET, cleanBasket);
+  }
 }
+
+export const getPantryBasket = getStoredPantryBasket;
+export const savePantryBasket = setStoredPantryBasket;
 
 /* ==========================================================================
    Theme Preference
    ========================================================================== */
 export function getStoredTheme() {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.THEME) || 'light';
-  } catch {
-    return 'light';
-  }
+  const theme = localStorage.getItem(STORAGE_KEYS.THEME);
+  return theme === 'dark' ? 'dark' : 'light';
 }
 
 export function setStoredTheme(theme) {
-  try {
-    localStorage.setItem(STORAGE_KEYS.THEME, theme);
-  } catch (e) {
-    console.error(e);
-  }
+  const cleanTheme = theme === 'dark' ? 'dark' : 'light';
+  localStorage.setItem(STORAGE_KEYS.THEME, cleanTheme);
 }
