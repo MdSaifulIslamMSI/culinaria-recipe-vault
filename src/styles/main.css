@@ -2532,24 +2532,242 @@ a {
   font-weight: 600;
 }
 
-/* Print */
+/* ==========================================================================
+   Haute Cuisine Printable Recipe & PDF Engine
+   ========================================================================== */
 @media print {
-  body { background: #fff !important; color: #000 !important; }
-  .app-header, .filters-container, .hero-section, .modal-close-btn, .modal-actions-bar,
-  .floating-timer-bar, .shopping-drawer, .toast-container, .app-footer, .video-section-wrap {
+  @page {
+    margin: 1.2cm 1cm;
+    size: A4 portrait;
+  }
+
+  *, *::before, *::after {
+    background: transparent !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely suppress all website chrome, background pages, and UI controls */
+  .app-header, 
+  .main-content,
+  .hero-section, 
+  .filters-container, 
+  .recipes-grid-section,
+  .pantry-hero,
+  .pantry-results-area,
+  .favorites-header-section,
+  #favoritesGrid,
+  #favoritesEmpty,
+  .shopping-drawer, 
+  .drawer-overlay,
+  .floating-timer-bar, 
+  .toast-container, 
+  .app-footer, 
+  .video-section-wrap,
+  .cook-mode-overlay,
+  .roulette-modal,
+  #rouletteModalBackdrop,
+  .modal-close-btn,
+  .modal-actions-bar,
+  .add-all-cart-btn,
+  .ing-checkbox,
+  .clickable-timer-btn,
+  .modal-hero-gradient,
+  .chef-tip-box button {
     display: none !important;
   }
-  .recipe-modal {
-    box-shadow: none !important;
-    max-width: 100% !important;
-    max-height: none !important;
+
+  /* Unfurl the active recipe modal into a pristine document sheet */
+  .modal-backdrop.open {
     position: static !important;
-  }
-  .modal-backdrop {
-    position: static !important;
-    background: none !important;
+    display: block !important;
+    background: transparent !important;
     opacity: 1 !important;
-    pointer-events: auto !important;
+    visibility: visible !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  .recipe-modal {
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    max-height: none !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-scroll-body {
+    overflow: visible !important;
+    max-height: none !important;
+    padding: 0 !important;
+  }
+
+  .modal-hero-cover {
+    height: 180px !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    margin-bottom: 0.75rem !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .modal-hero-img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    filter: none !important;
+  }
+
+  .modal-dish-title {
+    font-size: 20pt !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    margin: 0.3rem 0 !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .modal-tags-row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.4rem !important;
+    margin-bottom: 0.5rem !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .modal-tag {
+    background: #f4f1ea !important;
+    color: #333 !important;
+    border: 1px solid #d5cec5 !important;
+    padding: 0.2rem 0.6rem !important;
+    font-size: 8pt !important;
+    font-weight: 600 !important;
+    border-radius: 4px !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .flavor-profile-bar {
+    margin-bottom: 0.85rem !important;
+    font-size: 8.5pt !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .modal-grid-body {
+    display: grid !important;
+    grid-template-columns: 240px 1fr !important;
+    gap: 1.5rem !important;
+    padding: 0 !important;
+  }
+
+  .modal-section-title {
+    font-size: 12pt !important;
+    font-weight: 700 !important;
+    color: #111 !important;
+    border-bottom: 1.5px solid #333 !important;
+    padding-bottom: 0.25rem !important;
+    margin-bottom: 0.65rem !important;
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  .ingredients-list {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 0 1rem 0 !important;
+  }
+
+  .ingredient-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    border-bottom: 1px dashed #ddd !important;
+    padding: 0.25rem 0 !important;
+    font-size: 9pt !important;
+  }
+
+  .ing-name {
+    font-weight: 500 !important;
+  }
+
+  .ing-measure {
+    font-weight: 700 !important;
+    color: #222 !important;
+  }
+
+  .instruction-step-card {
+    background: #faf8f5 !important;
+    border: 1px solid #e0dad0 !important;
+    border-radius: 6px !important;
+    padding: 0.65rem 0.85rem !important;
+    margin-bottom: 0.65rem !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .step-badge {
+    background: #d35418 !important;
+    color: #ffffff !important;
+    font-size: 8pt !important;
+    font-weight: 700 !important;
+    padding: 0.15rem 0.5rem !important;
+    border-radius: 3px !important;
+    display: inline-block !important;
+    margin-bottom: 0.25rem !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .step-text {
+    font-size: 9.5pt !important;
+    color: #222 !important;
+    line-height: 1.45 !important;
+  }
+
+  .sommelier-card, .chef-tip-box, .nutrition-section {
+    background: #fdfbf7 !important;
+    border: 1px solid #e0dad0 !important;
+    border-radius: 6px !important;
+    padding: 0.65rem 0.85rem !important;
+    margin-top: 0.85rem !important;
+    page-break-inside: avoid;
+    break-inside: avoid;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .recipe-modal::after {
+    content: "✨ Curated by Culinaria Michelin Haute Cuisine Studio • culinaria-recipe-vault.onrender.com";
+    display: block !important;
+    text-align: center !important;
+    margin-top: 1.25rem !important;
+    padding-top: 0.5rem !important;
+    border-top: 1px solid #ccc !important;
+    font-size: 8pt !important;
+    color: #666 !important;
   }
 }
 
