@@ -439,20 +439,35 @@ class CulinariaApp {
     this.resultsCount.textContent = `Showing ${count} ${count === 1 ? 'recipe' : 'recipes'}`;
 
     if (count === 0) {
+      let emptyTitle = 'No matching culinary creations found';
+      let emptyDesc = 'Try exploring another ingredient, dish name, or resetting your cuisine filters.';
+      let resetBtnText = 'Reset All Filters';
+
       const catText = this.activeCategory !== 'all' ? `"${this.activeCategory}"` : '';
       const areaText = this.activeArea !== 'all' ? `"${this.activeArea}"` : '';
       const filterDesc = [catText, areaText].filter(Boolean).join(' in ');
 
-      const emptyTitle = filterDesc 
-        ? `No ${filterDesc} dishes found in the database`
-        : `No matching culinary creations found`;
-
-      const emptyDesc = document.querySelector('#gridEmpty .empty-desc');
-      const emptyHeader = document.querySelector('#gridEmpty .empty-title');
-      if (emptyHeader) emptyHeader.textContent = emptyTitle;
-      if (emptyDesc) {
-        emptyDesc.textContent = `Try selecting "All World Traditions" in the region selector or picking another category.`;
+      if (this.searchQuery) {
+        if (filterDesc) {
+          emptyTitle = `No dishes matching "${this.searchQuery}" in ${filterDesc}`;
+          emptyDesc = `We couldn't find any ${filterDesc} recipes with "${this.searchQuery}". Try clearing your search or switching to "All Dishes".`;
+          resetBtnText = `Clear Search & Reset ${filterDesc}`;
+        } else {
+          emptyTitle = `No recipes found matching "${this.searchQuery}"`;
+          emptyDesc = `We searched through our entire culinary vault, but couldn't find any dishes matching "${this.searchQuery}". Try searching for "pasta", "chicken", "salmon", or "curry".`;
+          resetBtnText = 'Clear Search Query';
+        }
+      } else if (filterDesc) {
+        emptyTitle = `No ${filterDesc} dishes found in the database`;
+        emptyDesc = `Try selecting "All World Traditions" in the region selector or picking another category pill.`;
+        resetBtnText = 'Reset All Filters';
       }
+
+      const emptyHeader = document.querySelector('#gridEmpty .empty-title');
+      const emptyParagraph = document.querySelector('#gridEmpty .empty-desc');
+      if (emptyHeader) emptyHeader.textContent = emptyTitle;
+      if (emptyParagraph) emptyParagraph.textContent = emptyDesc;
+      if (this.btnResetFilters) this.btnResetFilters.textContent = resetBtnText;
 
       this.gridEmpty.classList.remove('hidden');
       return;
