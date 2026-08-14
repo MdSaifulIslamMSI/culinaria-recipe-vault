@@ -1,10 +1,11 @@
 /**
- * Client-Side Web Crypto AES-GCM-256 Encryption Utility
- * Provides optional client-side cryptographic encryption routines using the Web Cryptography API (SubtleCrypto).
+ * Optional client-side Web Crypto AES-GCM-256 utility.
+ * This helper is not used as a secret store: its origin-derived key protects
+ * against casual storage inspection, not a same-origin attacker or XSS.
  */
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from './securityAuditLedger.js';
 
-// Fixed origin salt for deterministic local master key derivation
+// Fixed origin salt for deterministic local convenience-key derivation.
 const ORIGIN_KDF_SALT = new TextEncoder().encode('Culinaria_Haute_Cuisine_Zero_Knowledge_Salt_2026');
 let cachedKey = null;
 

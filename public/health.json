@@ -1,19 +1,23 @@
 {
   "status": "healthy",
-  "app": "culinaria-recipe-vault",
+  "service": "culinaria-recipe-vault",
   "version": "1.0.0",
   "buildType": "client-side-pwa",
   "deployment": {
-    "provider": "Render Static Site",
-    "gitBranch": "master"
+    "provider": "GitHub Pages",
+    "sourceBranch": "gh-pages",
+    "healthModel": "static-artifact-metadata; no server-side SLA"
   },
   "clientFeatures": {
     "offlineCatalogReady": true,
     "curatedRecipesCount": 789,
     "serviceWorkerEnabled": true,
-    "localStorageSanitized": true,
+    "storageSecurityModel": "sanitized non-sensitive client-local data; not encrypted",
     "webAudioSupported": true,
     "speechSynthesisSupported": true
   },
-  "lastVerified": "2026-08-14T23:00:00Z"
+  "verification": {
+    "releaseMetadata": "dist/release.json",
+    "requiredChecks": ["npm test", "npm run build", "npm audit --audit-level=high"]
+  }
 }

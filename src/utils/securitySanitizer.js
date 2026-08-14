@@ -1,7 +1,7 @@
 /**
- * Enterprise Security Sanitizer & Defense Engine
- * Protects against XSS, Prototype Pollution, Tabnabbing, and Input Tampering
- * Complies with OWASP Top 10 client-side security guidelines.
+ * Client-side input sanitizer and storage-boundary helpers.
+ * This module reduces DOM injection and malformed local data risk; it is not a
+ * replacement for server-side authorization or a secret-management system.
  */
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from './securityAuditLedger.js';
 
@@ -108,11 +108,12 @@ export function sanitizeObject(obj) {
   return clean;
 }
 
-// Session salt for client-side tamper detection
+// Public salt for best-effort local corruption detection. This is not a secret.
 const INTEGRITY_SALT = 'culinaria_vault_salt_v1';
 
 /**
- * Calculates a salted FNV-1a checksum digest for client-side storage tamper-detection
+ * Calculates a non-cryptographic FNV-1a checksum for client-side corruption detection.
+ * Do not use this as authentication, authorization, or proof against XSS.
  */
 export function computeIntegrityHash(data) {
   const str = (typeof data === 'string' ? data : JSON.stringify(data)) + INTEGRITY_SALT;

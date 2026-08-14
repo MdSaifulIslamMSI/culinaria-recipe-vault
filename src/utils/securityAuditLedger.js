@@ -79,7 +79,7 @@ export function getAuditLedger() {
  */
 export function exportAuditReport() {
   return {
-    engine: 'Culinaria Client Zero-Trust Engine v2.0',
+    engine: 'Culinaria Client Security Diagnostics v2.0',
     generatedAt: new Date().toISOString(),
     totalEvents: ledger.length,
     ledger: getAuditLedger(),

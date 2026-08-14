@@ -1,12 +1,14 @@
 import assert from 'assert';
 import puppeteer from 'puppeteer-core';
 import { 
-  filterByCategory, 
-  filterByArea, 
-  filterByCategoryAndArea, 
-  filterByIngredient 
+  filterByCategory,
+  filterByArea,
+  filterByCategoryAndArea,
+  filterByIngredient,
+  matchesIngredient
 } from '../src/services/mealDbApi.js';
 import { computeIntegrityHash } from '../src/utils/securitySanitizer.js';
+import { safeGet } from '../src/services/storageService.js';
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
@@ -31,7 +33,9 @@ async function runHardeningTests() {
   const fakeMatches2 = await filterByIngredient('dragon_dust_999');
   console.log(`  - Query "dragon_dust_999" -> Returned ${fakeMatches2.length} recipes`);
   assert.strictEqual(fakeMatches2.length, 0, 'Expected 0 matches for non-existent ingredient "dragon_dust_999"');
-  console.log('  ✅ [PASS] Strict pantry matching verified (Zero false positives)\n');
+  assert.equal(matchesIngredient('Egg Roll Wrappers', 'egg'), false, 'Compound ingredient must not be a direct egg match');
+  assert.equal(matchesIngredient('Eggs', 'egg'), true, 'Plural direct ingredient should match');
+  console.log('  ✅ [PASS] Pantry matching verified with compound-word protection\n');
 
   // -------------------------------------------------------------
   // TEST 2: Offline Category + Area Intersection & Null Safety
@@ -59,7 +63,7 @@ async function runHardeningTests() {
   // -------------------------------------------------------------
   // TEST 3: Cryptographic Integrity Signature & Tamper Detection
   // -------------------------------------------------------------
-  console.log('🔍 [TEST 3] Testing Salted Integrity Signature & Tampering Rejection...');
+  console.log('🔍 [TEST 3] Testing Local Storage Corruption Detection...');
   
   const testPayload = [{ id: '52772', title: 'Teriyaki Chicken Casserole' }];
   const originalSig = computeIntegrityHash(testPayload);
@@ -68,11 +72,19 @@ async function runHardeningTests() {
   assert.strictEqual(originalSig, recalculateSig, 'Integrity signature must be deterministic');
 
   const tamperedPayload = [{ id: '52772', title: 'FORGED_PAYLOAD_XSS_ATTACK' }];
-  const tamperedSig = computeIntegrityHash(tamperedPayload);
-  assert.notStrictEqual(originalSig, tamperedSig, 'Tampered data must not match original signature');
-  console.log('  - Original Signature:', originalSig);
-  console.log('  - Tampered Signature:', tamperedSig);
-  console.log('  ✅ [PASS] Salted integrity digest & tamper rejection verified\n');
+  globalThis.localStorage = {
+    store: new Map(),
+    getItem(key) { return this.store.get(key) ?? null; },
+    setItem(key, value) { this.store.set(key, String(value)); }
+  };
+  globalThis.localStorage.setItem('hardening-check', JSON.stringify({
+    _v: 2,
+    _sig: originalSig,
+    _data: tamperedPayload
+  }));
+  assert.deepStrictEqual(safeGet('hardening-check', []), [], 'Changed payload with original checksum must reset to fallback');
+  console.log('  - Original Checksum:', originalSig);
+  console.log('  ✅ [PASS] Local corruption detection verified (not authentication)\n');
 
   // -------------------------------------------------------------
   // TEST 4: Headless Browser Accessibility, ARIA Roles, & Focus Trapping
@@ -131,7 +143,7 @@ async function runHardeningTests() {
   await browser.close();
 
   console.log('=================================================================');
-  console.log('🏆 [ALL PRODUCTION HARDENING TESTS PASSED WITH 100% INTEGRITY]');
+  console.log('🏆 [ALL PRODUCTION HARDENING TESTS PASSED]');
   console.log('=================================================================');
 }
 

@@ -4,7 +4,7 @@
  */
 
 import { getFavorites } from './storageService.js';
-import curated500 from '../data/curated500Recipes.js';
+import { sanitizeIdentifier, sanitizeTextInput, sanitizeUrl } from '../utils/securitySanitizer.js';
 
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 const cache = new Map();
@@ -110,10 +110,24 @@ const DEFAULT_TOP_RECIPES = [
   }
 ];
 
-const CURATED_FALLBACK_RECIPES = [
-  ...DEFAULT_TOP_RECIPES,
-  ...(Array.isArray(curated500) ? curated500.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal))) : [])
-];
+let curatedFallbackPromise;
+
+async function getCuratedFallbackRecipes() {
+  if (!curatedFallbackPromise) {
+    curatedFallbackPromise = import('../data/curated500Recipes.js')
+      .then(({ default: curated500 }) => [
+        ...DEFAULT_TOP_RECIPES,
+        ...(Array.isArray(curated500)
+          ? curated500.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal)))
+          : [])
+      ])
+      .catch(error => {
+        console.warn('Curated catalog unavailable, using built-in top recipes:', error);
+        return DEFAULT_TOP_RECIPES;
+      });
+  }
+  return curatedFallbackPromise;
+}
 
 /**
  * Robust step splitter: Handles newlines, numbered lists, and sentence blocks
@@ -174,8 +188,8 @@ export function formatRecipe(meal) {
     if (ing && ing.trim()) {
       ingredients.push({
         id: `ing-${i}`,
-        name: ing.trim(),
-        measure: measure ? measure.trim() : 'As needed'
+        name: sanitizeTextInput(ing.trim(), 120),
+        measure: sanitizeTextInput(measure ? measure.trim() : 'As needed', 80)
       });
     }
   }
@@ -189,12 +203,13 @@ export function formatRecipe(meal) {
     }
   }
 
-  const tags = meal.strTags 
-    ? meal.strTags.split(',').map(t => t.trim()).filter(Boolean)
+  const tags = meal.strTags
+    ? meal.strTags.split(',').map(t => sanitizeTextInput(t.trim(), 50)).filter(Boolean)
     : [];
 
   const rawInstructions = meal.strInstructions || '';
   const steps = parseInstructionSteps(rawInstructions);
+  const safeSteps = steps.map(step => sanitizeTextInput(step, 1200)).filter(Boolean);
 
   let estimatedTime = 30;
   if (meal.strCategory === 'Dessert' || meal.strCategory === 'Baking') estimatedTime = 45;
@@ -203,20 +218,42 @@ export function formatRecipe(meal) {
   if (meal.strCategory === 'Breakfast' || meal.strCategory === 'Starter') estimatedTime = 15;
 
   return {
-    id: meal.idMeal,
-    title: meal.strMeal,
-    category: meal.strCategory || 'Miscellaneous',
-    area: meal.strArea || 'International',
-    instructions: rawInstructions,
-    steps,
-    thumbnail: meal.strMealThumb,
+    id: sanitizeIdentifier(meal.idMeal),
+    title: sanitizeTextInput(meal.strMeal || 'Gourmet Creation', 120),
+    category: sanitizeTextInput(meal.strCategory || 'Miscellaneous', 50),
+    area: sanitizeTextInput(meal.strArea || 'International', 50),
+    instructions: sanitizeTextInput(rawInstructions, 10000),
+    steps: safeSteps.length > 0 ? safeSteps : ['Follow recipe preparation instructions and savor your creation!'],
+    thumbnail: sanitizeUrl(meal.strMealThumb || '', ''),
     youtubeId,
-    youtubeUrl: meal.strYoutube || null,
-    sourceUrl: meal.strSource || null,
+    youtubeUrl: sanitizeUrl(meal.strYoutube || '', '') || null,
+    sourceUrl: sanitizeUrl(meal.strSource || '', '') || null,
     tags,
     ingredients,
     estimatedTime,
     servings: 4
+  };
+}
+
+/**
+ * Converts an API list item into the same sanitized shape used by full recipes.
+ * List endpoints are still untrusted network input and must not bypass the
+ * display-boundary sanitization performed by formatRecipe().
+ */
+function formatRecipeSummary(meal, categoryOverride = null, areaOverride = null) {
+  const formatted = formatRecipe({
+    ...meal,
+    strCategory: categoryOverride ?? meal.strCategory,
+    strArea: areaOverride ?? meal.strArea
+  });
+
+  return {
+    id: formatted.id,
+    title: formatted.title,
+    thumbnail: formatted.thumbnail,
+    category: formatted.category,
+    area: formatted.area,
+    estimatedTime: formatted.estimatedTime
   };
 }
 
@@ -232,15 +269,17 @@ async function fetchWithCache(endpoint) {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 6000);
-    const response = await fetch(url, { signal: controller.signal });
-    clearTimeout(timeoutId);
-
-    if (!response.ok) {
-      throw new Error(`MealDB API error: ${response.status}`);
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`MealDB API error: ${response.status}`);
+      }
+      const data = await response.json();
+      cache.set(url, data);
+      return data;
+    } finally {
+      clearTimeout(timeoutId);
     }
-    const data = await response.json();
-    cache.set(url, data);
-    return data;
   } catch (error) {
     console.warn(`Fetch error for ${endpoint}, using fallback:`, error);
     return null;
@@ -253,7 +292,8 @@ async function fetchWithCache(endpoint) {
 export async function searchRecipes(query = '') {
   const trimmed = query.trim();
   if (!trimmed) {
-    return CURATED_FALLBACK_RECIPES.map(formatRecipe);
+    const curatedRecipes = await getCuratedFallbackRecipes();
+    return curatedRecipes.map(formatRecipe);
   }
 
   const data = await fetchWithCache(`search.php?s=${encodeURIComponent(trimmed)}`);
@@ -262,7 +302,8 @@ export async function searchRecipes(query = '') {
   }
 
   const q = trimmed.toLowerCase();
-  const matched = CURATED_FALLBACK_RECIPES.filter(m => 
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  const matched = curatedRecipes.filter(m =>
     m.strMeal.toLowerCase().includes(q) || 
     m.strCategory.toLowerCase().includes(q) ||
     m.strArea.toLowerCase().includes(q) ||
@@ -296,7 +337,8 @@ export async function getRecipeById(id) {
   }
 
   // 3. Check curated fallback dataset
-  const fallback = CURATED_FALLBACK_RECIPES.find(m => String(m.idMeal) === strId) || CURATED_FALLBACK_RECIPES[0];
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  const fallback = curatedRecipes.find(m => String(m.idMeal) === strId) || curatedRecipes[0];
   return formatRecipe(fallback);
 }
 
@@ -314,7 +356,8 @@ export async function getRandomRecipe() {
     console.warn(e);
   }
 
-  const randomFallback = CURATED_FALLBACK_RECIPES[Math.floor(Math.random() * CURATED_FALLBACK_RECIPES.length)];
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  const randomFallback = curatedRecipes[Math.floor(Math.random() * curatedRecipes.length)];
   return formatRecipe(randomFallback);
 }
 
@@ -325,10 +368,10 @@ export async function getCategories() {
   const data = await fetchWithCache('categories.php');
   if (data && data.categories) {
     return data.categories.map(c => ({
-      id: c.idCategory,
-      name: c.strCategory,
-      thumbnail: c.strCategoryThumb,
-      description: c.strCategoryDescription
+      id: sanitizeIdentifier(c.idCategory),
+      name: sanitizeTextInput(c.strCategory || 'Miscellaneous', 50),
+      thumbnail: sanitizeUrl(c.strCategoryThumb || '', ''),
+      description: sanitizeTextInput(c.strCategoryDescription || '', 500)
     }));
   }
 
@@ -354,7 +397,7 @@ export async function getCategories() {
 export async function getAreas() {
   const data = await fetchWithCache('list.php?a=list');
   if (data && data.meals) {
-    return data.meals.map(m => m.strArea).filter(Boolean);
+    return data.meals.map(m => sanitizeTextInput(m.strArea || '', 50)).filter(Boolean);
   }
 
   return ["American", "British", "Canadian", "Chinese", "French", "Greek", "Indian", "Italian", "Japanese", "Mexican", "Spanish", "Thai"];
@@ -367,18 +410,12 @@ export async function filterByCategory(category) {
   if (!category || category === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?c=${encodeURIComponent(category)}`);
   if (data && data.meals && data.meals.length > 0) {
-    return data.meals.map(m => ({
-      id: m.idMeal,
-      title: m.strMeal,
-      thumbnail: m.strMealThumb,
-      category: category,
-      area: '',
-      estimatedTime: 30
-    }));
+    return data.meals.map(m => formatRecipeSummary(m, category, m.strArea || ''));
   }
 
   const catLower = category.toLowerCase();
-  return CURATED_FALLBACK_RECIPES
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  return curatedRecipes
     .filter(m => (m.strCategory || '').toLowerCase() === catLower)
     .map(formatRecipe);
 }
@@ -426,17 +463,11 @@ export async function filterByArea(area) {
   if (!area || area === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?a=${encodeURIComponent(area)}`);
   if (data && data.meals && data.meals.length > 0) {
-    return data.meals.map(m => ({
-      id: m.idMeal,
-      title: m.strMeal,
-      thumbnail: m.strMealThumb,
-      category: '',
-      area: area,
-      estimatedTime: 30
-    }));
+    return data.meals.map(m => formatRecipeSummary(m, m.strCategory || '', area));
   }
 
-  return CURATED_FALLBACK_RECIPES
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  return curatedRecipes
     .filter(m => matchesArea(m.strArea || m.strCountry || m.cuisine || m.area, area))
     .map(formatRecipe);
 }
@@ -468,20 +499,14 @@ export async function filterByCategoryAndArea(category = 'all', area = 'all') {
     const areaIdSet = new Set(areaMeals.map(m => String(m.idMeal)));
     const matched = catMeals.filter(m => areaIdSet.has(String(m.idMeal)));
     if (matched.length > 0) {
-      return matched.map(m => ({
-        id: m.idMeal,
-        title: m.strMeal,
-        thumbnail: m.strMealThumb,
-        category: category,
-        area: area,
-        estimatedTime: 30
-      }));
+      return matched.map(m => formatRecipeSummary(m, category, area));
     }
   }
 
   // Offline / Resilient Local Intersection Fallback against curated dataset
   const catLower = category.toLowerCase();
-  const matchedOffline = CURATED_FALLBACK_RECIPES.filter(m => {
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  const matchedOffline = curatedRecipes.filter(m => {
     const mCat = (m.strCategory || '').toLowerCase();
     const areaField = m.strArea || m.strCountry || m.cuisine || m.area;
     return mCat === catLower && matchesArea(areaField, area);
@@ -516,6 +541,51 @@ export function sanitizeIngredientKey(name) {
   return aliases[clean] || clean.replace(/\s+/g, '_');
 }
 
+const INGREDIENT_COMPOUND_EXCLUSIONS = new Map([
+  ['egg', ['egg roll', 'egg yolk', 'egg plant', 'eggplant', 'egg noodle', 'egg wrapper']]
+]);
+
+function canonicalIngredientToken(token) {
+  const clean = token.toLowerCase().trim();
+  if (clean.endsWith('ies') && clean.length > 3) return `${clean.slice(0, -3)}y`;
+  if (clean.endsWith('s') && !clean.endsWith('ss') && clean.length > 3) return clean.slice(0, -1);
+  return clean;
+}
+
+function normalizeIngredientText(value) {
+  return String(value || '')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
+/**
+ * Match pantry queries by ingredient tokens, avoiding compound false positives
+ * such as "eggplant" and "egg roll wrappers" when the user asks for eggs.
+ */
+export function matchesIngredient(ingredient, query) {
+  const ingredientText = normalizeIngredientText(ingredient);
+  const queryText = normalizeIngredientText(query);
+  if (!ingredientText || !queryText) return false;
+
+  const queryTokens = queryText.split(' ').map(canonicalIngredientToken);
+  const ingredientTokens = ingredientText.split(' ').map(canonicalIngredientToken);
+  const queryPhrase = queryTokens.join(' ');
+
+  if (queryTokens.length > 1) {
+    return ingredientTokens.join(' ').includes(queryPhrase);
+  }
+
+  const queryToken = queryTokens[0];
+  const exclusions = INGREDIENT_COMPOUND_EXCLUSIONS.get(queryToken) || [];
+  if (exclusions.some(compound => ingredientText.includes(compound))) return false;
+
+  return ingredientTokens.includes(queryToken);
+}
+
 /**
  * Filter recipes by single ingredient (Strict text-matching fallback)
  */
@@ -527,33 +597,20 @@ export async function filterByIngredient(ingredient) {
   const sanitized = sanitizeIngredientKey(ingredient);
   const data = await fetchWithCache(`filter.php?i=${encodeURIComponent(sanitized)}`);
   if (data && data.meals && data.meals.length > 0) {
-    return data.meals.map(m => ({
-      id: m.idMeal,
-      title: m.strMeal,
-      thumbnail: m.strMealThumb,
-      category: 'Pantry Match',
-      area: 'Global',
-      estimatedTime: 30
-    }));
+    return data.meals.map(m => formatRecipeSummary(m, m.strCategory || 'Pantry Match', m.strArea || 'Global'));
   }
 
   // Strict Offline / Fallback Match against ingredient list
-  const matched = CURATED_FALLBACK_RECIPES.filter(m => {
+  const curatedRecipes = await getCuratedFallbackRecipes();
+  const matched = curatedRecipes.filter(m => {
     for (let i = 1; i <= 20; i++) {
       const ing = m[`strIngredient${i}`];
-      if (ing && typeof ing === 'string' && ing.toLowerCase().includes(query)) {
+      if (ing && typeof ing === 'string' && matchesIngredient(ing, query)) {
         return true;
       }
     }
     return false;
   });
 
-  return matched.map(m => ({
-    id: m.idMeal,
-    title: m.strMeal,
-    thumbnail: m.strMealThumb,
-    category: m.strCategory || 'Pantry Match',
-    area: m.strArea || m.strCountry || 'Global',
-    estimatedTime: 30
-  }));
+  return matched.map(m => formatRecipeSummary(m, m.strCategory || 'Pantry Match', m.strArea || m.strCountry || 'Global'));
 }

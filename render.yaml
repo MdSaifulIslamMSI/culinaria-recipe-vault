@@ -2,7 +2,7 @@ services:
   - type: web
     name: culinaria-recipe-vault
     runtime: static
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm test && npm run build && node scripts/write-release-metadata.js
     staticPublishPath: ./dist
     headers:
       - path: /*

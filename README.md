@@ -33,3 +33,13 @@ Click the button below to deploy this application to your Render account in one 
 * **Vanilla JavaScript & CSS Design System** (Custom tokens, typography, dark mode)
 * **TheMealDB REST API** (Open-source recipe database)
 * **Canvas Confetti & Web Audio API** (Tactile feedback and notifications)
+
+## Verification and storage model
+
+The release gate runs `npm test`, `npm run build`, and `npm audit --audit-level=high`.
+Successful pushes to `master` publish the verified `dist/` artifact to the configured
+GitHub Pages `gh-pages` branch and write `release.json` with the source commit.
+
+Favorites, pantry items, preferences, and shopping items are sanitized client-local
+data. They are not an encrypted secret store and should not contain passwords, tokens,
+health information, or other sensitive data.

@@ -1,4 +1,4 @@
-name: Culinaria CI
+name: Culinaria Quality and Pages Release
 
 on:
   push:
@@ -6,28 +6,64 @@ on:
   pull_request:
     branches: [ master, main ]
 
-jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
+permissions:
+  contents: write
 
+concurrency:
+  group: culinaria-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Run Build
+      - name: Run regression tests
+        run: npm test
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+
+      - name: Build production artifact
         run: npm run build
 
-      - name: Verify Health JSON & Manifest
+      - name: Verify production artifact contract
         run: |
           test -f public/health.json
-          test -f public/manifest.webmanifest
+          test -f public/manifest.json
+          test -f public/sw.js
           test -f dist/index.html
+          node scripts/write-release-metadata.js
+          test -f dist/release.json
+          node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('dist/release.json')); if(!/^[0-9a-f]{40}$/.test(r.commit)) process.exit(1)"
+
+      - name: Publish verified artifact to GitHub Pages
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git clone --depth 1 --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" pages-release
+          find pages-release -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+          cp -R dist/. pages-release/
+          touch pages-release/.nojekyll
+          cd pages-release
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          if git diff --cached --quiet; then
+            echo "GitHub Pages artifact is already current"
+          else
+            git commit -m "deploy: ${GITHUB_SHA}"
+            git push origin HEAD:gh-pages
+          fi

@@ -1,7 +1,11 @@
 /**
  * Client-Side Storage Service
- * Provides sanitized local storage with rate-limiting, prototype pollution protection,
- * and cryptographic integrity validation envelopes.
+ * Provides sanitized local storage with rate-limiting, prototype-pollution
+ * protection, schema normalization, and best-effort corruption detection.
+ *
+ * This is client-local preference data, not a secret store. The checksum is
+ * deliberately documented as corruption detection rather than authentication
+ * or encryption because a same-origin script can access this data.
  */
 import {
   sanitizeObject,
@@ -41,7 +45,7 @@ export function safeGet(key, fallback = []) {
       return fallback;
     }
 
-    // Check for Dual-Layer Tamper Envelope
+    // Check for the best-effort corruption-detection envelope.
     if (parsed && typeof parsed === 'object' && parsed._sig && parsed._data) {
       const computedSig = computeIntegrityHash(parsed._data);
       if (computedSig !== parsed._sig) {
@@ -77,7 +81,7 @@ export function safeSet(key, value) {
     const cleanValue = sanitizeObject(value);
     memoryCache.set(key, cleanValue);
 
-    // Envelope with integrity signature
+    // Envelope with a non-cryptographic corruption checksum.
     const envelope = {
       _v: 2,
       _sig: computeIntegrityHash(cleanValue),
@@ -95,7 +99,47 @@ export function safeSet(key, value) {
    Cookbook & Favorites API (Normalized & Complete Storage)
    ========================================================================== */
 export function getFavorites() {
-  return safeGet(STORAGE_KEYS.FAVORITES, []);
+  const stored = safeGet(STORAGE_KEYS.FAVORITES, []);
+  if (!Array.isArray(stored)) return [];
+
+  return stored.map(normalizeFavoriteRecord).filter(Boolean);
+}
+
+function normalizeFavoriteRecord(recipe) {
+  if (!recipe || typeof recipe !== 'object') return null;
+
+  const id = sanitizeIdentifier(recipe.id || recipe.idMeal);
+  const title = sanitizeTextInput(recipe.title || recipe.strMeal || '', 120);
+  if (!id || !title) return null;
+
+  const ingredients = Array.isArray(recipe.ingredients)
+    ? recipe.ingredients.map((item, index) => ({
+        id: sanitizeIdentifier(item?.id || `ing-${index + 1}`),
+        name: sanitizeTextInput(item?.name || '', 120),
+        measure: sanitizeTextInput(item?.measure || 'As needed', 80)
+      })).filter(item => item.name)
+    : [];
+
+  const steps = Array.isArray(recipe.steps)
+    ? recipe.steps.map(step => sanitizeTextInput(step, 1200)).filter(Boolean)
+    : [];
+
+  return {
+    id,
+    title,
+    thumbnail: sanitizeUrl(recipe.thumbnail || recipe.strMealThumb || '', ''),
+    category: sanitizeTextInput(recipe.category || recipe.strCategory || 'Miscellaneous', 50),
+    area: sanitizeTextInput(recipe.area || recipe.strArea || 'International', 50),
+    estimatedTime: Math.max(5, Math.min(360, parseInt(recipe.estimatedTime, 10) || 30)),
+    instructions: sanitizeTextInput(recipe.instructions || recipe.strInstructions || '', 10000),
+    steps,
+    ingredients,
+    youtubeId: sanitizeIdentifier(recipe.youtubeId || ''),
+    sourceUrl: sanitizeUrl(recipe.sourceUrl || recipe.strSource || '', '') || null,
+    tags: Array.isArray(recipe.tags) ? recipe.tags.map(tag => sanitizeTextInput(tag, 50)).filter(Boolean) : [],
+    servings: Math.max(1, Math.min(16, parseInt(recipe.servings, 10) || 4)),
+    savedAt: Number.isFinite(recipe.savedAt) ? recipe.savedAt : Date.now()
+  };
 }
 
 export function isFavorite(recipeId) {
@@ -146,7 +190,22 @@ export function toggleFavorite(recipe) {
    Shopping List API
    ========================================================================== */
 export function getShoppingList() {
-  return safeGet(STORAGE_KEYS.SHOPPING_LIST, []);
+  const stored = safeGet(STORAGE_KEYS.SHOPPING_LIST, []);
+  if (!Array.isArray(stored)) return [];
+
+  return stored.map(item => {
+    if (!item || typeof item !== 'object') return null;
+    const name = sanitizeTextInput(item.name, 80);
+    if (!name) return null;
+    return {
+      id: sanitizeIdentifier(item.id || `shop_${Date.now()}`),
+      name,
+      measure: sanitizeTextInput(item.measure, 40),
+      recipeTitle: sanitizeTextInput(item.recipeTitle, 80),
+      checked: item.checked === true,
+      addedAt: Number.isFinite(item.addedAt) ? item.addedAt : Date.now()
+    };
+  }).filter(Boolean);
 }
 
 export function addToShoppingList(items) {
@@ -214,7 +273,10 @@ export function clearShoppingList() {
    Pantry Basket Persistence
    ========================================================================== */
 export function getStoredPantryBasket() {
-  return safeGet(STORAGE_KEYS.PANTRY_BASKET, ['chicken', 'garlic', 'tomatoes', 'pasta']);
+  const stored = safeGet(STORAGE_KEYS.PANTRY_BASKET, ['chicken', 'garlic', 'tomatoes', 'pasta']);
+  return Array.isArray(stored)
+    ? stored.map(item => sanitizeTextInput(item, 50)).filter(Boolean)
+    : [];
 }
 
 export function setStoredPantryBasket(basket) {

@@ -119,7 +119,7 @@ export class CookingStudioModal {
     }
   }
 
-  open(recipe) {
+  async open(recipe) {
     if (!recipe) return;
     this.previousActiveElement = document.activeElement;
     const prefs = getChefPreferences();
@@ -129,7 +129,7 @@ export class CookingStudioModal {
     this.unitSystem = prefs.unitSystem || 'metric';
     this.checkedIngredientNames.clear();
 
-    this.render();
+    await this.render();
     this.modalBackdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => this.closeBtn.focus(), 50);
@@ -143,7 +143,7 @@ export class CookingStudioModal {
     }
   }
 
-  render() {
+  async render() {
     const r = this.currentRecipe;
     const prefs = getChefPreferences();
     const isFav = isFavorite(r.id);
@@ -151,6 +151,7 @@ export class CookingStudioModal {
     const pairing = getCulinaryPairing(r);
     const ratio = this.currentServings / this.baseServings;
     const fallbackCover = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80';
+    const relatedRecipes = await getRelatedRecipes(r, undefined, 3);
 
     this.modalContent.innerHTML = `
       <div class="modal-hero-cover">
@@ -350,7 +351,7 @@ export class CookingStudioModal {
           <h3 class="modal-section-title" style="margin: 0.35rem 0 0.85rem;">Recommended Pairings & Similar Dishes</h3>
         </div>
         <div class="modal-rec-cards-grid">
-          ${getRelatedRecipes(r, undefined, 3).map(rel => `
+          ${relatedRecipes.map(rel => `
             <div class="modal-rec-card" data-rec-id="${rel.recipe.id || rel.recipe.idMeal}">
               <div class="rec-card-thumb-wrap">
                 <img src="${rel.recipe.thumbnail || rel.recipe.strMealThumb}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />

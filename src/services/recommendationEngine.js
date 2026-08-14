@@ -5,7 +5,21 @@
  */
 
 import { getFavorites } from './storageService.js';
-import curatedRecipes from '../data/curated500Recipes.json' with { type: 'json' };
+import { formatRecipe } from './mealDbApi.js';
+
+let curatedRecipesPromise;
+
+async function getCuratedRecipes() {
+  if (!curatedRecipesPromise) {
+    curatedRecipesPromise = import('../data/curated500Recipes.js')
+      .then(({ default: recipes }) => Array.isArray(recipes) ? recipes.map(formatRecipe).filter(Boolean) : [])
+      .catch(error => {
+        console.warn('Recommendation catalog unavailable:', error);
+        return [];
+      });
+  }
+  return curatedRecipesPromise;
+}
 
 /* ==========================================================================
    1. Culinary Substitution Knowledge Base (45+ Professional Chef Alts)
@@ -180,8 +194,9 @@ function calculateJaccardSimilarity(setA, setB) {
 /* ==========================================================================
    3. Multi-Factor "You May Also Like" & Course Pairing Engine
    ========================================================================== */
-export function getRelatedRecipes(currentRecipe, pool = curatedRecipes, limit = 3) {
-  if (!currentRecipe || !pool || pool.length === 0) return [];
+export async function getRelatedRecipes(currentRecipe, pool = null, limit = 3) {
+  const recipePool = pool || await getCuratedRecipes();
+  if (!currentRecipe || recipePool.length === 0) return [];
 
   const currentId = String(currentRecipe.id || currentRecipe.idMeal || '');
   const currentCategory = (currentRecipe.category || currentRecipe.strCategory || '').toLowerCase();
@@ -190,7 +205,7 @@ export function getRelatedRecipes(currentRecipe, pool = curatedRecipes, limit = 
 
   const scored = [];
 
-  pool.forEach(candidate => {
+  recipePool.forEach(candidate => {
     const candidateId = String(candidate.id || candidate.idMeal || '');
     if (candidateId === currentId) return;
 
@@ -245,10 +260,11 @@ export function getRelatedRecipes(currentRecipe, pool = curatedRecipes, limit = 
 /* ==========================================================================
    4. Personalized "Curated For Your Palate" Ribbon Engine
    ========================================================================== */
-export function getPersonalizedRecommendations(favorites = getFavorites(), pool = curatedRecipes, limit = 6) {
+export async function getPersonalizedRecommendations(favorites = getFavorites(), pool = null, limit = 6) {
+  const recipePool = pool || await getCuratedRecipes();
   if (!favorites || favorites.length === 0) {
     // Cold start fallback: Return top trending chef selections
-    return pool.slice(0, limit).map(r => ({
+    return recipePool.slice(0, limit).map(r => ({
       recipe: r,
       rationale: '🌟 Chef Signature Special'
     }));
@@ -274,7 +290,7 @@ export function getPersonalizedRecommendations(favorites = getFavorites(), pool 
   const topCategory = Object.keys(categoryFreq).sort((a, b) => categoryFreq[b] - categoryFreq[a])[0] || '';
   const topArea = Object.keys(areaFreq).sort((a, b) => areaFreq[b] - areaFreq[a])[0] || '';
 
-  const candidates = pool.filter(r => !favIds.has(String(r.id || r.idMeal)));
+  const candidates = recipePool.filter(r => !favIds.has(String(r.id || r.idMeal)));
 
   const scored = candidates.map(candidate => {
     const cat = candidate.category || candidate.strCategory || '';

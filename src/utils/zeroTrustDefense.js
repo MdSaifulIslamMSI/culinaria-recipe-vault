@@ -1,11 +1,11 @@
 /**
- * Zero-Trust Data Integrity & Schema Validation Engine
- * Provides safe cryptographic signing and strict schema assertions
+ * Client-side data integrity and schema validation helpers.
+ * Provides best-effort checks and strict schema assertions
  * without mutating global browser built-in prototypes or window properties.
  */
 
 // ---------------------------------------------------------------------------
-// 1. Cryptographic Storage Integrity Guard
+// 1. Best-effort Storage Corruption Guard
 // ---------------------------------------------------------------------------
 const INTEGRITY_SALT = 'culinaria_entropy_v1_' + (typeof window !== 'undefined' ? window.location.hostname : 'localhost');
 
@@ -37,7 +37,7 @@ export function verifySignedData(envelope) {
 }
 
 // ---------------------------------------------------------------------------
-// 2. Strict Zero-Trust Recipe Schema Validator
+// 2. Strict Client-Side Recipe Schema Validator
 // ---------------------------------------------------------------------------
 export function validateRecipeSchema(recipe) {
   if (!recipe || typeof recipe !== 'object') return null;

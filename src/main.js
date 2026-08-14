@@ -610,7 +610,7 @@ class CulinariaApp {
     this.renderPalateRibbon();
   }
 
-  renderPalateRibbon() {
+  async renderPalateRibbon() {
     const ribbonEl = document.getElementById('palateRibbon');
     const stripEl = document.getElementById('palateCardsStrip');
     if (!ribbonEl || !stripEl) return;
@@ -622,7 +622,7 @@ class CulinariaApp {
     }
 
     const favorites = getFavorites();
-    const recs = getPersonalizedRecommendations(favorites, undefined, 5);
+    const recs = await getPersonalizedRecommendations(favorites, undefined, 5);
     if (!recs || recs.length === 0) {
       ribbonEl.classList.add('hidden');
       return;
@@ -649,7 +649,7 @@ class CulinariaApp {
         const id = card.dataset.recId;
         const recipe = await getRecipeById(id);
         if (recipe) {
-          this.cookingStudio.open(recipe);
+          await this.cookingStudio.open(recipe);
         }
       });
     });
@@ -736,7 +736,7 @@ class CulinariaApp {
       try {
         const fullRecipe = await getRecipeById(recipeId);
         if (fullRecipe) {
-          this.cookingStudio.open(fullRecipe);
+          await this.cookingStudio.open(fullRecipe);
         }
       } catch (err) {
         console.error(err);
