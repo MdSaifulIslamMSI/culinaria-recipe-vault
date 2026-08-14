@@ -10,6 +10,16 @@ import {
   addToShoppingList
 } from '../services/storageService.js';
 
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 export class ShoppingListDrawer {
   constructor() {
     this.drawer = document.getElementById('shoppingDrawer');
@@ -102,7 +112,7 @@ export class ShoppingListDrawer {
       <div class="shopping-item-row ${item.checked ? 'checked' : ''}" data-id="${item.id}">
         <label class="shopping-item-left">
           <input type="checkbox" ${item.checked ? 'checked' : ''} class="shop-check" />
-          <span class="shopping-item-name">${item.measure ? `<b>${item.measure}</b> ` : ''}${item.name}</span>
+          <span class="shopping-item-name">${item.measure ? `<b>${escapeHtml(item.measure)}</b> ` : ''}${escapeHtml(item.name)}</span>
         </label>
         <button class="btn-remove-shopping" title="Remove" aria-label="Remove item">✕</button>
       </div>

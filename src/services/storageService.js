@@ -13,9 +13,13 @@ const STORAGE_KEYS = {
 function safeGet(key, fallback = []) {
   try {
     const item = localStorage.getItem(key);
-    return item ? JSON.parse(item) : fallback;
+    if (!item || item === 'null' || item === 'undefined') return fallback;
+    const parsed = JSON.parse(item);
+    if (parsed === null || parsed === undefined) return fallback;
+    if (Array.isArray(fallback) && !Array.isArray(parsed)) return fallback;
+    return parsed;
   } catch (e) {
-    console.error(`Error reading ${key} from localStorage:`, e);
+    console.warn(`Error parsing ${key} from localStorage, resetting to fallback:`, e);
     return fallback;
   }
 }
