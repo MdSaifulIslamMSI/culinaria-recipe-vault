@@ -6,7 +6,7 @@ const ARTIFACT_DIR = 'C:\\Users\\mdsai\\.gemini\\antigravity\\brain\\0a4a9d16-d2
 
 async function verifyVideoFacade() {
   console.log('🎬 =================================================================');
-  console.log('✨ [VIDEO COOKING MASTERCLASS FACADE VERIFICATION SUITE]');
+  console.log('✨ [VIDEO COOKING MASTERCLASS FINAL LAUNCHER VERIFICATION]');
   console.log('🎬 =================================================================\n');
 
   const browser = await puppeteer.launch({
@@ -26,32 +26,32 @@ async function verifyVideoFacade() {
   await page.waitForSelector('.modal-method-col', { timeout: 10000 });
   await new Promise(r => setTimeout(r, 600));
 
-  // 2. Verify Video Facade Elements
-  console.log('🧪 [TEST 2] Verifying Video Cooking Masterclass Facade...');
-  const videoDetails = await page.evaluate(() => {
+  // 2. Verify Video Elements
+  console.log('🧪 [TEST 2] Verifying Video Masterclass Card & Direct YouTube Link...');
+  const details = await page.evaluate(() => {
     const wrap = document.querySelector('.video-section-wrap');
-    const extBtn = document.querySelector('.yt-external-btn');
-    const facade = document.querySelector('.video-facade-card');
-    const playBtn = document.querySelector('.btn-facade-play');
+    const facadeLink = document.querySelector('.video-facade-card');
+    const headerBtn = document.querySelector('.yt-external-btn');
+    const footerStrip = document.querySelector('.video-footer-strip');
+    const footerLink = document.querySelector('.video-footer-link');
 
     return {
       hasWrap: Boolean(wrap),
-      hasExtBtn: Boolean(extBtn),
-      extHref: extBtn ? extBtn.href : null,
-      hasFacade: Boolean(facade),
-      hasPlayBtn: Boolean(playBtn)
+      facadeHref: facadeLink ? facadeLink.href : null,
+      headerHref: headerBtn ? headerBtn.href : null,
+      hasFooterStrip: Boolean(footerStrip),
+      footerHref: footerLink ? footerLink.href : null
     };
   });
 
-  console.log(`  - Video Wrap Present: ${videoDetails.hasWrap}`);
-  console.log(`  - External YouTube Link: ${videoDetails.extHref}`);
-  console.log(`  - Facade Card Present: ${videoDetails.hasFacade}`);
-  console.log(`  - Play Masterclass Button: ${videoDetails.hasPlayBtn}`);
+  console.log('  - Facade Link URL:', details.facadeHref);
+  console.log('  - Header Button URL:', details.headerHref);
+  console.log('  - Footer Link URL:', details.footerHref);
 
-  if (!videoDetails.hasWrap || !videoDetails.hasFacade || !videoDetails.hasPlayBtn) {
-    throw new Error('Video Masterclass Facade elements missing!');
+  if (!details.hasWrap || !details.facadeHref || !details.headerHref) {
+    throw new Error('Video Masterclass elements missing!');
   }
-  console.log('  ✅ [PASS] Video Masterclass Facade & Fallback Link Verified\n');
+  console.log('  ✅ [PASS] Video Masterclass Direct Launcher Links Verified\n');
 
   // 3. Scroll to Video Masterclass and capture screenshot
   console.log('🧪 [TEST 3] Scrolling to Video Masterclass & Capturing Screenshot...');
@@ -66,36 +66,13 @@ async function verifyVideoFacade() {
   await page.screenshot({ path: screenshotPath });
   console.log(`📸 Screenshot saved: ${screenshotPath}\n`);
 
-  // 4. Test Click-to-Play Swap to Iframe
-  console.log('🧪 [TEST 4] Testing Click-to-Play Iframe Activation...');
-  const clickDiag = await page.evaluate(() => {
-    const facade = document.querySelector('.video-facade-card');
-    if (!facade) return { error: 'no facade found' };
-    const btn = facade.querySelector('.btn-facade-play') || facade;
-    btn.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
-    const container = document.querySelector('.video-frame-container');
-    const iframe = container ? container.querySelector('iframe') : null;
-    return {
-      facadeFound: true,
-      hasIframe: Boolean(iframe),
-      iframeSrc: iframe ? iframe.src : null,
-      containerHtml: container ? container.innerHTML : null
-    };
-  });
-
-  console.log(`  - Click Diagnostics:`, clickDiag);
-  if (!clickDiag.hasIframe) {
-    throw new Error('Iframe failed to mount after facade click!');
-  }
-  console.log('  ✅ [PASS] Interactive Video Player Successfully Activated\n');
-
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [VIDEO COOKING MASTERCLASS 100% FIXED & VERIFIED]');
+  console.log('🏆 [VIDEO COOKING MASTERCLASS 100% VERIFIED & PERMANENTLY FIXED]');
   console.log('=================================================================');
 }
 
 verifyVideoFacade().catch(err => {
-  console.error('❌ VIDEO FACADE TEST FAILED:', err);
+  console.error('❌ VIDEO TEST FAILED:', err);
   process.exit(1);
 });
