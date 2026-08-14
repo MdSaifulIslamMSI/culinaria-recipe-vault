@@ -99,7 +99,7 @@ const CURATED_FALLBACK_RECIPES = [
     strCategory: "Dessert",
     strArea: "French",
     strInstructions: "Preheat oven to 425°F (220°C). Butter four 6-ounce ramekins and dust with cocoa powder.\r\nMelt dark chocolate (70%) and unsalted butter together in a heatproof bowl set over simmering water; stir until glossy.\r\nIn a separate bowl, whisk whole eggs, egg yolks, and confectioners sugar until pale and fluffy.\r\nFold the melted chocolate into the egg mixture, then gently sift in all-purpose flour and a pinch of salt.\r\nDivide batter evenly among prepared ramekins.\r\nBake for 12 minutes until edges are firm but the centers remain soft and molten.\r\nLet rest for 1 minute, invert onto dessert plates, and dust with powdered sugar and fresh raspberries.",
-    strMealThumb: "https://www.themealdb.com/images/media/meals/yqsrrm1483186027.jpg",
+    strMealThumb: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c?auto=format&fit=crop&w=800&q=80",
     strYoutube: "https://www.youtube.com/watch?v=cM3i7G0e5mY",
     strIngredient1: "Dark Chocolate 70%", strMeasure1: "200g",
     strIngredient2: "Unsalted Butter", strMeasure2: "100g",
