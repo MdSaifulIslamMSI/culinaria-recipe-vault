@@ -12,57 +12,77 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
-  <script type="module" crossorigin src="./assets/index-3eI9QzE6.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-b1NraW1d.css">
+  <script type="module" crossorigin src="./assets/index-CeKuT0ay.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Bcgj_2B2.css">
 </head>
 <body>
   <div id="app" class="app-container">
     <!-- Top Navigation Header -->
     <header class="app-header" id="appHeader">
       <div class="header-inner">
-        <div class="brand-group">
-          <a href="#" class="brand-logo" id="navHome">
-            <span class="logo-emblem">🍲</span>
-            <div class="brand-text">
-              <span class="brand-title">Culinaria</span>
-              <span class="brand-subtitle">Michelin Gourmet Studio</span>
-            </div>
-          </a>
+        <div class="header-top-bar">
+          <div class="brand-group">
+            <a href="#" class="brand-logo" id="navHome">
+              <span class="logo-emblem">🍲</span>
+              <div class="brand-text">
+                <span class="brand-title">Culinaria</span>
+                <span class="brand-subtitle">Michelin Studio</span>
+              </div>
+            </a>
+          </div>
+
+          <nav class="nav-links desktop-nav" id="mainNav">
+            <button class="nav-btn active" data-view="explore" id="tabExplore">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+              <span>Explore</span>
+            </button>
+            <button class="nav-btn" data-view="pantry" id="tabPantry">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span>Pantry Matcher</span>
+              <span class="badge-dot"></span>
+            </button>
+            <button class="nav-btn" data-view="favorites" id="tabFavorites">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+              <span>Cookbook</span>
+              <span class="fav-count-pill" id="favCountPill">0</span>
+            </button>
+          </nav>
+
+          <div class="header-actions">
+            <button class="action-btn roulette-trigger" id="btnRoulette" title="Surprise Me / Chef's Roulette">
+              <span class="sparkle-spin">🎲</span>
+              <span class="btn-text">Surprise</span>
+            </button>
+
+            <button class="action-btn shopping-trigger" id="btnShoppingList" title="Grocery Shopping List">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+              <span class="cart-badge" id="cartCountBadge">0</span>
+            </button>
+
+            <button class="theme-toggle" id="themeToggle" title="Toggle Light/Dark Theme" aria-label="Toggle light and dark theme">
+              <span class="theme-icon light-icon">☀️</span>
+              <span class="theme-icon dark-icon">🌙</span>
+            </button>
+          </div>
         </div>
 
-        <nav class="nav-links" id="mainNav">
-          <button class="nav-btn active" data-view="explore" id="tabExplore">
+        <!-- Mobile Segmented Navigation Tab Strip -->
+        <nav class="nav-links mobile-nav" id="mainNavMobile">
+          <button class="nav-btn active" data-view="explore" id="tabExploreMobile">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
             <span>Explore</span>
           </button>
-          <button class="nav-btn" data-view="pantry" id="tabPantry">
+          <button class="nav-btn" data-view="pantry" id="tabPantryMobile">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span>Pantry Matcher</span>
+            <span>Pantry</span>
             <span class="badge-dot"></span>
           </button>
-          <button class="nav-btn" data-view="favorites" id="tabFavorites">
+          <button class="nav-btn" data-view="favorites" id="tabFavoritesMobile">
             <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
             <span>Cookbook</span>
-            <span class="fav-count-pill" id="favCountPill">0</span>
+            <span class="fav-count-pill" id="favCountPillMobile">0</span>
           </button>
         </nav>
-
-        <div class="header-actions">
-          <button class="action-btn roulette-trigger" id="btnRoulette" title="Surprise Me / Chef's Roulette">
-            <span class="sparkle-spin">🎲</span>
-            <span class="btn-text">Chef's Surprise</span>
-          </button>
-
-          <button class="action-btn shopping-trigger" id="btnShoppingList" title="Grocery Shopping List">
-            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-            <span class="cart-badge" id="cartCountBadge">0</span>
-          </button>
-
-          <button class="theme-toggle" id="themeToggle" title="Toggle Light/Dark Theme" aria-label="Toggle light and dark theme">
-            <span class="theme-icon light-icon">☀️</span>
-            <span class="theme-icon dark-icon">🌙</span>
-          </button>
-        </div>
       </div>
     </header>
 
