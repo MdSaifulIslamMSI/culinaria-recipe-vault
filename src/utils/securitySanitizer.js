@@ -7,8 +7,16 @@
 // Disallowed dangerous protocol schemes
 const DANGEROUS_PROTOCOLS = /^(javascript|vbscript|data|file):/i;
 
-// Disallowed prototype pollution keys
-const POLLUTION_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+// Disallowed prototype pollution keys & accessor methods
+const POLLUTION_KEYS = new Set([
+  '__proto__',
+  'constructor',
+  'prototype',
+  '__defineGetter__',
+  '__defineSetter__',
+  '__lookupGetter__',
+  '__lookupSetter__'
+]);
 
 /**
  * Escapes raw strings for safe DOM insertion
