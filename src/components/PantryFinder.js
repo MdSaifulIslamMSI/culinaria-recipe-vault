@@ -82,6 +82,14 @@ export class PantryFinder {
     this.items = this.items.filter(i => i.toLowerCase() !== name.toLowerCase());
     savePantryBasket(this.items);
     this.renderChips();
+    if (this.items.length === 0) {
+      this.clearResults();
+    }
+  }
+
+  clearResults() {
+    if (this.resultsArea) this.resultsArea.innerHTML = '';
+    if (this.resultsHeader) this.resultsHeader.classList.add('hidden');
   }
 
   renderChips() {
@@ -90,6 +98,7 @@ export class PantryFinder {
 
     if (this.items.length === 0) {
       this.chipsBox.innerHTML = '<p class="pantry-empty-hint">No ingredients added yet. Pick staples above or type any ingredient!</p>';
+      this.clearResults();
       return;
     }
 
