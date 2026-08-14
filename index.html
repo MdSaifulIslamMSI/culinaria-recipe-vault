@@ -4,11 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta name="referrer" content="strict-origin-when-cross-origin">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.youtube.com; connect-src 'self' https://www.themealdb.com https://*.youtube.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>Culinaria — World-Class Recipe Discovery & Gourmet Cooking Studio</title>
   <meta name="description" content="Discover thousands of world-class recipes, dynamic ingredient scalers, sommelier pairings, pantry matching, voice-guided kitchen cook mode, and interactive shopping lists.">
   <meta name="theme-color" content="#e27237">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <link rel="manifest" href="./manifest.json">
@@ -24,11 +24,14 @@
           t = 'dark';
         }
         document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+
+        var p = localStorage.getItem('culinaria_color_palette_v1') || 'saffron';
+        document.documentElement.setAttribute('data-palette', p);
       } catch (e) {}
     })();
   </script>
-  <script type="module" crossorigin src="./assets/index-Cy3d91Jk.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-C86otCVk.css">
+  <script type="module" crossorigin src="./assets/index-Dt8iEeKB.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-DoMZm-QC.css">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -64,6 +67,11 @@
           </nav>
 
           <div class="header-actions">
+            <button class="action-btn prefs-trigger" id="btnChefPreferences" title="Chef Kitchen Settings (10 Toggles)" aria-label="Open Chef Kitchen Preferences">
+              <span class="prefs-icon">⚙️</span>
+              <span class="btn-text">Settings</span>
+            </button>
+
             <button class="action-btn roulette-trigger" id="btnRoulette" title="Surprise Me / Chef's Roulette">
               <span class="sparkle-spin">🎲</span>
               <span class="btn-text">Surprise</span>
@@ -125,15 +133,17 @@
                 <span class="search-icon">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
                 </span>
+                <label for="recipeSearchInput" class="sr-only">Search 3,000+ recipes, ingredients, or cuisines</label>
                 <input 
                   type="text" 
                   id="recipeSearchInput" 
                   class="search-input" 
                   placeholder="Search 3,000+ recipes, ingredients, or cuisines (e.g., Teriyaki, Carbonara, Salmon, Birria)..." 
+                  aria-label="Search recipes, ingredients, or cuisines"
                   autocomplete="off"
                 />
                 <button class="clear-search-btn hidden" id="clearSearchBtn" aria-label="Clear search">✕</button>
-                <button class="search-submit-btn" id="searchSubmitBtn">
+                <button class="search-submit-btn" id="searchSubmitBtn" aria-label="Search recipes">
                   <span>Explore</span>
                 </button>
               </div>
@@ -250,13 +260,16 @@
             <!-- Ingredient Input & Quick Suggestions -->
             <div class="pantry-input-box">
               <span class="pantry-input-icon">🔍</span>
+              <label for="pantryIngredientInput" class="sr-only">Type an ingredient to add to pantry</label>
               <input 
                 type="text" 
                 id="pantryIngredientInput" 
                 placeholder="Type an ingredient (e.g., Chicken, Eggs, Tomato, Garlic, Spinach)..."
+                aria-label="Type an ingredient to add to your pantry"
                 autocomplete="off"
               />
-              <button class="primary-btn" id="btnAddPantryItem">+ Add Item</button>
+              <button class="secondary-btn btn-voice-pantry" id="btnVoicePantry" type="button" aria-label="Speak ingredients aloud" title="Speak ingredients aloud">🎙️ Speak</button>
+              <button class="primary-btn" id="btnAddPantryItem" aria-label="Add ingredient to pantry basket">+ Add Item</button>
             </div>
 
             <!-- Quick Add Suggestions -->
@@ -310,7 +323,7 @@
       <section class="view-panel" id="viewFavorites">
         <div class="favorites-header-section">
           <div class="fav-badge">❤️ Personal Cookbook</div>
-          <h2 class="section-title">Your Private Culinary Vault</h2>
+          <h2 class="section-title">Your Personal Culinary Vault</h2>
           <p class="section-subtitle">All your curated favorites saved offline for instant, distraction-free kitchen prep.</p>
         </div>
 
@@ -345,21 +358,22 @@
 
     <!-- Slide-over Grocery Shopping List Drawer -->
     <div class="drawer-overlay" id="shoppingDrawerOverlay"></div>
-    <aside class="shopping-drawer" id="shoppingDrawer">
+    <aside class="shopping-drawer" id="shoppingDrawer" role="dialog" aria-modal="true" aria-label="Gourmet Grocery List">
       <div class="drawer-header">
         <div class="drawer-title-wrap">
           <span class="drawer-icon">🛒</span>
           <div>
-            <h3 class="drawer-title">Gourmet Grocery List</h3>
+            <h3 class="drawer-title" id="shoppingDrawerTitle">Gourmet Grocery List</h3>
             <span class="drawer-count" id="shoppingItemCount">0 items</span>
           </div>
         </div>
-        <button class="drawer-close-btn" id="btnCloseShoppingDrawer">✕</button>
+        <button class="drawer-close-btn" id="btnCloseShoppingDrawer" aria-label="Close grocery list">✕</button>
       </div>
 
       <div class="drawer-input-row">
-        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." />
-        <button class="primary-btn" id="btnAddManualGrocery">+</button>
+        <label for="manualGroceryInput" class="sr-only">Add custom grocery item</label>
+        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" />
+        <button class="primary-btn" id="btnAddManualGrocery" aria-label="Add ingredient">+</button>
       </div>
 
       <div class="drawer-body" id="shoppingListItems">
@@ -376,9 +390,180 @@
       </div>
     </aside>
 
+    <!-- Slide-over Gourmet Chef Preferences Drawer (10 Interactive Toggles) -->
+    <div class="drawer-overlay" id="prefsOverlay"></div>
+    <aside class="shopping-drawer prefs-drawer" id="prefsDrawer" role="dialog" aria-modal="true" aria-label="Chef Kitchen Preferences">
+      <div class="drawer-header">
+        <div class="drawer-title-wrap">
+          <span class="drawer-icon">⚙️</span>
+          <div>
+            <h3 class="drawer-title">Chef Kitchen Preferences</h3>
+            <span class="drawer-count">10 Interactive Toggles</span>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="btnClosePrefsDrawer" aria-label="Close preferences">✕</button>
+      </div>
+
+      <div class="drawer-body prefs-drawer-body">
+        <!-- Section 1: Live Kitchen & Cooking -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🍳 Live Kitchen & Cooking</h4>
+          
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🕯️ Keep Screen Awake</span>
+              <span class="pref-desc">Prevents display sleep/dimming while cooking hands-free</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefKeepScreenAwake">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⚖️ Global Unit System</span>
+              <span class="pref-desc">Convert recipe grams & ml to ounces & cups</span>
+            </div>
+            <div class="unit-toggle-pill">
+              <label class="unit-radio">
+                <input type="radio" name="prefUnitGroup" id="prefUnitMetric" value="metric" checked>
+                <span>Metric (g/ml)</span>
+              </label>
+              <label class="unit-radio">
+                <input type="radio" name="prefUnitGroup" id="prefUnitImperial" value="imperial">
+                <span>US (oz/cups)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🔊 Voice Chef Auto-Narration</span>
+              <span class="pref-desc">Reads steps aloud when transitioning in Cook Studio</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefVoiceNarration" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 2: Dietary & Prep Filters -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🥗 Dietary & Quick Prep</h4>
+          
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⏱️ Fast Prep (Under 30 Mins)</span>
+              <span class="pref-desc">Filter dishes ready in under 30 minutes</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefQuick30">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🌱 Vegetarian & Plant-Forward</span>
+              <span class="pref-desc">Display strictly vegetarian, vegan & meatless recipes</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefVegetarian">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">💪 High Protein Focus</span>
+              <span class="pref-desc">Prioritize protein-dense poultry, meats & seafood</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefHighProtein">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 3: Visual & Audio Aesthetics -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">✨ Visual & Sensory Experience</h4>
+          
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🔔 Audio Chime & Timer Bell</span>
+              <span class="pref-desc">Plays harmonic Web Audio chime upon timer completion</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefTimerSound" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">📊 Macro & Calorie Badges</span>
+              <span class="pref-desc">Display estimated kcal, protein, and fat breakdowns</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefShowMacros" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🍷 Sommelier Wine Pairing Cards</span>
+              <span class="pref-desc">Includes wine & beverage pairings in recipe modal</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefShowSommelier" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⇄ Auto-Substitution Chips</span>
+              <span class="pref-desc">Highlight instant pantry ingredient substitutes</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefAutoSubs">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🖼️ Compact Chef View</span>
+              <span class="pref-desc">Dense 4-column compact grid for fast catalog scanning</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefCompactGrid">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 4: 10 Gourmet Culinary Color Palettes -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🎨 Gourmet Color Palettes (10 Moods)</h4>
+          <div class="palette-swatches-grid" id="paletteSwatchesGrid">
+            <!-- Dynamically populated via PreferencesDrawer -->
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="secondary-btn" id="btnResetAllPrefs" style="width: 100%;">🔄 Reset Preferences to Default</button>
+      </div>
+    </aside>
+
     <!-- Modal: Interactive Recipe Studio & Scaler -->
     <div class="modal-backdrop" id="recipeModalBackdrop">
-      <div class="recipe-modal" id="recipeModal">
+      <div class="recipe-modal" id="recipeModal" role="dialog" aria-modal="true" aria-label="Recipe Studio and Cooking Method">
         <button class="modal-close-btn" id="btnCloseRecipeModal" aria-label="Close recipe details">✕</button>
         <div class="modal-scroll-body" id="modalRecipeContent">
           <!-- Injected dynamically -->
@@ -387,7 +572,7 @@
     </div>
 
     <!-- Modal: Fullscreen Hands-Free Guided Cook Mode with Voice Narration -->
-    <div class="cook-mode-overlay" id="cookModeOverlay">
+    <div class="cook-mode-overlay" id="cookModeOverlay" role="dialog" aria-modal="true" aria-labelledby="cookModeTitle">
       <div class="cook-mode-container">
         <!-- Cook Mode Header -->
         <div class="cook-mode-header">

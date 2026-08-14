@@ -1,20 +1,38 @@
 {
-  "status": "HEALTHY",
+  "status": "healthy",
   "service": "culinaria-recipe-vault",
-  "version": "2.0.0",
-  "sreTier": "Tier-1 Production PWA",
-  "uptimeSLA": "99.99%",
+  "version": "1.0.0",
+  "buildType": "client-side-pwa",
   "deployment": {
-    "primary": "Render Static Edge Service",
-    "failover": "GitHub Pages Anycast Global CDN",
-    "multiCloudRedundant": true
+    "provider": "GitHub Pages",
+    "sourceBranch": "gh-pages",
+    "healthModel": "static-artifact-metadata; no server-side SLA"
   },
-  "capabilities": {
-    "offlineVaultReady": true,
-    "cachedRecipesCount": 789,
-    "trustedTypesEnforced": true,
-    "cryptoAesGcmActive": true,
-    "serviceWorkerEnabled": true
+  "clientFeatures": {
+    "offlineCatalogReady": true,
+    "curatedRecipesCount": 789,
+    "serviceWorkerEnabled": true,
+    "storageSecurityModel": "sanitized non-sensitive client-local data; not encrypted",
+    "webAudioSupported": true,
+    "speechSynthesisSupported": true
   },
-  "timestamp": "2026-08-14T14:40:00Z"
+  "verification": {
+    "releaseMetadata": "dist/release.json",
+    "requiredChecks": [
+      "npm test",
+      "npm run build",
+      "npm audit --audit-level=high"
+    ]
+  },
+  "release": {
+    "service": "culinaria-recipe-vault",
+    "commit": "9e45f59656b241e07852b7e3bacbc2eb985bdc20",
+    "generatedAt": "2026-08-14T18:06:16.291Z",
+    "artifact": "dist",
+    "checks": [
+      "npm test",
+      "npm run build",
+      "npm audit --audit-level=high"
+    ]
+  }
 }
