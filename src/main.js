@@ -107,18 +107,31 @@ class CulinariaApp {
   }
 
   /* ==========================================================================
-     Theme Management
+     Theme Management & Zero-Flicker Synchronizer
      ========================================================================== */
   initTheme() {
-    const savedTheme = getStoredTheme();
-    document.documentElement.setAttribute('data-theme', savedTheme);
-
     const themeToggle = document.getElementById('themeToggle');
+    const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+
+    const syncThemeUI = (theme) => {
+      document.documentElement.setAttribute('data-theme', theme);
+      setStoredTheme(theme);
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', theme === 'dark' ? '#121413' : '#faf8f5');
+      }
+      if (themeToggle) {
+        themeToggle.title = `Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`;
+        themeToggle.setAttribute('aria-label', `Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`);
+      }
+    };
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || getStoredTheme();
+    syncThemeUI(currentTheme);
+
     themeToggle?.addEventListener('click', () => {
-      const current = document.documentElement.getAttribute('data-theme') || 'light';
-      const nextTheme = current === 'dark' ? 'light' : 'dark';
-      document.documentElement.setAttribute('data-theme', nextTheme);
-      setStoredTheme(nextTheme);
+      const active = document.documentElement.getAttribute('data-theme') || 'light';
+      const nextTheme = active === 'dark' ? 'light' : 'dark';
+      syncThemeUI(nextTheme);
     });
   }
 

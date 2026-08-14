@@ -18,6 +18,17 @@
   <link rel="stylesheet" href="./src/styles/design-tokens.css">
   <link rel="stylesheet" href="./src/styles/main.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('culinaria_theme_preference');
+        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          t = 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
   <div id="app" class="app-container">
