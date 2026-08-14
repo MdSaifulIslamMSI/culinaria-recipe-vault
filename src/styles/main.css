@@ -517,6 +517,18 @@ a {
   color: var(--text-tertiary);
 }
 
+.suggestion-empty-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  color: var(--text-secondary);
+}
+
+.suggestion-empty-item .empty-icon {
+  font-size: 1.5rem;
+}
+
 /* Trending Pills */
 .trending-pills {
   display: flex;

@@ -2,6 +2,7 @@
  * Culinaria - Application Orchestrator
  */
 import './utils/zeroTrustDefense.js';
+import { sanitizeHtml } from './utils/securitySanitizer.js';
 import {
   searchRecipes,
   getRecipeById,
@@ -257,7 +258,16 @@ class CulinariaApp {
       const topFive = results.slice(0, 5);
 
       if (topFive.length === 0) {
-        this.suggestionsDropdown.classList.add('hidden');
+        this.suggestionsDropdown.innerHTML = `
+          <div class="suggestion-empty-item">
+            <span class="empty-icon">🔍</span>
+            <div class="suggestion-info">
+              <div class="suggestion-title">No dishes matching "${sanitizeHtml(query)}"</div>
+              <div class="suggestion-meta">Try searching for "pasta", "curry", "salmon", or "beef"</div>
+            </div>
+          </div>
+        `;
+        this.suggestionsDropdown.classList.remove('hidden');
         return;
       }
 

@@ -246,21 +246,24 @@ async function fetchWithCache(endpoint) {
  * Search recipes by name or keywords
  */
 export async function searchRecipes(query = '') {
-  const data = await fetchWithCache(`search.php?s=${encodeURIComponent(query)}`);
+  const trimmed = query.trim();
+  if (!trimmed) {
+    return CURATED_FALLBACK_RECIPES.map(formatRecipe);
+  }
+
+  const data = await fetchWithCache(`search.php?s=${encodeURIComponent(trimmed)}`);
   if (data && data.meals && data.meals.length > 0) {
     return data.meals.map(formatRecipe);
   }
 
-  if (!query) {
-    return CURATED_FALLBACK_RECIPES.map(formatRecipe);
-  }
-  const q = query.toLowerCase();
+  const q = trimmed.toLowerCase();
   const matched = CURATED_FALLBACK_RECIPES.filter(m => 
     m.strMeal.toLowerCase().includes(q) || 
     m.strCategory.toLowerCase().includes(q) ||
-    m.strArea.toLowerCase().includes(q)
+    m.strArea.toLowerCase().includes(q) ||
+    (m.strInstructions && m.strInstructions.toLowerCase().includes(q))
   );
-  return (matched.length > 0 ? matched : CURATED_FALLBACK_RECIPES).map(formatRecipe);
+  return matched.map(formatRecipe);
 }
 
 /**
