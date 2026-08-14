@@ -24,7 +24,7 @@ const STORAGE_KEYS = {
 // In-memory hot cache for instant zero-latency synchronous access
 const memoryCache = new Map();
 
-function safeGet(key, fallback = []) {
+export function safeGet(key, fallback = []) {
   try {
     if (memoryCache.has(key)) {
       return memoryCache.get(key);
@@ -72,7 +72,7 @@ function safeGet(key, fallback = []) {
   }
 }
 
-function safeSet(key, value) {
+export function safeSet(key, value) {
   if (!storageRateLimiter.canExecute()) return;
   try {
     const cleanValue = sanitizeObject(value);

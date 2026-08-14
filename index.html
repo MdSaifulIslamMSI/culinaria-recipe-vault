@@ -64,6 +64,11 @@
           </nav>
 
           <div class="header-actions">
+            <button class="action-btn prefs-trigger" id="btnChefPreferences" title="Chef Kitchen Settings (10 Toggles)" aria-label="Open Chef Kitchen Preferences">
+              <span class="prefs-icon">⚙️</span>
+              <span class="btn-text">Settings</span>
+            </button>
+
             <button class="action-btn roulette-trigger" id="btnRoulette" title="Surprise Me / Chef's Roulette">
               <span class="sparkle-spin">🎲</span>
               <span class="btn-text">Surprise</span>
@@ -373,6 +378,158 @@
       <div class="drawer-footer">
         <button class="secondary-btn" id="btnCopyShoppingList">📋 Copy to Clipboard</button>
         <button class="danger-text-btn" id="btnClearShoppingList">Clear All</button>
+      </div>
+    </aside>
+
+    <!-- Slide-over Gourmet Chef Preferences Drawer (10 Interactive Toggles) -->
+    <div class="drawer-overlay" id="prefsOverlay"></div>
+    <aside class="shopping-drawer prefs-drawer" id="prefsDrawer">
+      <div class="drawer-header">
+        <div class="drawer-title-wrap">
+          <span class="drawer-icon">⚙️</span>
+          <div>
+            <h3 class="drawer-title">Chef Kitchen Preferences</h3>
+            <span class="drawer-count">10 Interactive Toggles</span>
+          </div>
+        </div>
+        <button class="drawer-close-btn" id="btnClosePrefsDrawer" aria-label="Close preferences">✕</button>
+      </div>
+
+      <div class="drawer-body prefs-drawer-body">
+        <!-- Section 1: Live Kitchen & Cooking -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🍳 Live Kitchen & Cooking</h4>
+          
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🕯️ Keep Screen Awake</span>
+              <span class="pref-desc">Prevents display sleep/dimming while cooking hands-free</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefKeepScreenAwake">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⚖️ Global Unit System</span>
+              <span class="pref-desc">Convert recipe grams & ml to ounces & cups</span>
+            </div>
+            <div class="unit-toggle-pill">
+              <label class="unit-radio">
+                <input type="radio" name="prefUnitGroup" id="prefUnitMetric" value="metric" checked>
+                <span>Metric (g/ml)</span>
+              </label>
+              <label class="unit-radio">
+                <input type="radio" name="prefUnitGroup" id="prefUnitImperial" value="imperial">
+                <span>US (oz/cups)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🔊 Voice Chef Auto-Narration</span>
+              <span class="pref-desc">Reads steps aloud when transitioning in Cook Studio</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefVoiceNarration" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 2: Dietary & Prep Filters -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🥗 Dietary & Quick Prep</h4>
+          
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🌱 Vegetarian Only Focus</span>
+              <span class="pref-desc">Isolates vegetarian, vegan, and plant-forward creations</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefVegetarianOnly">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🥩 High-Protein Macro Filter</span>
+              <span class="pref-desc">Prioritizes dishes with 25g+ protein per serving</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefHighProtein">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⚡ Quick Weeknight Rush (&lt; 30m)</span>
+              <span class="pref-desc">Shows rapid 15–30 min gourmet meals for busy days</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefQuickUnder30">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Section 3: Visual & Intelligence Toggles -->
+        <div class="pref-group">
+          <h4 class="pref-group-title">🎨 Display & Culinary Intelligence</h4>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">📊 Macro & Calorie Badges</span>
+              <span class="pref-desc">Display estimated kcal, protein, and fat breakdowns</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefShowMacros" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🍷 Sommelier Wine Pairing Cards</span>
+              <span class="pref-desc">Includes wine & beverage pairings in recipe modal</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefShowSommelier" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">⇄ Auto-Substitution Chips</span>
+              <span class="pref-desc">Highlight instant pantry ingredient substitutes</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefAutoSubs">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="pref-item">
+            <div class="pref-text">
+              <span class="pref-label">🖼️ Compact Chef View</span>
+              <span class="pref-desc">Dense 4-column compact grid for fast catalog scanning</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="prefCompactGrid">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawer-footer">
+        <button class="secondary-btn" id="btnResetAllPrefs" style="width: 100%;">🔄 Reset Preferences to Default</button>
       </div>
     </aside>
 

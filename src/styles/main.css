@@ -2389,6 +2389,168 @@ a {
 }
 
 /* ==========================================================================
+   Gourmet Chef Preferences & 10 Interactive Toggles
+   ========================================================================== */
+.prefs-drawer {
+  max-width: 440px;
+}
+
+.prefs-drawer-body {
+  padding: 1.25rem 1.5rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.pref-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.pref-group-title {
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-primary);
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.35rem;
+}
+
+.pref-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.4rem 0;
+}
+
+.pref-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+}
+
+.pref-label {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.pref-desc {
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+  line-height: 1.35;
+}
+
+/* iOS-Style Animated Toggle Switch */
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 26px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: var(--border-subtle);
+  border: 1px solid var(--border-strong);
+  transition: all var(--transition-fast);
+  border-radius: var(--radius-full);
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 2px;
+  bottom: 2px;
+  background-color: #ffffff;
+  transition: transform var(--transition-fast);
+  border-radius: 50%;
+  box-shadow: var(--shadow-xs);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+  transform: translateX(22px);
+}
+
+/* Unit System Pill Selector */
+.unit-toggle-pill {
+  display: flex;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 2px;
+  flex-shrink: 0;
+}
+
+.unit-radio {
+  cursor: pointer;
+}
+
+.unit-radio input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.unit-radio span {
+  display: inline-block;
+  padding: 0.3rem 0.65rem;
+  font-size: 0.74rem;
+  font-weight: 700;
+  border-radius: var(--radius-full);
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+}
+
+.unit-radio input:checked + span {
+  background: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: var(--shadow-xs);
+}
+
+/* Compact Chef View Grid (Dense 4-Column Layout) */
+.recipe-cards-grid.compact-grid {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)) !important;
+  gap: 1.15rem !important;
+}
+
+.recipe-cards-grid.compact-grid .recipe-image-wrap {
+  aspect-ratio: 16 / 9 !important;
+}
+
+.recipe-cards-grid.compact-grid .recipe-card-content {
+  padding: 0.85rem !important;
+}
+
+.recipe-cards-grid.compact-grid .recipe-card-title {
+  font-size: 1rem !important;
+  line-height: 1.25 !important;
+}
+
+/* ==========================================================================
    Chef's Roulette Modal
    ========================================================================== */
 .roulette-modal {

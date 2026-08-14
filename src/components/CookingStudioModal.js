@@ -8,6 +8,7 @@ import { estimateNutrition } from '../services/nutritionCalculator.js';
 import { getCulinaryPairing } from '../services/sommelierService.js';
 import { voiceAssistant } from '../services/voiceAssistant.js';
 import { isFavorite, toggleFavorite, addToShoppingList } from '../services/storageService.js';
+import { getChefPreferences } from '../services/preferencesService.js';
 import { activeTimer } from '../services/timerManager.js';
 import { getRelatedRecipes, getIngredientSubstitution } from '../services/recommendationEngine.js';
 import { getRecipeById } from '../services/mealDbApi.js';
@@ -99,10 +100,11 @@ export class CookingStudioModal {
 
   open(recipe) {
     if (!recipe) return;
+    const prefs = getChefPreferences();
     this.currentRecipe = recipe;
     this.baseServings = recipe.servings || 4;
     this.currentServings = this.baseServings;
-    this.unitSystem = 'metric';
+    this.unitSystem = prefs.unitSystem || 'metric';
     this.checkedIngredientNames.clear();
 
     this.render();
@@ -117,6 +119,7 @@ export class CookingStudioModal {
 
   render() {
     const r = this.currentRecipe;
+    const prefs = getChefPreferences();
     const isFav = isFavorite(r.id);
     const nutrition = estimateNutrition(r, this.currentServings);
     const pairing = getCulinaryPairing(r);
@@ -208,27 +211,29 @@ export class CookingStudioModal {
             }).join('')}
           </ul>
 
-          <!-- Sommelier Pairing Card -->
-          <div class="sommelier-card">
-            <div class="sommelier-header">
-              <span class="sommelier-icon">🍷</span>
-              <div>
-                <h3 class="sommelier-title">Sommelier Pairing</h3>
-                <span class="sommelier-sub">Curated by our Master Cellar</span>
+          <!-- Sommelier Pairing Card (Toggled via Chef Preferences) -->
+          ${prefs.showSommelier ? `
+            <div class="sommelier-card">
+              <div class="sommelier-header">
+                <span class="sommelier-icon">🍷</span>
+                <div>
+                  <h3 class="sommelier-title">Sommelier Pairing</h3>
+                  <span class="sommelier-sub">Curated by our Master Cellar</span>
+                </div>
+              </div>
+              <div class="sommelier-body">
+                <div class="pairing-item">
+                  <span class="pairing-label">Wine Selection:</span>
+                  <p class="pairing-text highlight">${pairing.wine}</p>
+                  <small class="pairing-note">${pairing.wineNote}</small>
+                </div>
+                <div class="pairing-item" style="margin-top: 0.75rem;">
+                  <span class="pairing-label">Artisanal Beverage:</span>
+                  <p class="pairing-text">${pairing.beverage}</p>
+                </div>
               </div>
             </div>
-            <div class="sommelier-body">
-              <div class="pairing-item">
-                <span class="pairing-label">Wine Selection:</span>
-                <p class="pairing-text highlight">${pairing.wine}</p>
-                <small class="pairing-note">${pairing.wineNote}</small>
-              </div>
-              <div class="pairing-item" style="margin-top: 0.75rem;">
-                <span class="pairing-label">Artisanal Beverage:</span>
-                <p class="pairing-text">${pairing.beverage}</p>
-              </div>
-            </div>
-          </div>
+          ` : ''}
 
           <!-- Chef Tip Box -->
           <div class="chef-tip-box">
@@ -238,28 +243,30 @@ export class CookingStudioModal {
             <p class="chef-tip-text">"${pairing.chefTip}"</p>
           </div>
 
-          <!-- Nutrition Macro Card -->
-          <div class="nutrition-breakdown-box">
-            <h3 class="modal-section-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Estimated Macros / Portion</h3>
-            <div class="nutrition-grid">
-              <div class="nutri-card">
-                <div class="nutri-val">${nutrition.calories}</div>
-                <div class="nutri-lbl">Calories</div>
-              </div>
-              <div class="nutri-card">
-                <div class="nutri-val">${nutrition.protein}g</div>
-                <div class="nutri-lbl">Protein</div>
-              </div>
-              <div class="nutri-card">
-                <div class="nutri-val">${nutrition.carbs}g</div>
-                <div class="nutri-lbl">Carbs</div>
-              </div>
-              <div class="nutri-card">
-                <div class="nutri-val">${nutrition.fat}g</div>
-                <div class="nutri-lbl">Fat</div>
+          <!-- Nutrition Macro Card (Toggled via Chef Preferences) -->
+          ${prefs.showMacros ? `
+            <div class="nutrition-breakdown-box">
+              <h3 class="modal-section-title" style="font-size: 1.1rem; margin-bottom: 0.5rem;">Estimated Macros / Portion</h3>
+              <div class="nutrition-grid">
+                <div class="nutri-card">
+                  <div class="nutri-val">${nutrition.calories}</div>
+                  <div class="nutri-lbl">Calories</div>
+                </div>
+                <div class="nutri-card">
+                  <div class="nutri-val">${nutrition.protein}g</div>
+                  <div class="nutri-lbl">Protein</div>
+                </div>
+                <div class="nutri-card">
+                  <div class="nutri-val">${nutrition.carbs}g</div>
+                  <div class="nutri-lbl">Carbs</div>
+                </div>
+                <div class="nutri-card">
+                  <div class="nutri-val">${nutrition.fat}g</div>
+                  <div class="nutri-lbl">Fat</div>
+                </div>
               </div>
             </div>
-          </div>
+          ` : ''}
         </div>
 
         <!-- Column 2: Step-by-Step Instructions -->

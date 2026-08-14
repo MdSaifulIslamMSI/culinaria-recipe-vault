@@ -24,11 +24,13 @@ import {
 } from './services/storageService.js';
 import { activeTimer } from './services/timerManager.js';
 import { getPersonalizedRecommendations } from './services/recommendationEngine.js';
+import { getChefPreferences } from './services/preferencesService.js';
 import { createRecipeCard } from './components/RecipeCard.js';
 import { CookingStudioModal } from './components/CookingStudioModal.js';
 import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
+import { PreferencesDrawer } from './components/PreferencesDrawer.js';
 
 // Arm real-time defenses, error boundary, and offline network monitor
 initErrorBoundary();
@@ -61,15 +63,31 @@ class CulinariaApp {
     this.pantryFinder = new PantryFinder();
     this.shoppingDrawer = new ShoppingListDrawer();
     this.rouletteModal = new RouletteModal();
+    this.preferencesDrawer = new PreferencesDrawer();
 
     this.initDOM();
     this.initTheme();
+    this.initPreferences();
     this.initNavigation();
     this.initSearchAndFilters();
     this.initTimerDock();
     this.initGlobalEvents();
 
     this.bootstrapApp();
+  }
+
+  initPreferences() {
+    const prefs = getChefPreferences();
+    this.applyPreferences(prefs);
+  }
+
+  applyPreferences(prefs) {
+    if (this.recipeGrid) {
+      this.recipeGrid.classList.toggle('compact-grid', Boolean(prefs.compactGrid));
+    }
+    if (this.favoritesGrid) {
+      this.favoritesGrid.classList.toggle('compact-grid', Boolean(prefs.compactGrid));
+    }
   }
 
   initDOM() {
@@ -472,22 +490,27 @@ class CulinariaApp {
   async executeFilterAndSearch() {
     this.setGridLoading(true);
     this.gridEmpty.classList.add('hidden');
+    const prefs = getChefPreferences();
 
     try {
       let results = [];
+      let effectiveCat = this.activeCategory;
+      if (effectiveCat === 'all' && prefs.vegetarianOnly) {
+        effectiveCat = 'Vegetarian';
+      }
 
       if (this.searchQuery) {
         results = await searchRecipes(this.searchQuery);
         // If user has a category or area filter active during search, apply it
-        if (this.activeCategory !== 'all') {
-          results = results.filter(r => (r.category || '').toLowerCase() === this.activeCategory.toLowerCase());
+        if (effectiveCat !== 'all') {
+          results = results.filter(r => (r.category || '').toLowerCase() === effectiveCat.toLowerCase());
         }
         if (this.activeArea !== 'all') {
           results = results.filter(r => (r.area || '').toLowerCase() === this.activeArea.toLowerCase());
         }
       } else {
         // Multi-dimensional filtering by Category AND Cuisine Area
-        results = await filterByCategoryAndArea(this.activeCategory, this.activeArea);
+        results = await filterByCategoryAndArea(effectiveCat, this.activeArea);
       }
 
       this.currentRecipes = results;
@@ -504,17 +527,22 @@ class CulinariaApp {
 
   applyLocalFilters() {
     let filtered = [...this.currentRecipes];
+    const prefs = getChefPreferences();
 
-    if (this.activeQuickFilter === 'under30') {
+    if (prefs.quickUnder30 || this.activeQuickFilter === 'under30') {
       filtered = filtered.filter(r => (r.estimatedTime || 30) <= 30);
-    } else if (this.activeQuickFilter === 'vegetarian') {
+    }
+    
+    if (prefs.vegetarianOnly || this.activeQuickFilter === 'vegetarian') {
       filtered = filtered.filter(r => 
         r.category === 'Vegetarian' || 
         r.category === 'Vegan' || 
         r.category === 'Side' ||
         (r.title && /(salad|veggie|cheese|mushroom|paneer|tofu|vegetarian|vegan)/i.test(r.title))
       );
-    } else if (this.activeQuickFilter === 'highprotein') {
+    }
+    
+    if (prefs.highProteinOnly || this.activeQuickFilter === 'highprotein') {
       filtered = filtered.filter(r => 
         r.category === 'Beef' || 
         r.category === 'Chicken' || 
@@ -747,6 +775,19 @@ class CulinariaApp {
         this.renderFavoritesView();
       } else if (this.currentView === 'explore') {
         this.renderPalateRibbon();
+      }
+    });
+
+    // Reactive handler for 10 Chef Kitchen Preferences Toggles
+    window.addEventListener('culinaria:pref-updated', (e) => {
+      const { key, preferences } = e.detail;
+      this.applyPreferences(preferences);
+
+      if (['vegetarianOnly', 'highProteinOnly', 'quickUnder30'].includes(key)) {
+        this.executeFilterAndSearch();
+      }
+      if (key === 'compactGrid') {
+        this.showToast(`🖼️ Compact Chef View: ${preferences.compactGrid ? 'Active' : 'Cinematic'}`);
       }
     });
 
