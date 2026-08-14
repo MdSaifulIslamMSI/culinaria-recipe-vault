@@ -1,6 +1,7 @@
 /**
  * Culinaria - Application Orchestrator
  */
+import './utils/zeroTrustDefense.js';
 import {
   searchRecipes,
   getRecipeById,
