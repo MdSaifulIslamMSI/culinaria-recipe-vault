@@ -189,6 +189,18 @@
 
         <!-- Recipe Grid Area -->
         <div class="recipes-grid-section">
+          <!-- Personalized Palate Recommendation Ribbon -->
+          <div class="palate-recommendation-ribbon hidden" id="palateRibbon">
+            <div class="ribbon-header">
+              <div class="ribbon-title-wrap">
+                <span class="ribbon-badge">✨ Curated For Your Palate</span>
+                <h3 class="ribbon-title">Chef Selections Matching Your Taste</h3>
+              </div>
+              <span class="ribbon-sub" id="palateRationaleText">Based on your saved cookbook favorites</span>
+            </div>
+            <div class="ribbon-cards-strip" id="palateCardsStrip"></div>
+          </div>
+
           <!-- Loading State -->
           <div class="loading-state hidden" id="gridLoading">
             <div class="culinary-spinner"></div>

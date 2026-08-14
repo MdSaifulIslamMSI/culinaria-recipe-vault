@@ -21,6 +21,7 @@ import {
   setStoredTheme
 } from './services/storageService.js';
 import { activeTimer } from './services/timerManager.js';
+import { getPersonalizedRecommendations } from './services/recommendationEngine.js';
 import { createRecipeCard } from './components/RecipeCard.js';
 import { CookingStudioModal } from './components/CookingStudioModal.js';
 import { PantryFinder } from './components/PantryFinder.js';
@@ -557,6 +558,55 @@ class CulinariaApp {
       const card = createRecipeCard(recipe);
       this.recipeGrid.appendChild(card);
     });
+
+    this.renderPalateRibbon();
+  }
+
+  renderPalateRibbon() {
+    const ribbonEl = document.getElementById('palateRibbon');
+    const stripEl = document.getElementById('palateCardsStrip');
+    if (!ribbonEl || !stripEl) return;
+
+    // Only show ribbon in explore view when not searching
+    if (this.currentView !== 'explore' || this.searchQuery) {
+      ribbonEl.classList.add('hidden');
+      return;
+    }
+
+    const favorites = getFavorites();
+    const recs = getPersonalizedRecommendations(favorites, undefined, 5);
+    if (!recs || recs.length === 0) {
+      ribbonEl.classList.add('hidden');
+      return;
+    }
+
+    stripEl.innerHTML = recs.map(item => `
+      <div class="palate-card" data-rec-id="${item.recipe.id || item.recipe.idMeal}">
+        <div class="palate-thumb-wrap">
+          <img src="${item.recipe.thumbnail || item.recipe.strMealThumb}" alt="${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}" class="palate-img" loading="lazy" />
+          <span class="palate-rationale-pill">${item.rationale}</span>
+        </div>
+        <div class="palate-info">
+          <h4 class="palate-dish-title">${item.recipe.title || item.recipe.strMeal}</h4>
+          <div class="palate-meta">
+            <span>🍽️ ${item.recipe.category || item.recipe.strCategory}</span>
+            <span>⏱️ ${item.recipe.estimatedTime || 30}m</span>
+          </div>
+        </div>
+      </div>
+    `).join('');
+
+    stripEl.querySelectorAll('.palate-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const id = card.dataset.recId;
+        const recipe = await getRecipeById(id);
+        if (recipe) {
+          this.cookingStudio.open(recipe);
+        }
+      });
+    });
+
+    ribbonEl.classList.remove('hidden');
   }
 
   setGridLoading(isLoading) {
@@ -674,9 +724,11 @@ class CulinariaApp {
         modalFavBtn.title = isFav ? 'Remove Favorite' : 'Save Favorite';
       }
 
-      // 3. Re-render favorites view if active
+      // 3. Re-render favorites view if active, and refresh palate recommendations
       if (this.currentView === 'favorites') {
         this.renderFavoritesView();
+      } else if (this.currentView === 'explore') {
+        this.renderPalateRibbon();
       }
     });
 

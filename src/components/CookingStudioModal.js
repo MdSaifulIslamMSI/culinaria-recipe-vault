@@ -9,6 +9,8 @@ import { getCulinaryPairing } from '../services/sommelierService.js';
 import { voiceAssistant } from '../services/voiceAssistant.js';
 import { isFavorite, toggleFavorite, addToShoppingList } from '../services/storageService.js';
 import { activeTimer } from '../services/timerManager.js';
+import { getRelatedRecipes, getIngredientSubstitution } from '../services/recommendationEngine.js';
+import { getRecipeById } from '../services/mealDbApi.js';
 import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
 import confetti from 'canvas-confetti';
 
@@ -190,11 +192,15 @@ export class CookingStudioModal {
             ${r.ingredients.map(ing => {
               const scaledMeasure = scaleMeasurement(ing.measure, ratio, this.unitSystem);
               const isChecked = this.checkedIngredientNames.has(ing.name.toLowerCase());
+              const sub = getIngredientSubstitution(ing.name);
+              const subButton = sub ? `<button class="sub-hint-btn" data-ing="${sanitizeHtml(ing.name)}" title="Chef Alternative: ${sanitizeHtml(sub.substitute)}">⇄ Sub</button>` : '';
+
               return `
                 <li class="ingredient-item ${isChecked ? 'checked' : ''}">
                   <label class="ing-check-wrap">
                     <input type="checkbox" class="ing-checkbox" data-name="${ing.name}" ${isChecked ? 'checked' : ''} />
                     <span class="ing-name">${ing.name}</span>
+                    ${subButton}
                   </label>
                   <span class="ing-measure">${scaledMeasure}</span>
                 </li>
@@ -290,6 +296,31 @@ export class CookingStudioModal {
               </div>
             </div>
           ` : ''}
+        </div>
+      </div>
+
+      <!-- Recommended Pairings & Similar Dishes Carousel -->
+      <div class="modal-recommendations-section">
+        <div class="rec-section-header">
+          <span class="rec-badge-pill">✨ Sommelier & Chef Harmonies</span>
+          <h3 class="modal-section-title" style="margin: 0.35rem 0 0.85rem;">Recommended Pairings & Similar Dishes</h3>
+        </div>
+        <div class="modal-rec-cards-grid">
+          ${getRelatedRecipes(r, undefined, 3).map(rel => `
+            <div class="modal-rec-card" data-rec-id="${rel.recipe.id || rel.recipe.idMeal}">
+              <div class="rec-card-thumb-wrap">
+                <img src="${rel.recipe.thumbnail || rel.recipe.strMealThumb}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />
+                <span class="rec-pairing-badge">${rel.pairingBadge}</span>
+              </div>
+              <div class="rec-card-info">
+                <h4 class="rec-card-title">${rel.recipe.title || rel.recipe.strMeal}</h4>
+                <div class="rec-card-meta">
+                  <span>🍽️ ${rel.recipe.category || rel.recipe.strCategory}</span>
+                  <span>⏱️ ${rel.recipe.estimatedTime || 30} mins</span>
+                </div>
+              </div>
+            </div>
+          `).join('')}
         </div>
       </div>
     `;
@@ -389,6 +420,34 @@ export class CookingStudioModal {
         const mins = parseInt(btn.dataset.minutes, 10);
         activeTimer.start(mins * 60, `${this.currentRecipe.title}`);
         window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: `⏱️ Started ${mins}-minute timer!` } }));
+      });
+    });
+
+    // Substitution advice popovers
+    this.modalContent.querySelectorAll('.sub-hint-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const ingName = btn.dataset.ing;
+        const subInfo = getIngredientSubstitution(ingName);
+        if (subInfo) {
+          window.dispatchEvent(new CustomEvent('culinaria:toast', {
+            detail: { message: `💡 Substitute for ${ingName}: ${subInfo.substitute} • ${subInfo.note}` }
+          }));
+        }
+      });
+    });
+
+    // Related Recommendation Cards Navigation
+    this.modalContent.querySelectorAll('.modal-rec-card').forEach(card => {
+      card.addEventListener('click', async () => {
+        const targetId = card.dataset.recId;
+        const found = await getRecipeById(targetId);
+        if (found) {
+          this.open(found);
+          const scrollEl = document.getElementById('recipeModal') || document.getElementById('modalRecipeContent');
+          scrollEl?.scrollTo({ top: 0, behavior: 'smooth' });
+        }
       });
     });
 
