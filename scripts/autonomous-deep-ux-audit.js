@@ -238,7 +238,8 @@ async function runAutonomousAudit() {
   console.log('\n=================================================================');
   console.log('🏆 [AUTONOMOUS DEEP UX AUDIT COMPLETE]');
   console.log(`Total UX Journeys Tested: ${passed + failed}`);
-  console.log(`Passed Checks: ${passed} (100%)`);
+  const passRate = passed + failed > 0 ? ((passed / (passed + failed)) * 100).toFixed(1) : '0.0';
+  console.log(`Passed Checks: ${passed} (${passRate}%)`);
   console.log(`Failed Checks: ${failed}`);
   console.log(`Page Uncaught Errors: ${pageErrors.length}`);
   console.log('=================================================================\n');

@@ -49,7 +49,7 @@ async function verifyResponsive() {
     await page.screenshot({ path: shotPath, fullPage: false });
 
     console.log(`📸 [${vp.name.toUpperCase()}] Viewport (${vp.width}x${vp.height}):`);
-    console.log(`   - Horizontal Overflow: ${hasHorizontalOverflow ? '❌ FAILED' : '✅ 0px (PERFECT)'}`);
+    console.log(`   - Horizontal Overflow: ${hasHorizontalOverflow ? '❌ FAILED' : '✅ 0px'}`);
     console.log(`   - Screenshot Saved: ${shotPath}`);
 
     await page.close();

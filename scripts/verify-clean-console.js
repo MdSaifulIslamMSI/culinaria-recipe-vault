@@ -32,7 +32,7 @@ async function testCleanConsole() {
     throw new Error('Console still has DOM_MUTATION_TRAPPED warnings!');
   }
 
-  console.log('✅ Console is 100% clean and pristine with 0 warnings!');
+  console.log('✅ Console emitted no captured warnings or errors.');
 }
 
 testCleanConsole().catch(err => {

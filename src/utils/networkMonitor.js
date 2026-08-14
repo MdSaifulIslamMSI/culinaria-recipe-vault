@@ -11,7 +11,7 @@ export function initNetworkMonitor() {
   window.addEventListener('online', () => {
     isOnline = true;
     window.dispatchEvent(new CustomEvent('culinaria:toast', {
-      detail: { message: '⚡ Connection Restored — Live global search & video masterclasses active!' }
+      detail: { message: '⚡ Connection restored — live search and video guides are available.' }
     }));
   });
 

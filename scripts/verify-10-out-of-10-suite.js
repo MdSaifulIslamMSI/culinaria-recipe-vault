@@ -4,9 +4,9 @@ import path from 'path';
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const ARTIFACT_DIR = 'C:\\Users\\mdsai\\.gemini\\antigravity\\brain\\0a4a9d16-d2aa-4a8f-898f-c4748dc51157';
 
-async function verifyPerfectTenSuite() {
+async function verifyFrontendInteractionSuite() {
   console.log('🏆 =================================================================');
-  console.log('✨ [10/10 PERFECT FRONTEND POLISH VERIFICATION SUITE]');
+  console.log('✨ [FRONTEND INTERACTION VERIFICATION SUITE]');
   console.log('🏆 =================================================================\n');
 
   const browser = await puppeteer.launch({
@@ -47,10 +47,13 @@ async function verifyPerfectTenSuite() {
   const inlineTimersCount = await page.$$eval('.inline-step-timer-chip', chips => chips.length);
   console.log(`  - Detected Inline Step Timers in Recipe: ${inlineTimersCount}`);
 
-  if (inlineTimersCount > 0) {
-    // Click first inline timer
-    await page.click('.inline-step-timer-chip');
-    await new Promise(r => setTimeout(r, 500));
+  if (inlineTimersCount === 0) {
+    throw new Error('Expected at least one inline step timer in the selected recipe.');
+  }
+
+  // Click first inline timer
+  await page.click('.inline-step-timer-chip');
+  await new Promise(r => setTimeout(r, 500));
 
     // Verify floating timer bar is visible
     const isTimerActive = await page.evaluate(() => {
@@ -63,12 +66,11 @@ async function verifyPerfectTenSuite() {
       };
     });
 
-    console.log(`  - Floating Timer Dock Visible: ${!isTimerActive.isHidden}, Time: ${isTimerActive.display}`);
-    if (isTimerActive.isHidden) {
-      throw new Error('Floating kitchen timer bar failed to launch from inline step timer click!');
-    }
-    console.log('  ✅ [PASS] 1-Tap Inline Step Timer Successfully Launched\n');
+  console.log(`  - Floating Timer Dock Visible: ${!isTimerActive.isHidden}, Time: ${isTimerActive.display}`);
+  if (isTimerActive.isHidden) {
+    throw new Error('Floating kitchen timer bar failed to launch from inline step timer click!');
   }
+  console.log('  ✅ [PASS] 1-Tap Inline Step Timer Successfully Launched\n');
 
   // 3. Test Web Audio Chime Synthesizer
   console.log('🧪 [TEST 3] Testing Web Audio Synthesizer Chime Execution...');
@@ -85,7 +87,8 @@ async function verifyPerfectTenSuite() {
     }
   });
   console.log(`  - HTML5 Web Audio API Context: Supported=${audioResult.supported}, State=${audioResult.state}`);
-  console.log('  ✅ [PASS] Web Audio API Synthesizer Armed & Ready\n');
+  if (!audioResult.supported) throw new Error(`Web Audio API unavailable: ${audioResult.error || 'unknown error'}`);
+  console.log('  ✅ [PASS] Web Audio API context created\n');
 
   // 4. Capture Visual Showcase Artifact
   console.log('🧪 [TEST 4] Capturing Visual Showcase Artifact...');
@@ -95,11 +98,11 @@ async function verifyPerfectTenSuite() {
 
   await browser.close();
   console.log('\n=================================================================');
-  console.log('🏆 [10/10 PERFECT FRONTEND POLISH 100% VERIFIED]');
+  console.log('🏁 [FRONTEND INTERACTION VERIFICATION COMPLETE]');
   console.log('=================================================================');
 }
 
-verifyPerfectTenSuite().catch(err => {
-  console.error('❌ 10/10 SUITE FAILED:', err);
+verifyFrontendInteractionSuite().catch(err => {
+  console.error('❌ FRONTEND INTERACTION SUITE FAILED:', err);
   process.exit(1);
 });

@@ -66,7 +66,7 @@ async function verifyViewport770() {
   if (headerOverflow.isClipped) {
     throw new Error('Header actions are still clipped at 770px!');
   }
-  console.log('  ✅ [PASS] Header Actions 100% Contained & Visible at 770px\n');
+  console.log('  ✅ [PASS] Header actions contained and visible at 770px\n');
 
   // 2. Verify Palate Ribbon Horizontal Strip
   console.log('🧪 [TEST 3] Verifying Palate Ribbon Layout & Title Clamping...');
@@ -103,7 +103,7 @@ async function verifyViewport770() {
 
   await browser.close();
   console.log('\n=================================================================');
-  console.log('🏆 [VIEWPORT 770px & PALATE RIBBON 100% VERIFIED & FIXED]');
+  console.log('🏁 [VIEWPORT 770px & PALATE RIBBON CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

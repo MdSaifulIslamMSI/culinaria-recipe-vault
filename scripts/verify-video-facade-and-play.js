@@ -62,13 +62,13 @@ async function verifyVideoFacade() {
     }
   });
   await new Promise(r => setTimeout(r, 400));
-  const screenshotPath = path.join(ARTIFACT_DIR, 'video_masterclass_facade_fixed.png');
+  const screenshotPath = path.join(ARTIFACT_DIR, 'video_guide_facade_verified.png');
   await page.screenshot({ path: screenshotPath });
   console.log(`📸 Screenshot saved: ${screenshotPath}\n`);
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [VIDEO COOKING MASTERCLASS 100% VERIFIED & PERMANENTLY FIXED]');
+  console.log('🏁 [VIDEO GUIDE CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

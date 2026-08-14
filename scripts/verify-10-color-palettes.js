@@ -110,7 +110,7 @@ async function testTenColorPalettes() {
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [ALL 10 GOURMET COLOR PALETTES 100% VERIFIED]');
+  console.log('🏁 [COLOR PALETTE CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

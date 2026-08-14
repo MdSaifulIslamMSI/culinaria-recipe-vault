@@ -1,6 +1,6 @@
 /**
- * Culinaria Security SIEM & Tamper-Evident Audit Ledger
- * Records client-side security events, mutation traps, and cryptographic anomalies.
+ * Culinaria client diagnostics ledger.
+ * Records local security events, mutation traps, and integrity anomalies.
  */
 
 const MAX_LEDGER_ENTRIES = 100;
@@ -18,7 +18,7 @@ export const SecurityEventType = {
   TRUSTED_TYPE_INITIALIZED: 'TRUSTED_TYPE_INITIALIZED',
   XSS_PAYLOAD_BLOCKED: 'XSS_PAYLOAD_BLOCKED',
   DOM_MUTATION_TRAPPED: 'DOM_MUTATION_TRAPPED',
-  STORAGE_ENCRYPTION_SUCCESS: 'STORAGE_ENCRYPTION_SUCCESS',
+  CRYPTO_PAYLOAD_ENCRYPTED: 'CRYPTO_PAYLOAD_ENCRYPTED',
   STORAGE_TAMPER_DETECTED: 'STORAGE_TAMPER_DETECTED',
   RATE_LIMIT_EXCEEDED: 'RATE_LIMIT_EXCEEDED',
   UNAUTHORIZED_TAG_REMOVED: 'UNAUTHORIZED_TAG_REMOVED'
@@ -68,14 +68,14 @@ export function logSecurityEvent(type, details = {}, severity = SecuritySeverity
 }
 
 /**
- * Returns a read-only snapshot of the security audit ledger
+ * Returns a read-only snapshot of the in-memory diagnostics ledger.
  */
 export function getAuditLedger() {
   return [...ledger];
 }
 
 /**
- * Exports a formal JSON security audit compliance report
+ * Exports a JSON diagnostics report; this is not a compliance attestation.
  */
 export function exportAuditReport() {
   return {
@@ -83,12 +83,12 @@ export function exportAuditReport() {
     generatedAt: new Date().toISOString(),
     totalEvents: ledger.length,
     ledger: getAuditLedger(),
-    tamperProofChainValid: verifyLedgerChain()
+    integrityChainValid: verifyLedgerChain()
   };
 }
 
 /**
- * Verifies that the internal ledger hash chain has not been tampered with in memory
+ * Verifies that the in-memory ledger chain is internally consistent.
  */
 export function verifyLedgerChain() {
   for (let i = 0; i < ledger.length; i++) {

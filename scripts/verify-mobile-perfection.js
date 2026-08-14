@@ -80,7 +80,7 @@ async function verifyMobile() {
   }
 
   await browser.close();
-  console.log('\n🎉 ALL MOBILE VIEWPORTS PASSED WITH 0PX OVERFLOW & 100% CONTAINMENT!');
+  console.log('\n🎉 All tested mobile viewports passed the overflow and containment checks.');
 }
 
 verifyMobile().catch(err => {

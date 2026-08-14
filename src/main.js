@@ -166,7 +166,7 @@ class CulinariaApp {
           this.resetFiltersToDefault();
           window.scrollTo({ top: 0, behavior: 'smooth' });
           this.searchInput.focus();
-          this.showToast('🍽️ Refreshed to All World Dishes');
+          this.showToast('🍽️ Refreshed to All Dishes');
           return;
         }
         this.switchView(view);
@@ -816,7 +816,7 @@ class CulinariaApp {
 document.addEventListener('DOMContentLoaded', () => {
   new CulinariaApp();
 
-  // Register Progressive Web App Service Worker for 100% Offline Reliability
+  // Register the Progressive Web App service worker for offline support.
   if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('./sw.js')

@@ -30,7 +30,7 @@ async function testYouTubeEmbed() {
   await new Promise(r => setTimeout(r, 500));
 
   // Click play
-  console.log('Clicking play masterclass...');
+  console.log('Clicking play on the video guide...');
   await page.evaluate(() => {
     const btn = document.querySelector('.btn-facade-play') || document.querySelector('.video-facade-card');
     btn.click();

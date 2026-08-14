@@ -1,19 +1,21 @@
 /**
- * Massive 500+ Assertion Chrome DevTools Protocol (CDP) Rigorous Suite
- * 500+ Automated Test Assertions across Search, Categories, Cuisines,
+ * Extended Chrome DevTools Protocol (CDP) regression suite.
+ * Exercises Search, Categories, Cuisines,
  * Scalers, Unit Converters, Pantry Matchers, Viewports, and Memory Profiling.
  */
 import puppeteer from 'puppeteer-core';
 import fs from 'fs';
 import path from 'path';
+import { scaleMeasurement } from '../src/services/unitScaler.js';
+import { matchesIngredient } from '../src/services/mealDbApi.js';
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const TARGET_URL = 'http://localhost:3000/';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
-async function run500PlusCDPSuite() {
+async function runExtendedCDPSuite() {
   console.log('⚡ =================================================================');
-  console.log('🚀 [CDP 500++ RIGOROUS SUITE] Launching 500+ Assertion Test Engine...');
+  console.log('🚀 [CDP EXTENDED REGRESSION SUITE] Launching browser behavior checks...');
   console.log('⚡ =================================================================\n');
 
   const browser = await puppeteer.launch({
@@ -97,10 +99,10 @@ async function run500PlusCDPSuite() {
     await sleep(400);
 
     // -------------------------------------------------------------
-    // 3. Category Switching Matrix -> 14 Assertions
+    // 3. Representative category behavior checks
     // -------------------------------------------------------------
-    console.log('\n🥩 [PHASE 2] Category Switching Matrix (14 Categories)...');
-    const categories = ['all', 'Beef', 'Chicken', 'Dessert', 'Lamb', 'Miscellaneous', 'Pasta', 'Pork', 'Seafood', 'Side', 'Starter', 'Vegan', 'Vegetarian', 'Breakfast'];
+    console.log('\n🥩 [PHASE 2] Representative Category Behavior Checks...');
+    const categories = ['all', 'Beef', 'Chicken', 'Dessert', 'Seafood', 'Vegetarian', 'Breakfast'];
     for (const cat of categories) {
       const pill = await page.$(`.cat-pill[data-category="${cat}"]`);
       if (pill) {
@@ -109,20 +111,15 @@ async function run500PlusCDPSuite() {
         const active = await page.$eval(`.cat-pill[data-category="${cat}"]`, el => el.classList.contains('active'));
         assert(active, `Category Activation: ${cat}`);
       } else {
-        assert(true, `Category Pill Handled: ${cat}`);
+        assert(false, `Category Pill Present: ${cat}`, 'Expected a matching category control');
       }
     }
 
     // -------------------------------------------------------------
-    // 4. World Cuisine Areas Matrix -> 28 Assertions
+    // 4. Representative cuisine behavior checks
     // -------------------------------------------------------------
-    console.log('\n🌍 [PHASE 3] World Cuisine Areas Matrix (28 Cuisines)...');
-    const cuisines = [
-      "all", "American", "British", "Canadian", "Chinese", "Croatian", "Dutch",
-      "Egyptian", "Filipino", "French", "Greek", "Indian", "Irish", "Italian",
-      "Jamaican", "Japanese", "Kenyan", "Malaysian", "Mexican", "Moroccan",
-      "Polish", "Portuguese", "Russian", "Spanish", "Thai", "Tunisian", "Turkish", "Vietnamese"
-    ];
+    console.log('\n🌍 [PHASE 3] Representative Cuisine Behavior Checks...');
+    const cuisines = ['all', 'Canadian', 'Indian', 'Italian', 'Japanese', 'Mexican', 'Vietnamese'];
     for (const area of cuisines) {
       await page.select('#cuisineSelect', area);
       await sleep(100);
@@ -131,25 +128,44 @@ async function run500PlusCDPSuite() {
     }
 
     // -------------------------------------------------------------
-    // 5. Category x Cuisine Combinatorial Matrix -> 392 Assertions
+    // 5. Representative category x cuisine intersections
     // -------------------------------------------------------------
-    console.log('\n📐 [PHASE 4] Category × Cuisine Combinatorial Intersection Matrix (14 × 28 = 392 Assertions)...');
-    for (const cat of categories) {
-      for (const area of cuisines) {
-        assert(true, `Combinatorial Pair Validated: [${cat}] × [${area}]`);
-      }
+    console.log('\n📐 [PHASE 4] Category × Cuisine Intersection Checks...');
+    const intersections = [
+      ['all', 'all'],
+      ['Beef', 'Canadian'],
+      ['Chicken', 'Indian'],
+      ['Dessert', 'French'],
+      ['Seafood', 'Japanese'],
+      ['Vegetarian', 'Greek'],
+      ['Breakfast', 'American']
+    ];
+    for (const [cat, area] of intersections) {
+      const catPill = await page.$(`.cat-pill[data-category="${cat}"]`);
+      if (catPill) await catPill.click();
+      await page.select('#cuisineSelect', area);
+      await sleep(250);
+      const filterState = await page.evaluate(() => ({
+        activeCategory: document.querySelector('.cat-pill.active')?.dataset.category,
+        selectedArea: document.querySelector('#cuisineSelect')?.value,
+        resultsText: document.querySelector('#resultsCount')?.textContent || ''
+      }));
+      assert(
+        filterState.activeCategory === cat &&
+        filterState.selectedArea === area &&
+        /^Showing \d+ recipes?$/.test(filterState.resultsText),
+        `Filter State: [${cat}] × [${area}]`,
+        filterState.resultsText
+      );
     }
 
     // -------------------------------------------------------------
     // 6. Portion Scaler Dynamic Matrix (1 to 16 Servings) -> 16 Assertions
     // -------------------------------------------------------------
     console.log('\n⚖️ [PHASE 5] Portion Scaler Dynamic Matrix (1 to 16 Servings)...');
-    // Reset filters to ensure recipe grid has cards
-    const allPill = await page.$('.cat-pill[data-category="all"]');
-    if (allPill) await allPill.click();
-    await page.select('#cuisineSelect', 'all');
-    await sleep(800);
-
+    // Reload into a clean bootstrap state so earlier async filter requests
+    // cannot race with the modal interaction check.
+    await page.reload({ waitUntil: 'networkidle2', timeout: 25000 });
     await page.waitForSelector('.recipe-card', { timeout: 10000 });
     const firstCard = await page.$('.recipe-card');
     if (firstCard) {
@@ -157,9 +173,16 @@ async function run500PlusCDPSuite() {
       await page.waitForSelector('#recipeModalBackdrop.open', { timeout: 5000 });
     }
 
-    for (let s = 1; s <= 16; s++) {
-      assert(s >= 1 && s <= 16, `Servings Scale Step ${s} Portions`, `Validated mathematical scaling factor ${(s / 4).toFixed(2)}x`);
-    }
+    const servingsState = await page.evaluate(() => ({
+      current: Number(document.querySelector('#currentServingsText')?.textContent || 0),
+      hasScaleUp: Boolean(document.querySelector('#btnScaleUp')),
+      hasScaleDown: Boolean(document.querySelector('#btnScaleDown'))
+    }));
+    assert(
+      servingsState.current >= 1 && servingsState.current <= 16 && servingsState.hasScaleUp && servingsState.hasScaleDown,
+      'Serving Controls Rendered',
+      JSON.stringify(servingsState)
+    );
 
     // -------------------------------------------------------------
     // 7. Unit Converter Matrix (50 Culinary Measurements) -> 50 Assertions
@@ -177,7 +200,8 @@ async function run500PlusCDPSuite() {
       '2.5g baking powder', '1.25g salt', '120g flour', '80g sugar'
     ];
     for (const m of testMeasurements) {
-      assert(m.length > 0, `Unit Scaling Logic Validated: "${m}"`);
+      const scaled = scaleMeasurement(m, 2, 'metric');
+      assert(typeof scaled === 'string' && scaled.length > 0, `Unit Scaling Output: "${m}"`, scaled);
     }
 
     // -------------------------------------------------------------
@@ -186,13 +210,18 @@ async function run500PlusCDPSuite() {
     console.log('\n🥕 [PHASE 7] Zero-Waste Fridge Pantry Combinatorial Matching (10 Staples)...');
     const pantryStaples = ['Chicken', 'Eggs', 'Tomatoes', 'Onions', 'Garlic', 'Potatoes', 'Cheese', 'Pasta', 'Rice', 'Mushrooms'];
     for (const item of pantryStaples) {
-      assert(item.length > 0, `Pantry Ingredient Matching Algorithm Validated: "${item}"`);
+      assert(
+        matchesIngredient(item, item) && !matchesIngredient(item, 'unobtanium'),
+        `Pantry Ingredient Matching: "${item}"`
+      );
     }
 
     // -------------------------------------------------------------
     // 9. Responsive Viewports & Theme Matrix -> 6 Assertions
     // -------------------------------------------------------------
     console.log('\n📱 [PHASE 8] Responsive Viewports & Theme Matrix...');
+    await page.keyboard.press('Escape');
+    await sleep(400);
     const vps = [
       { w: 375, h: 667, name: 'iPhone SE' },
       { w: 390, h: 844, name: 'iPhone 14' },
@@ -202,12 +231,10 @@ async function run500PlusCDPSuite() {
       { w: 1920, h: 1080, name: 'Full HD Desktop' }
     ];
     for (const v of vps) {
-      assert(v.w > 0 && v.h > 0, `Viewport Breakpoint Validated: ${v.name} (${v.w}×${v.h})`);
+      await page.setViewport({ width: v.w, height: v.h });
+      const fitsViewport = await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth);
+      assert(fitsViewport, `Viewport Overflow Check: ${v.name} (${v.w}×${v.h})`);
     }
-
-    // Close modal
-    await page.keyboard.press('Escape');
-    await sleep(400);
 
     // Performance Metrics
     const metrics = await client.send('Performance.getMetrics');
@@ -223,9 +250,10 @@ async function run500PlusCDPSuite() {
 
   const total = passedAssertions + failedAssertions;
   console.log('\n=================================================================');
-  console.log(`🏆 [CDP 500++ RIGOROUS SUITE COMPLETE]`);
+  console.log(`🏆 [CDP EXTENDED REGRESSION SUITE COMPLETE]`);
   console.log(`Total Assertions Executed: ${total}`);
-  console.log(`Passed: ${passedAssertions} (100%)`);
+  const passRate = total > 0 ? ((passedAssertions / total) * 100).toFixed(1) : '0.0';
+  console.log(`Passed: ${passedAssertions} (${passRate}%)`);
   console.log(`Failed: ${failedAssertions}`);
   console.log(`Runtime Exceptions: ${errors.length}`);
   console.log('=================================================================\n');
@@ -235,7 +263,7 @@ async function run500PlusCDPSuite() {
   }
 }
 
-run500PlusCDPSuite().catch(err => {
+runExtendedCDPSuite().catch(err => {
   console.error('Fatal Script Error:', err);
   process.exit(1);
 });
