@@ -356,6 +356,7 @@ export async function getAreas() {
  * Filter recipes by category
  */
 export async function filterByCategory(category) {
+  if (!category || category === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?c=${encodeURIComponent(category)}`);
   if (data && data.meals) {
     return data.meals.map(m => ({
@@ -363,7 +364,7 @@ export async function filterByCategory(category) {
       title: m.strMeal,
       thumbnail: m.strMealThumb,
       category: category,
-      area: 'Global',
+      area: '',
       estimatedTime: 30
     }));
   }
@@ -375,19 +376,60 @@ export async function filterByCategory(category) {
  * Filter recipes by cuisine area
  */
 export async function filterByArea(area) {
+  if (!area || area === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?a=${encodeURIComponent(area)}`);
   if (data && data.meals) {
     return data.meals.map(m => ({
       id: m.idMeal,
       title: m.strMeal,
       thumbnail: m.strMealThumb,
-      category: 'International',
+      category: '',
       area: area,
       estimatedTime: 30
     }));
   }
 
   return CURATED_FALLBACK_RECIPES.filter(m => m.strArea.toLowerCase() === area.toLowerCase()).map(formatRecipe);
+}
+
+/**
+ * Accurate intersection filter for Category AND Cuisine Area
+ */
+export async function filterByCategoryAndArea(category = 'all', area = 'all') {
+  if (category === 'all' && area === 'all') {
+    return searchRecipes('');
+  }
+  if (category !== 'all' && area === 'all') {
+    return filterByCategory(category);
+  }
+  if (category === 'all' && area !== 'all') {
+    return filterByArea(area);
+  }
+
+  // Both category and area are active: fetch both and calculate true intersection
+  const [catData, areaData] = await Promise.all([
+    fetchWithCache(`filter.php?c=${encodeURIComponent(category)}`),
+    fetchWithCache(`filter.php?a=${encodeURIComponent(area)}`)
+  ]);
+
+  const catMeals = (catData && catData.meals) ? catData.meals : [];
+  const areaMeals = (areaData && areaData.meals) ? areaData.meals : [];
+
+  if (catMeals.length === 0 || areaMeals.length === 0) {
+    return [];
+  }
+
+  const areaIdSet = new Set(areaMeals.map(m => String(m.idMeal)));
+  const matched = catMeals.filter(m => areaIdSet.has(String(m.idMeal)));
+
+  return matched.map(m => ({
+    id: m.idMeal,
+    title: m.strMeal,
+    thumbnail: m.strMealThumb,
+    category: category,
+    area: area,
+    estimatedTime: 30
+  }));
 }
 
 /**

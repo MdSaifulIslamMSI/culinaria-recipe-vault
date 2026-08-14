@@ -7,7 +7,8 @@ import {
   getCategories,
   getAreas,
   filterByCategory,
-  filterByArea
+  filterByArea,
+  filterByCategoryAndArea
 } from './services/mealDbApi.js';
 import {
   getFavorites,
@@ -370,12 +371,16 @@ class CulinariaApp {
 
       if (this.searchQuery) {
         results = await searchRecipes(this.searchQuery);
-      } else if (this.activeCategory !== 'all') {
-        results = await filterByCategory(this.activeCategory);
-      } else if (this.activeArea !== 'all') {
-        results = await filterByArea(this.activeArea);
+        // If user has a category or area filter active during search, apply it
+        if (this.activeCategory !== 'all') {
+          results = results.filter(r => (r.category || '').toLowerCase() === this.activeCategory.toLowerCase());
+        }
+        if (this.activeArea !== 'all') {
+          results = results.filter(r => (r.area || '').toLowerCase() === this.activeArea.toLowerCase());
+        }
       } else {
-        results = await searchRecipes('');
+        // Multi-dimensional filtering by Category AND Cuisine Area
+        results = await filterByCategoryAndArea(this.activeCategory, this.activeArea);
       }
 
       this.currentRecipes = results;
@@ -393,10 +398,6 @@ class CulinariaApp {
   applyLocalFilters() {
     let filtered = [...this.currentRecipes];
 
-    if (this.activeArea !== 'all' && this.activeCategory !== 'all') {
-      filtered = filtered.filter(r => r.area === this.activeArea || r.area === 'Global');
-    }
-
     if (this.activeQuickFilter === 'under30') {
       filtered = filtered.filter(r => (r.estimatedTime || 30) <= 30);
     } else if (this.activeQuickFilter === 'vegetarian') {
@@ -404,14 +405,16 @@ class CulinariaApp {
         r.category === 'Vegetarian' || 
         r.category === 'Vegan' || 
         r.category === 'Side' ||
-        (r.title && /(salad|veggie|cheese|mushroom|paneer|tofu)/i.test(r.title))
+        (r.title && /(salad|veggie|cheese|mushroom|paneer|tofu|vegetarian|vegan)/i.test(r.title))
       );
     } else if (this.activeQuickFilter === 'highprotein') {
       filtered = filtered.filter(r => 
         r.category === 'Beef' || 
         r.category === 'Chicken' || 
         r.category === 'Seafood' || 
-        r.category === 'Pork'
+        r.category === 'Pork' ||
+        r.category === 'Lamb' ||
+        r.category === 'Goat'
       );
     }
 
@@ -425,6 +428,21 @@ class CulinariaApp {
     this.resultsCount.textContent = `Showing ${count} ${count === 1 ? 'recipe' : 'recipes'}`;
 
     if (count === 0) {
+      const catText = this.activeCategory !== 'all' ? `"${this.activeCategory}"` : '';
+      const areaText = this.activeArea !== 'all' ? `"${this.activeArea}"` : '';
+      const filterDesc = [catText, areaText].filter(Boolean).join(' in ');
+
+      const emptyTitle = filterDesc 
+        ? `No ${filterDesc} dishes found in the database`
+        : `No matching culinary creations found`;
+
+      const emptyDesc = document.querySelector('#gridEmpty .empty-desc');
+      const emptyHeader = document.querySelector('#gridEmpty .empty-title');
+      if (emptyHeader) emptyHeader.textContent = emptyTitle;
+      if (emptyDesc) {
+        emptyDesc.textContent = `Try selecting "All World Traditions" in the region selector or picking another category.`;
+      }
+
       this.gridEmpty.classList.remove('hidden');
       return;
     }
