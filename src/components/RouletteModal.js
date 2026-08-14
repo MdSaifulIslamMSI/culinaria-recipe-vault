@@ -1,6 +1,6 @@
 /**
  * RouletteModal Component
- * Chef's Surprise Dish Roulette
+ * Chef's Surprise Dish Roulette with race-condition prevention & image fallback
  */
 import { getRandomRecipe } from '../services/mealDbApi.js';
 
@@ -15,6 +15,7 @@ export class RouletteModal {
     this.btnOpen = document.getElementById('btnOpenRouletteDish');
 
     this.currentRecipe = null;
+    this.spinRequestId = 0;
     this.init();
   }
 
@@ -48,6 +49,7 @@ export class RouletteModal {
   }
 
   async spin() {
+    const currentRequestId = ++this.spinRequestId;
     this.btnSpin.disabled = true;
     this.btnOpen.disabled = true;
     this.stage.innerHTML = `
@@ -59,31 +61,35 @@ export class RouletteModal {
 
     try {
       const recipe = await getRandomRecipe();
-      this.currentRecipe = recipe;
+      if (currentRequestId !== this.spinRequestId) return; // Discard superseded spin
 
-      // Small delay for dramatic reveal
+      this.currentRecipe = recipe;
+      const fallbackThumb = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+
       setTimeout(() => {
-        if (!this.currentRecipe) return;
+        if (currentRequestId !== this.spinRequestId || !this.currentRecipe) return;
         this.stage.innerHTML = `
           <div style="text-align: center; width: 100%;">
             <div style="width: 140px; height: 140px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-md); border: 3px solid var(--accent-primary);">
-              <img src="${recipe.thumbnail}" alt="${recipe.title}" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img src="${recipe.thumbnail || fallbackThumb}" alt="${recipe.title}" onerror="this.src='${fallbackThumb}'" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
             <span style="font-size: 0.8rem; font-weight: 700; background: var(--accent-primary-light); color: var(--accent-primary); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">
-              🌍 ${recipe.area} • ${recipe.category}
+              🌍 ${recipe.area || 'Global'} • ${recipe.category || 'Specialty'}
             </span>
             <h4 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">${recipe.title}</h4>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${recipe.estimatedTime} minutes</p>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${recipe.estimatedTime || 30} minutes</p>
           </div>
         `;
         this.btnOpen.disabled = false;
         this.btnSpin.disabled = false;
-      }, 600);
+      }, 550);
 
     } catch (err) {
       console.error(err);
-      this.stage.innerHTML = '<p>Could not fetch random dish. Please spin again!</p>';
-      this.btnSpin.disabled = false;
+      if (currentRequestId === this.spinRequestId) {
+        this.stage.innerHTML = '<p>Could not fetch random dish. Please spin again!</p>';
+        this.btnSpin.disabled = false;
+      }
     }
   }
 }
