@@ -16,7 +16,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
-  <script type="module" crossorigin src="./assets/index-Bnn_-cr3.js"></script>
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('culinaria_theme_preference');
+        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          t = 'dark';
+        }
+        document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
+      } catch (e) {}
+    })();
+  </script>
+  <script type="module" crossorigin src="./assets/index-Cy3d91Jk.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-C86otCVk.css">
 </head>
 <body>
