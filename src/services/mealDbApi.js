@@ -4,12 +4,13 @@
  */
 
 import { getFavorites } from './storageService.js';
+import curated500 from '../data/curated500Recipes.json';
 
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 const cache = new Map();
 
 // Built-in curated gourmet recipes for instantaneous load & offline resilience
-const CURATED_FALLBACK_RECIPES = [
+const DEFAULT_TOP_RECIPES = [
   {
     idMeal: "52772",
     strMeal: "Teriyaki Chicken Casserole",
@@ -106,8 +107,12 @@ const CURATED_FALLBACK_RECIPES = [
     strIngredient3: "Powdered Sugar", strMeasure3: "1/2 cup",
     strIngredient4: "Eggs", strMeasure4: "2 whole + 2 yolks",
     strIngredient5: "Flour", strMeasure5: "3 tbsp",
-    strIngredient6: "Vanilla Extract", strMeasure6: "1 tsp"
   }
+];
+
+const CURATED_FALLBACK_RECIPES = [
+  ...DEFAULT_TOP_RECIPES,
+  ...(Array.isArray(curated500) ? curated500.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal))) : [])
 ];
 
 /**

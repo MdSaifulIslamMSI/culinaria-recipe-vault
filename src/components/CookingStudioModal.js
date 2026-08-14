@@ -296,8 +296,8 @@ export class CookingStudioModal {
             </div>
             <div class="video-frame-container" id="videoContainer_${r.id || 'current'}">
               ${r.youtubeId ? `
-                <div class="video-facade-card" data-yt-id="${encodeURIComponent(r.youtubeId)}" data-yt-title="${sanitizeHtml(r.title)}" title="Click to load and play video masterclass">
-                  <img src="https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg" alt="${sanitizeHtml(r.title)} Masterclass Video" class="video-facade-img" loading="lazy" />
+                <div class="video-facade-card" data-yt-id="${encodeURIComponent(r.youtubeId)}" data-yt-title="${sanitizeHtml(r.title)}" style="background-image: url('${r.thumbnail || fallbackCover}'); background-size: cover; background-position: center;" title="Click to load and play video masterclass">
+                  <img src="https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Masterclass Video" class="video-facade-img" />
                   <div class="video-facade-overlay">
                     <button type="button" class="btn-facade-play" aria-label="Play Masterclass Video">
                       <span class="facade-play-icon">▶</span>
@@ -318,6 +318,13 @@ export class CookingStudioModal {
                   </div>
                 </a>
               `}
+            </div>
+
+            <div class="video-footer-strip">
+              <span class="video-meta-badge">📺 ${r.youtubeId ? 'Interactive HD Masterclass' : 'YouTube Discovery Stream'}</span>
+              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-footer-link">
+                <span>Watch full screen on YouTube</span> ↗
+              </a>
             </div>
           </div>
         </div>
@@ -514,16 +521,11 @@ export class CookingStudioModal {
           e.preventDefault();
           parent.innerHTML = `
             <iframe 
-              src="https://www.youtube.com/embed/${encodeURIComponent(ytId)}?autoplay=1&rel=0&modestbranding=1&playsinline=1" 
+              src="https://www.youtube.com/embed/${encodeURIComponent(ytId)}?autoplay=1&enablejsapi=1&rel=0&modestbranding=1&playsinline=1" 
               title="${ytTitle}" 
-              loading="lazy"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
               allowfullscreen>
             </iframe>
-            <div class="video-active-helper">
-              <span>Having trouble playing?</span>
-              <a href="https://www.youtube.com/watch?v=${encodeURIComponent(ytId)}" target="_blank" rel="noopener noreferrer">Watch on YouTube ↗</a>
-            </div>
           `;
         }
       });
