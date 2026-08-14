@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
-  <script type="module" crossorigin src="./assets/index-CuCSgIKw.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BS5YrQVQ.css">
+  <script type="module" crossorigin src="./assets/index-TuGs2PA9.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-vjJ2pQK9.css">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -189,6 +189,18 @@
 
         <!-- Recipe Grid Area -->
         <div class="recipes-grid-section">
+          <!-- Personalized Palate Recommendation Ribbon -->
+          <div class="palate-recommendation-ribbon hidden" id="palateRibbon">
+            <div class="ribbon-header">
+              <div class="ribbon-title-wrap">
+                <span class="ribbon-badge">✨ Curated For Your Palate</span>
+                <h3 class="ribbon-title">Chef Selections Matching Your Taste</h3>
+              </div>
+              <span class="ribbon-sub" id="palateRationaleText">Based on your saved cookbook favorites</span>
+            </div>
+            <div class="ribbon-cards-strip" id="palateCardsStrip"></div>
+          </div>
+
           <!-- Loading State -->
           <div class="loading-state hidden" id="gridLoading">
             <div class="culinary-spinner"></div>
