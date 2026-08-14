@@ -125,7 +125,7 @@ export class CookingStudioModal {
 
     this.modalContent.innerHTML = `
       <div class="modal-hero-cover">
-        <img src="${r.thumbnail || fallbackCover}" alt="${r.title}" class="modal-hero-img" onerror="this.src='${fallbackCover}'" />
+        <img src="${r.thumbnail || fallbackCover}" alt="${r.title}" class="modal-hero-img" />
         <div class="modal-hero-gradient"></div>
       </div>
 
@@ -337,6 +337,13 @@ export class CookingStudioModal {
   }
 
   attachModalInteractiveEvents() {
+    const heroImg = this.modalContent.querySelector('.modal-hero-img');
+    if (heroImg) {
+      heroImg.addEventListener('error', () => {
+        heroImg.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80';
+      }, { once: true });
+    }
+
     const scaleUp = document.getElementById('btnScaleUp');
     const scaleDown = document.getElementById('btnScaleDown');
     const unitMetric = document.getElementById('btnUnitMetric');

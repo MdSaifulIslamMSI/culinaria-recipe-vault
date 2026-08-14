@@ -17,7 +17,7 @@ export function createRecipeCard(recipe, options = {}) {
 
   card.innerHTML = `
     <div class="recipe-image-wrap">
-      <img src="${imgUrl}" alt="${recipe.title}" class="recipe-image" loading="lazy" onerror="this.src='${fallbackImg}'" />
+      <img src="${imgUrl}" alt="${recipe.title}" class="recipe-image" loading="lazy" />
       <div class="card-badges-top">
         <span class="card-cat-badge">${recipe.category || 'Dish'}</span>
         ${recipe.area && recipe.area !== 'Global' ? `<span class="card-area-badge">${recipe.area}</span>` : ''}
@@ -56,6 +56,14 @@ export function createRecipeCard(recipe, options = {}) {
       </div>
     </div>
   `;
+
+  // Defensive image fallback handler
+  const imgEl = card.querySelector('.recipe-image');
+  if (imgEl) {
+    imgEl.addEventListener('error', () => {
+      imgEl.src = fallbackImg;
+    }, { once: true });
+  }
 
   // Favorite button handler
   const favBtn = card.querySelector('.btn-card-fav');

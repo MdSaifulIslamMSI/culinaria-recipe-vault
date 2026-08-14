@@ -49,7 +49,7 @@ function inspectNode(node) {
     for (const attrName of attrsToRemove) {
       const val = node.getAttribute(attrName);
       node.removeAttribute(attrName);
-      logSecurityEvent(SecurityEventType.DOM_MUTATION_TRAPPED, { attr: attrName, val: val ? val.slice(0, 40) : '' }, SecuritySeverity.HIGH);
+      logSecurityEvent(SecurityEventType.DOM_MUTATION_TRAPPED, { attr: attrName, val: val ? val.slice(0, 40) : '' }, SecuritySeverity.MEDIUM);
     }
   }
 
@@ -76,7 +76,7 @@ export function initDomWatchdog() {
       } else if (mutation.type === 'attributes') {
         if (INLINE_EVENT_REGEX.test(mutation.attributeName)) {
           mutation.target.removeAttribute(mutation.attributeName);
-          logSecurityEvent(SecurityEventType.DOM_MUTATION_TRAPPED, { attr: mutation.attributeName }, SecuritySeverity.HIGH);
+          logSecurityEvent(SecurityEventType.DOM_MUTATION_TRAPPED, { attr: mutation.attributeName }, SecuritySeverity.MEDIUM);
         }
       }
     }

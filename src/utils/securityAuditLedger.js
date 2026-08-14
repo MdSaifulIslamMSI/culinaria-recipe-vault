@@ -60,8 +60,8 @@ export function logSecurityEvent(type, details = {}, severity = SecuritySeverity
     ledger.shift();
   }
 
-  if (severity === SecuritySeverity.HIGH || severity === SecuritySeverity.CRITICAL) {
-    console.warn(`[SECURITY AUDIT - ${severity}] ${type}:`, details);
+  if (severity === SecuritySeverity.CRITICAL) {
+    console.warn(`[SECURITY AUDIT - CRITICAL] ${type}:`, details);
   }
 
   return entry;
