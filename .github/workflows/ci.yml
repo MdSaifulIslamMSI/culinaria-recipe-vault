@@ -7,7 +7,7 @@ on:
     branches: [ master, main ]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: culinaria-${{ github.ref }}
@@ -48,8 +48,27 @@ jobs:
           test -f dist/release.json
           node -e "const fs=require('fs'); const r=JSON.parse(fs.readFileSync('dist/release.json')); if(!/^[0-9a-f]{40}$/.test(r.commit)) process.exit(1)"
 
+      - name: Upload verified production artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: culinaria-production-dist
+          path: dist
+          if-no-files-found: error
+
+  deploy:
+    needs: quality
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: culinaria-production-dist
+          path: dist
+
       - name: Publish verified artifact to GitHub Pages
-        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
