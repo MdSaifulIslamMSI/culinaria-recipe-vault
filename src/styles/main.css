@@ -379,8 +379,10 @@ a {
 /* Search Box Component & Suggestions */
 .search-box-wrapper {
   max-width: 760px;
+  width: 100%;
   margin: 0 auto;
   position: relative;
+  box-sizing: border-box;
 }
 
 .search-box {
@@ -392,6 +394,10 @@ a {
   padding: 0.5rem 0.6rem 0.5rem 1.35rem;
   box-shadow: var(--shadow-md);
   transition: all var(--transition-base);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .search-box:focus-within {
@@ -404,6 +410,7 @@ a {
   align-items: center;
   color: var(--text-tertiary);
   margin-right: 0.85rem;
+  flex-shrink: 0;
 }
 
 .search-icon svg {
@@ -412,7 +419,9 @@ a {
 }
 
 .search-input {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0 !important;
+  width: 100%;
   font-size: 1.05rem;
   color: var(--text-primary);
   background: transparent;
@@ -1049,6 +1058,9 @@ a {
   padding: 2.25rem;
   box-shadow: var(--shadow-md);
   text-align: left;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .pantry-input-box {
@@ -1059,6 +1071,11 @@ a {
   border-radius: var(--radius-md);
   padding: 0.45rem 0.5rem 0.45rem 1.15rem;
   margin-bottom: 1.5rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+  gap: 0.5rem;
 }
 
 .pantry-input-box:focus-within {
@@ -1067,13 +1084,25 @@ a {
 
 .pantry-input-icon {
   font-size: 1.15rem;
-  margin-right: 0.85rem;
+  margin-right: 0.4rem;
+  flex-shrink: 0;
 }
 
 .pantry-input-box input {
-  flex: 1;
+  flex: 1 1 0%;
+  min-width: 0 !important;
+  width: 100%;
   font-size: 1.02rem;
   color: var(--text-primary);
+  background: transparent;
+}
+
+.pantry-input-box .primary-btn {
+  flex-shrink: 0;
+  padding: 0.6rem 1.15rem;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  border-radius: var(--radius-sm);
 }
 
 .pantry-quick-suggestions {
@@ -2548,6 +2577,21 @@ a {
 }
 
 /* Tablets (max-width: 860px) */
+/* Global Viewport & Container Hard Locks */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+  position: relative !important;
+}
+
+.app-container {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+  width: 100% !important;
+}
+
+/* Tablets (max-width: 860px) */
 @media (max-width: 860px) {
   .modal-grid-body {
     grid-template-columns: 1fr !important;
@@ -2575,11 +2619,11 @@ a {
 /* Mobile & Phablets (max-width: 768px) */
 @media (max-width: 768px) {
   .app-header {
-    padding: 0.5rem 0;
+    padding: 0.45rem 0;
   }
   .header-inner {
     padding: 0 0.85rem;
-    gap: 0.45rem;
+    gap: 0.4rem;
   }
   .header-top-bar {
     display: flex;
@@ -2591,10 +2635,10 @@ a {
     display: none;
   }
   .brand-title {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
   }
   .logo-emblem {
-    font-size: 1.7rem;
+    font-size: 1.6rem;
   }
   .desktop-nav {
     display: none !important;
@@ -2605,49 +2649,122 @@ a {
     justify-content: space-between;
     gap: 0.25rem;
     background: var(--bg-surface-subtle);
-    padding: 0.25rem;
+    padding: 0.2rem;
     border-radius: var(--radius-full);
     border: 1px solid var(--border-subtle);
+    box-sizing: border-box;
   }
   .mobile-nav .nav-btn {
-    flex: 1;
+    flex: 1 1 0%;
+    min-width: 0;
     justify-content: center;
-    padding: 0.45rem 0.4rem;
-    font-size: 0.8rem;
+    padding: 0.42rem 0.3rem;
+    font-size: 0.78rem;
+    gap: 0.35rem;
     border-radius: var(--radius-full);
+    white-space: nowrap;
+  }
+  .mobile-nav .nav-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
   }
   .header-actions {
-    gap: 0.4rem;
+    gap: 0.35rem;
   }
   .action-btn {
-    padding: 0.45rem 0.65rem;
-    min-height: 38px;
+    padding: 0.45rem 0.6rem;
+    min-height: 36px;
   }
   .action-btn .btn-text {
     display: none;
   }
-  .hero-badge {
-    font-size: 0.76rem;
-    padding: 0.25rem 0.75rem;
-    margin-bottom: 0.75rem;
-  }
   .hero-section {
-    padding: 2rem 0.85rem 1.75rem;
+    padding: 1.75rem 0.85rem 1.5rem !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+  }
+  .hero-badge {
+    font-size: 0.74rem;
+    padding: 0.25rem 0.75rem;
+    margin-bottom: 0.65rem;
   }
   .hero-title {
-    font-size: clamp(1.6rem, 5vw, 2.2rem);
+    font-size: clamp(1.5rem, 5.5vw, 2.1rem);
     line-height: 1.2;
     margin-bottom: 0.4rem;
   }
   .hero-subtitle {
-    font-size: 0.88rem;
-    margin-bottom: 1.35rem;
+    font-size: 0.86rem;
+    margin-bottom: 1.25rem;
+    line-height: 1.55;
   }
   .search-box-wrapper {
-    max-width: 100%;
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    box-sizing: border-box !important;
+  }
+  .search-box {
+    padding: 0.32rem 0.35rem 0.32rem 0.85rem !important;
+    border-radius: var(--radius-full) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 0.3rem !important;
+    overflow: hidden !important;
+  }
+  .search-icon {
+    margin-right: 0.25rem !important;
+  }
+  .search-icon svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+  .search-input {
+    min-width: 0 !important;
+    flex: 1 1 0% !important;
+    width: 100% !important;
+    font-size: 0.88rem !important;
+  }
+  .search-input::placeholder {
+    font-size: 0.8rem !important;
+  }
+  .search-submit-btn {
+    padding: 0.5rem 0.95rem !important;
+    font-size: 0.84rem !important;
+    flex-shrink: 0 !important;
+    border-radius: var(--radius-full) !important;
+    white-space: nowrap !important;
+  }
+  .clear-search-btn {
+    padding: 0.25rem 0.4rem !important;
+    font-size: 0.82rem !important;
+  }
+  .trending-pills {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.35rem !important;
+    margin-top: 1rem !important;
+  }
+  .trending-label {
+    font-size: 0.74rem !important;
+    width: 100% !important;
+    margin-bottom: 0.2rem !important;
+  }
+  .trend-chip {
+    font-size: 0.76rem !important;
+    padding: 0.25rem 0.65rem !important;
+  }
+  .filters-container {
+    padding: 0 0.85rem !important;
+    margin-bottom: 1.5rem !important;
   }
   .filters-sticky-wrap {
-    padding: 0.6rem 1rem;
+    padding: 0.85rem 0.85rem !important;
+    border-radius: var(--radius-lg) !important;
   }
   .category-scroll-strip {
     padding: 0.2rem 0;
@@ -2659,48 +2776,106 @@ a {
     font-size: 0.82rem;
   }
   .sub-filter-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.65rem;
-    margin-top: 0.65rem;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    margin-top: 0.65rem !important;
   }
   .filter-dropdown-group {
-    width: 100%;
-    justify-content: space-between;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 0.5rem !important;
+  }
+  .filter-label {
+    font-size: 0.8rem !important;
+    white-space: nowrap !important;
   }
   .styled-select {
-    flex: 1;
-    width: 100%;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    width: 100% !important;
+    padding: 0.45rem 1.8rem 0.45rem 0.75rem !important;
+    font-size: 0.82rem !important;
   }
   .quick-toggles-group {
-    width: 100%;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 0.35rem !important;
+    width: 100% !important;
   }
   .toggle-filter-btn {
-    flex: 1 1 calc(33.33% - 0.4rem);
-    min-width: 95px;
-    justify-content: center;
-    padding: 0.45rem 0.5rem;
-    font-size: 0.76rem;
+    min-width: 0 !important;
+    flex: 1 !important;
+    padding: 0.45rem 0.2rem !important;
+    font-size: 0.72rem !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+    border-radius: var(--radius-md) !important;
+  }
+  .results-stats {
+    font-size: 0.76rem !important;
+    text-align: center !important;
+    width: 100% !important;
   }
   .recipes-grid-section {
-    padding: 0 1rem 3.5rem;
+    padding: 0 0.85rem 3.5rem !important;
   }
   .recipe-cards-grid {
     grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
+    gap: 0.85rem;
   }
   .recipe-content {
-    padding: 1rem 0.9rem;
+    padding: 0.85rem 0.75rem;
   }
   .recipe-title {
-    font-size: 1.05rem;
+    font-size: 0.95rem;
   }
   .recipe-meta-row {
-    font-size: 0.78rem;
-    gap: 0.4rem;
+    font-size: 0.75rem;
+    gap: 0.35rem;
+  }
+  .pantry-hero {
+    padding: 0 0.85rem !important;
+    margin: 1.5rem auto 2rem !important;
+  }
+  .pantry-builder-card {
+    padding: 1.25rem 0.85rem !important;
+    border-radius: var(--radius-lg) !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  .pantry-input-box {
+    padding: 0.32rem 0.35rem 0.32rem 0.75rem !important;
+    border-radius: var(--radius-md) !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    gap: 0.35rem !important;
+    margin-bottom: 1.25rem !important;
+  }
+  .pantry-input-box input {
+    font-size: 0.86rem !important;
+    min-width: 0 !important;
+    flex: 1 1 0% !important;
+  }
+  .pantry-input-box input::placeholder {
+    font-size: 0.78rem !important;
+  }
+  .pantry-input-box .primary-btn {
+    padding: 0.48rem 0.8rem !important;
+    font-size: 0.82rem !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+  }
+  .quick-staples {
+    gap: 0.35rem !important;
+  }
+  .staple-chip {
+    font-size: 0.78rem !important;
+    padding: 0.3rem 0.65rem !important;
   }
   .cook-step-card {
     padding: 2rem 1.25rem;
@@ -2733,7 +2908,7 @@ a {
 @media (max-width: 540px) {
   .recipe-cards-grid {
     grid-template-columns: 1fr !important;
-    gap: 1.25rem;
+    gap: 1.15rem;
   }
   .recipe-image-wrap {
     padding-top: 58%;
