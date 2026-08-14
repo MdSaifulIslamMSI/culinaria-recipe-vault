@@ -183,6 +183,7 @@ class CulinariaApp {
         const shuffled = [...allRecipes].sort(() => 0.5 - Math.random());
         this.currentRecipes = shuffled;
         this.applyLocalFilters();
+        this.setGridLoading(false);
         this.showToast('✨ Discovered fresh chef specials!');
       } else {
         await this.executeFilterAndSearch();
@@ -200,7 +201,11 @@ class CulinariaApp {
           }
         }, 120);
       }
+    } catch (err) {
+      console.error('Explore discovery error:', err);
+      this.executeFilterAndSearch();
     } finally {
+      this.setGridLoading(false);
       this.searchSubmitBtn.classList.remove('exploring');
       this.searchSubmitBtn.innerHTML = originalBtnText;
     }
@@ -489,6 +494,7 @@ class CulinariaApp {
   }
 
   renderRecipeGrid(recipes) {
+    this.setGridLoading(false);
     this.recipeGrid.innerHTML = '';
     const count = recipes.length;
 
