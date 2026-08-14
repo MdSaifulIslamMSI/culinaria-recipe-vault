@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "buildType": "client-side-pwa",
   "deployment": {
-    "provider": "GitHub Pages",
-    "sourceBranch": "gh-pages",
+    "provider": "static hosting",
+    "sourceBranch": "deployment metadata",
     "healthModel": "static-artifact-metadata; no server-side SLA"
   },
   "clientFeatures": {
