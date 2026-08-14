@@ -289,17 +289,23 @@ export class CookingStudioModal {
 
           ${r.youtubeId ? `
             <div class="video-section-wrap">
-              <h3 class="modal-section-title" style="font-size: 1.15rem; margin-bottom: 0.75rem;">Video Cooking Masterclass</h3>
-              <div class="video-frame-container">
-                <iframe 
-                  src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(r.youtubeId)}" 
-                  title="${sanitizeHtml(r.title)} Video Guide" 
-                  sandbox="allow-scripts allow-same-origin allow-presentation"
-                  loading="lazy"
-                  referrerpolicy="strict-origin-when-cross-origin"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
-                  allowfullscreen>
-                </iframe>
+              <div class="video-section-header">
+                <h3 class="modal-section-title" style="font-size: 1.15rem; margin: 0;">Video Cooking Masterclass</h3>
+                <a href="https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}" target="_blank" rel="noopener noreferrer" class="yt-external-btn" title="Open video in YouTube">
+                  <span>🎬 Open in YouTube</span> ↗
+                </a>
+              </div>
+              <div class="video-frame-container" id="videoContainer_${r.id || 'current'}">
+                <div class="video-facade-card" data-yt-id="${encodeURIComponent(r.youtubeId)}" data-yt-title="${sanitizeHtml(r.title)}" title="Click to load and play video masterclass">
+                  <img src="https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg" alt="${sanitizeHtml(r.title)} Masterclass Video" class="video-facade-img" loading="lazy" />
+                  <div class="video-facade-overlay">
+                    <button type="button" class="btn-facade-play" aria-label="Play Masterclass Video">
+                      <span class="facade-play-icon">▶</span>
+                      <span class="facade-play-text">Play Masterclass</span>
+                    </button>
+                    <span class="video-hd-badge">HD Masterclass</span>
+                  </div>
+                </div>
               </div>
             </div>
           ` : ''}
@@ -333,14 +339,6 @@ export class CookingStudioModal {
     `;
 
     this.attachModalInteractiveEvents();
-  }
-
-  highlightTimers(stepText) {
-    return stepText.replace(/\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/gi, (match, num, unit) => {
-      let mins = parseInt(num, 10);
-      if (/hour|hr/i.test(unit)) mins *= 60;
-      return `<button class="clickable-timer-btn" data-minutes="${mins}" title="Click to start ${mins}-min timer">⏱️ ${match}</button>`;
-    });
   }
 
   attachModalInteractiveEvents() {
@@ -489,6 +487,29 @@ export class CookingStudioModal {
         window.dispatchEvent(new CustomEvent('culinaria:toast', {
           detail: { message: `⏱️ Started ${mins}-minute kitchen timer for this step!` }
         }));
+      });
+    });
+
+    // Video Facade Click-to-Play
+    this.modalContent.querySelectorAll('.video-facade-card, .btn-facade-play').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const facade = el.closest('.video-facade-card');
+        if (!facade) return;
+        const ytId = facade.dataset.ytId;
+        const ytTitle = facade.dataset.ytTitle || 'Recipe Video Guide';
+        const parent = facade.closest('.video-frame-container');
+        if (parent && ytId) {
+          parent.innerHTML = `
+            <iframe 
+              src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(ytId)}?autoplay=1&rel=0&modestbranding=1" 
+              title="${ytTitle}" 
+              loading="lazy"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+              allowfullscreen>
+            </iframe>
+          `;
+        }
       });
     });
 
