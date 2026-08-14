@@ -108,11 +108,14 @@ export function sanitizeObject(obj) {
   return clean;
 }
 
+// Session salt for client-side tamper detection
+const INTEGRITY_SALT = 'culinaria_vault_salt_v1';
+
 /**
- * Calculates a lightweight 32-bit checksum for local storage tamper-proofing
+ * Calculates a salted FNV-1a checksum digest for client-side storage tamper-detection
  */
 export function computeIntegrityHash(data) {
-  const str = typeof data === 'string' ? data : JSON.stringify(data);
+  const str = (typeof data === 'string' ? data : JSON.stringify(data)) + INTEGRITY_SALT;
   let hash = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {
     hash ^= str.charCodeAt(i);

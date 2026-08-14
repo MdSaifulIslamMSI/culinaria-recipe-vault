@@ -31,7 +31,34 @@ button, input, select, textarea {
   color: inherit;
   border: none;
   background: none;
-  outline: none;
+}
+
+/* Screen-reader only utility */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* Accessible High-Visibility Focus Rings for Keyboard Navigation */
+:focus-visible {
+  outline: 2px solid var(--accent-primary, #d35400);
+  outline-offset: 2px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--accent-primary, #d35400);
+  outline-offset: 2px;
 }
 
 button {

@@ -4,7 +4,7 @@
  */
 
 import { getFavorites } from './storageService.js';
-import curated500 from '../data/curated500Recipes.json';
+import curated500 from '../data/curated500Recipes.js';
 
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 const cache = new Map();
@@ -366,7 +366,7 @@ export async function getAreas() {
 export async function filterByCategory(category) {
   if (!category || category === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?c=${encodeURIComponent(category)}`);
-  if (data && data.meals) {
+  if (data && data.meals && data.meals.length > 0) {
     return data.meals.map(m => ({
       id: m.idMeal,
       title: m.strMeal,
@@ -377,16 +377,55 @@ export async function filterByCategory(category) {
     }));
   }
 
-  return CURATED_FALLBACK_RECIPES.filter(m => m.strCategory.toLowerCase() === category.toLowerCase()).map(formatRecipe);
+  const catLower = category.toLowerCase();
+  return CURATED_FALLBACK_RECIPES
+    .filter(m => (m.strCategory || '').toLowerCase() === catLower)
+    .map(formatRecipe);
+}
+
+const AREA_DEMONYM_MAP = {
+  'indian': ['indian', 'india'],
+  'american': ['american', 'united states', 'usa', 'us'],
+  'british': ['british', 'uk', 'united kingdom', 'england'],
+  'canadian': ['canadian', 'canada'],
+  'chinese': ['chinese', 'china'],
+  'french': ['french', 'france'],
+  'greek': ['greek', 'greece'],
+  'italian': ['italian', 'italy'],
+  'japanese': ['japanese', 'japan'],
+  'mexican': ['mexican', 'mexico'],
+  'spanish': ['spanish', 'spain'],
+  'thai': ['thai', 'thailand'],
+  'turkish': ['turkish', 'turkey'],
+  'vietnamese': ['vietnamese', 'vietnam'],
+  'malaysian': ['malaysian', 'malaysia'],
+  'moroccan': ['moroccan', 'morocco']
+};
+
+export function matchesArea(recipeArea, queryArea) {
+  if (!recipeArea || !queryArea) return false;
+  const rLower = String(recipeArea).toLowerCase().trim();
+  const qLower = String(queryArea).toLowerCase().trim();
+  if (rLower === qLower) return true;
+  
+  const aliases = AREA_DEMONYM_MAP[qLower];
+  if (aliases && aliases.includes(rLower)) return true;
+
+  for (const [key, list] of Object.entries(AREA_DEMONYM_MAP)) {
+    if (list.includes(qLower) && (rLower === key || list.includes(rLower))) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**
- * Filter recipes by cuisine area
+ * Filter recipes by cuisine area (with null safety and demonym alias normalization)
  */
 export async function filterByArea(area) {
   if (!area || area === 'all') return searchRecipes('');
   const data = await fetchWithCache(`filter.php?a=${encodeURIComponent(area)}`);
-  if (data && data.meals) {
+  if (data && data.meals && data.meals.length > 0) {
     return data.meals.map(m => ({
       id: m.idMeal,
       title: m.strMeal,
@@ -397,11 +436,13 @@ export async function filterByArea(area) {
     }));
   }
 
-  return CURATED_FALLBACK_RECIPES.filter(m => m.strArea.toLowerCase() === area.toLowerCase()).map(formatRecipe);
+  return CURATED_FALLBACK_RECIPES
+    .filter(m => matchesArea(m.strArea || m.strCountry || m.cuisine || m.area, area))
+    .map(formatRecipe);
 }
 
 /**
- * Accurate intersection filter for Category AND Cuisine Area
+ * Accurate intersection filter for Category AND Cuisine Area (Online & Resilient Offline)
  */
 export async function filterByCategoryAndArea(category = 'all', area = 'all') {
   if (category === 'all' && area === 'all') {
@@ -414,7 +455,7 @@ export async function filterByCategoryAndArea(category = 'all', area = 'all') {
     return filterByArea(area);
   }
 
-  // Both category and area are active: fetch both and calculate true intersection
+  // Both category and area are active: attempt online fetch first
   const [catData, areaData] = await Promise.all([
     fetchWithCache(`filter.php?c=${encodeURIComponent(category)}`),
     fetchWithCache(`filter.php?a=${encodeURIComponent(area)}`)
@@ -423,21 +464,30 @@ export async function filterByCategoryAndArea(category = 'all', area = 'all') {
   const catMeals = (catData && catData.meals) ? catData.meals : [];
   const areaMeals = (areaData && areaData.meals) ? areaData.meals : [];
 
-  if (catMeals.length === 0 || areaMeals.length === 0) {
-    return [];
+  if (catMeals.length > 0 && areaMeals.length > 0) {
+    const areaIdSet = new Set(areaMeals.map(m => String(m.idMeal)));
+    const matched = catMeals.filter(m => areaIdSet.has(String(m.idMeal)));
+    if (matched.length > 0) {
+      return matched.map(m => ({
+        id: m.idMeal,
+        title: m.strMeal,
+        thumbnail: m.strMealThumb,
+        category: category,
+        area: area,
+        estimatedTime: 30
+      }));
+    }
   }
 
-  const areaIdSet = new Set(areaMeals.map(m => String(m.idMeal)));
-  const matched = catMeals.filter(m => areaIdSet.has(String(m.idMeal)));
+  // Offline / Resilient Local Intersection Fallback against curated dataset
+  const catLower = category.toLowerCase();
+  const matchedOffline = CURATED_FALLBACK_RECIPES.filter(m => {
+    const mCat = (m.strCategory || '').toLowerCase();
+    const areaField = m.strArea || m.strCountry || m.cuisine || m.area;
+    return mCat === catLower && matchesArea(areaField, area);
+  });
 
-  return matched.map(m => ({
-    id: m.idMeal,
-    title: m.strMeal,
-    thumbnail: m.strMealThumb,
-    category: category,
-    area: area,
-    estimatedTime: 30
-  }));
+  return matchedOffline.map(formatRecipe);
 }
 
 /**
@@ -467,12 +517,16 @@ export function sanitizeIngredientKey(name) {
 }
 
 /**
- * Filter recipes by single ingredient
+ * Filter recipes by single ingredient (Strict text-matching fallback)
  */
 export async function filterByIngredient(ingredient) {
+  if (!ingredient || typeof ingredient !== 'string') return [];
+  const query = ingredient.toLowerCase().trim();
+  if (!query) return [];
+
   const sanitized = sanitizeIngredientKey(ingredient);
   const data = await fetchWithCache(`filter.php?i=${encodeURIComponent(sanitized)}`);
-  if (data && data.meals) {
+  if (data && data.meals && data.meals.length > 0) {
     return data.meals.map(m => ({
       id: m.idMeal,
       title: m.strMeal,
@@ -483,12 +537,23 @@ export async function filterByIngredient(ingredient) {
     }));
   }
 
-  return CURATED_FALLBACK_RECIPES.map(m => ({
+  // Strict Offline / Fallback Match against ingredient list
+  const matched = CURATED_FALLBACK_RECIPES.filter(m => {
+    for (let i = 1; i <= 20; i++) {
+      const ing = m[`strIngredient${i}`];
+      if (ing && typeof ing === 'string' && ing.toLowerCase().includes(query)) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  return matched.map(m => ({
     id: m.idMeal,
     title: m.strMeal,
     thumbnail: m.strMealThumb,
-    category: 'Pantry Match',
-    area: 'Global',
+    category: m.strCategory || 'Pantry Match',
+    area: m.strArea || m.strCountry || 'Global',
     estimatedTime: 30
   }));
 }

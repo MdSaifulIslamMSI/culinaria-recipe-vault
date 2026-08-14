@@ -1,6 +1,6 @@
 /**
- * Hardware-Accelerated Web Crypto AES-GCM-256 Encryption Engine
- * Provides Zero-Knowledge, Origin-Bound encryption for sensitive user cookbook and pantry storage.
+ * Client-Side Web Crypto AES-GCM-256 Encryption Utility
+ * Provides optional client-side cryptographic encryption routines using the Web Cryptography API (SubtleCrypto).
  */
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from './securityAuditLedger.js';
 

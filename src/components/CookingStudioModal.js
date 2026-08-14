@@ -71,6 +71,13 @@ export class CookingStudioModal {
           this.prevCookStep();
         }
       }
+      if (e.key === 'Tab') {
+        if (this.cookOverlay.classList.contains('open')) {
+          this.trapFocus(this.cookOverlay, e);
+        } else if (this.modalBackdrop.classList.contains('open')) {
+          this.trapFocus(this.modal, e);
+        }
+      }
     });
 
     // Cook mode buttons
@@ -98,8 +105,23 @@ export class CookingStudioModal {
     });
   }
 
+  trapFocus(container, e) {
+    const focusable = Array.from(container.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus();
+      e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus();
+      e.preventDefault();
+    }
+  }
+
   open(recipe) {
     if (!recipe) return;
+    this.previousActiveElement = document.activeElement;
     const prefs = getChefPreferences();
     this.currentRecipe = recipe;
     this.baseServings = recipe.servings || 4;
@@ -110,11 +132,15 @@ export class CookingStudioModal {
     this.render();
     this.modalBackdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+    setTimeout(() => this.closeBtn.focus(), 50);
   }
 
   close() {
     this.modalBackdrop.classList.remove('open');
     document.body.style.overflow = '';
+    if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
+      this.previousActiveElement.focus();
+    }
   }
 
   render() {

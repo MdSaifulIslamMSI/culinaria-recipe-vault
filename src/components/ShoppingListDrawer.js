@@ -63,22 +63,52 @@ export class ShoppingListDrawer {
       window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '🗑️ Cleared grocery list' } }));
     });
 
+    // Keyboard controls
+    document.addEventListener('keydown', (e) => {
+      if (this.drawer.classList.contains('open')) {
+        if (e.key === 'Escape') {
+          this.close();
+        } else if (e.key === 'Tab') {
+          this.trapFocus(e);
+        }
+      }
+    });
+
     // Global cart updated event listener
     window.addEventListener('culinaria:cart-updated', () => {
       this.updateUI();
     });
   }
 
+  trapFocus(e) {
+    const focusable = Array.from(this.drawer.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus();
+      e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus();
+      e.preventDefault();
+    }
+  }
+
   open() {
+    this.previousActiveElement = document.activeElement;
     this.drawer.classList.add('open');
     this.overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    setTimeout(() => this.manualInput.focus(), 50);
   }
 
   close() {
     this.drawer.classList.remove('open');
     this.overlay.classList.remove('open');
     document.body.style.overflow = '';
+    if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
+      this.previousActiveElement.focus();
+    }
   }
 
   addManualItem() {

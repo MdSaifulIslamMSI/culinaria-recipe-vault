@@ -51,26 +51,49 @@ export class PreferencesDrawer {
       this.syncActivePaletteUI();
     });
 
-    // Listen to ESC key to close
+    // Listen to ESC key & Tab trapping
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen()) {
-        this.close();
+      if (this.isOpen()) {
+        if (e.key === 'Escape') {
+          this.close();
+        } else if (e.key === 'Tab') {
+          this.trapFocus(e);
+        }
       }
     });
   }
 
+  trapFocus(e) {
+    const focusable = Array.from(this.drawer.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus();
+      e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus();
+      e.preventDefault();
+    }
+  }
+
   open() {
+    this.previousActiveElement = document.activeElement;
     this.syncToggleUI();
     this.syncActivePaletteUI();
     this.overlay?.classList.add('open');
     this.drawer?.classList.add('open');
     document.body.style.overflow = 'hidden';
+    setTimeout(() => this.closeBtn?.focus(), 50);
   }
 
   close() {
     this.overlay?.classList.remove('open');
     this.drawer?.classList.remove('open');
     document.body.style.overflow = '';
+    if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
+      this.previousActiveElement.focus();
+    }
   }
 
   isOpen() {

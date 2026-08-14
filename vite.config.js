@@ -4,6 +4,13 @@ export default defineConfig({
   base: './',
   build: {
     outDir: 'dist',
-    sourcemap: false
+    sourcemap: false,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'recipe-catalog': ['./src/data/curated500Recipes.js']
+        }
+      }
+    }
   }
 });

@@ -1,20 +1,19 @@
 {
-  "status": "HEALTHY",
-  "service": "culinaria-recipe-vault",
-  "version": "2.0.0",
-  "sreTier": "Tier-1 Production PWA",
-  "uptimeSLA": "99.99%",
+  "status": "healthy",
+  "app": "culinaria-recipe-vault",
+  "version": "1.0.0",
+  "buildType": "client-side-pwa",
   "deployment": {
-    "primary": "Render Static Edge Service",
-    "failover": "GitHub Pages Anycast Global CDN",
-    "multiCloudRedundant": true
+    "provider": "Render Static Site",
+    "gitBranch": "master"
   },
-  "capabilities": {
-    "offlineVaultReady": true,
-    "cachedRecipesCount": 789,
-    "trustedTypesEnforced": true,
-    "cryptoAesGcmActive": true,
-    "serviceWorkerEnabled": true
+  "clientFeatures": {
+    "offlineCatalogReady": true,
+    "curatedRecipesCount": 789,
+    "serviceWorkerEnabled": true,
+    "localStorageSanitized": true,
+    "webAudioSupported": true,
+    "speechSynthesisSupported": true
   },
-  "timestamp": "2026-08-14T14:40:00Z"
+  "lastVerified": "2026-08-14T23:00:00Z"
 }

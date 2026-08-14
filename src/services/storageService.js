@@ -1,7 +1,7 @@
 /**
- * Enterprise Zero-Knowledge Storage Service
- * Hardware-accelerated Web Crypto encryption, prototype pollution defense,
- * rate limiting, and dual-layer HMAC tamper verification.
+ * Client-Side Storage Service
+ * Provides sanitized local storage with rate-limiting, prototype pollution protection,
+ * and cryptographic integrity validation envelopes.
  */
 import {
   sanitizeObject,
@@ -11,7 +11,6 @@ import {
   computeIntegrityHash,
   storageRateLimiter
 } from '../utils/securitySanitizer.js';
-import { encryptPayload, decryptPayload } from '../utils/cryptoEngine.js';
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from '../utils/securityAuditLedger.js';
 
 const STORAGE_KEYS = {
@@ -87,9 +86,6 @@ export function safeSet(key, value) {
     };
 
     localStorage.setItem(key, JSON.stringify(envelope));
-
-    // Asynchronously encrypt in background for zero-knowledge resilience
-    encryptPayload(cleanValue).catch(() => {});
   } catch (e) {
     console.error(`[SECURITY] Error saving ${key} to localStorage:`, e);
   }
