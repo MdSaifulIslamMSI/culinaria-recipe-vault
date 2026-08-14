@@ -287,15 +287,15 @@ export function getPersonalizedRecommendations(favorites = getFavorites(), pool 
 
     const score = (ingSim * 0.45) + catMatch + areaMatch;
 
-    let rationale = '✨ Recommended for your taste';
+    let rationale = '✨ Curated Match';
     if (areaMatch > 0 && catMatch > 0) {
-      rationale = `Matches your passion for ${area} ${cat}`;
+      rationale = `✨ ${area} ${cat}`;
     } else if (areaMatch > 0) {
-      rationale = `Because you enjoy ${area} cuisine`;
+      rationale = `✨ ${area} Tradition`;
     } else if (catMatch > 0) {
-      rationale = `Based on your favorite ${cat} dishes`;
+      rationale = `✨ ${cat} Favorite`;
     } else if (ingSim > 0.15) {
-      rationale = 'Shares your favorite flavor aromatics';
+      rationale = '✨ Flavor Match';
     }
 
     return {
