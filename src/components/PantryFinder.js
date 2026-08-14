@@ -58,6 +58,84 @@ export class PantryFinder {
 
     // Find recipes button
     this.btnFind.addEventListener('click', () => this.findMatchedRecipes());
+
+    // Initialize Voice Dictate
+    this.initVoiceInput();
+  }
+
+  initVoiceInput() {
+    const btnVoice = document.getElementById('btnVoicePantry');
+    if (!btnVoice) return;
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      btnVoice.title = 'Voice recognition not supported in this browser';
+      return;
+    }
+
+    let recognition = null;
+    let isListening = false;
+
+    const resetBtn = () => {
+      isListening = false;
+      btnVoice.classList.remove('listening');
+      btnVoice.textContent = '🎙️ Speak';
+    };
+
+    btnVoice.addEventListener('click', () => {
+      if (isListening) {
+        recognition?.stop();
+        resetBtn();
+        return;
+      }
+
+      try {
+        recognition = new SpeechRecognition();
+        recognition.continuous = false;
+        recognition.lang = 'en-US';
+        recognition.interimResults = false;
+
+        recognition.onstart = () => {
+          isListening = true;
+          btnVoice.classList.add('listening');
+          btnVoice.textContent = '🔴 Listening...';
+          window.dispatchEvent(new CustomEvent('culinaria:toast', {
+            detail: { message: '🎙️ Speak ingredients aloud (e.g. "Garlic, Butter, Shrimp")' }
+          }));
+        };
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0]?.[0]?.transcript || '';
+          if (transcript) {
+            const rawTokens = transcript
+              .split(/,|\sand\s|\spluss\s|\splus\s/i)
+              .map(s => s.replace(/^add\s/i, '').replace(/[.,!]/g, '').trim())
+              .filter(s => s.length > 1);
+
+            rawTokens.forEach(token => this.addItem(token));
+
+            window.dispatchEvent(new CustomEvent('culinaria:toast', {
+              detail: { message: `🎙️ Added from voice: ${rawTokens.join(', ')}` }
+            }));
+          }
+          resetBtn();
+        };
+
+        recognition.onerror = (e) => {
+          console.warn('Voice recognition error:', e);
+          resetBtn();
+        };
+
+        recognition.onend = () => {
+          resetBtn();
+        };
+
+        recognition.start();
+      } catch (err) {
+        console.warn('Could not start speech recognition:', err);
+        resetBtn();
+      }
+    });
   }
 
   addItemFromInput() {

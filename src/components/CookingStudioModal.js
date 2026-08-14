@@ -480,8 +480,29 @@ export class CookingStudioModal {
       });
     });
 
+    // Inline Step Timer chips click
+    this.modalContent.querySelectorAll('.inline-step-timer-chip').forEach(chip => {
+      chip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const mins = parseInt(chip.dataset.minutes, 10) || 5;
+        activeTimer.start(mins * 60, `${this.currentRecipe.title} (${mins}m)`);
+        window.dispatchEvent(new CustomEvent('culinaria:toast', {
+          detail: { message: `⏱️ Started ${mins}-minute kitchen timer for this step!` }
+        }));
+      });
+    });
+
     btnLaunchCook?.addEventListener('click', () => {
       this.openCookMode();
+    });
+  }
+
+  highlightTimers(text) {
+    if (!text || typeof text !== 'string') return '';
+    return sanitizeHtml(text).replace(/\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/gi, (match, count, unit) => {
+      let mins = parseInt(count, 10);
+      if (/hour|hr/i.test(unit)) mins *= 60;
+      return `<button type="button" class="inline-step-timer-chip" data-minutes="${mins}" title="Click to start ${mins}-minute countdown timer">⏱️ ${match}</button>`;
     });
   }
 

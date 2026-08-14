@@ -3764,8 +3764,10 @@ html, body {
     margin-bottom: 1.25rem !important;
   }
   .ribbon-cards-strip {
-    grid-template-columns: 1fr !important;
-    gap: 0.65rem !important;
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 0.75rem !important;
+    padding-bottom: 0.4rem !important;
   }
   .footer-inner {
     flex-direction: column;
@@ -3773,4 +3775,67 @@ html, body {
     gap: 1rem;
   }
 }
+
+/* ==========================================================================
+   10/10 Micro-Polish: Inline Step Timers & Voice Dictation Controls
+   ========================================================================== */
+.inline-step-timer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--accent-primary-light);
+  color: var(--accent-primary);
+  font-weight: 700;
+  font-size: 0.82rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--accent-primary);
+  cursor: pointer;
+  vertical-align: middle;
+  transition: all var(--transition-fast);
+  margin: 0 0.25rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.inline-step-timer-chip:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-voice-pantry {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  font-size: 0.85rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border-strong);
+  background: var(--bg-surface-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-voice-pantry:hover {
+  background: var(--bg-surface-hover);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.btn-voice-pantry.listening {
+  background: #e53935 !important;
+  color: #ffffff !important;
+  border-color: #d32f2f !important;
+  animation: pulseMic 1.2s infinite;
+}
+
+@keyframes pulseMic {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7); }
+  70% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+}
+
 
