@@ -55,7 +55,7 @@ export function renderRecoveryScreen(errorMsg = '') {
       <div class="recovery-icon">👨‍🍳</div>
       <h2 class="recovery-title">Kitchen Prep Interrupted</h2>
       <p class="recovery-desc">
-        A temporary browser exception occurred. Your saved recipes and settings are safe in encrypted storage.
+        A temporary browser exception occurred. Your saved recipes and settings remain in this browser's local storage.
       </p>
       ${errorMsg ? `<div class="recovery-error-preview"><code>${sanitizeErrorText(errorMsg)}</code></div>` : ''}
       <div class="recovery-actions">

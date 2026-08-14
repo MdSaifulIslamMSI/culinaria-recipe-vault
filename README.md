@@ -1,4 +1,4 @@
-# 🍲 Culinaria — World-Class Recipe Finder & Michelin Cooking Studio
+# 🍲 Culinaria — Global Recipe Finder & Cooking Studio
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/MdSaifulIslamMSI/culinaria-recipe-vault)
 

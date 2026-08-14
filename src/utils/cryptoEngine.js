@@ -6,7 +6,7 @@
 import { logSecurityEvent, SecurityEventType, SecuritySeverity } from './securityAuditLedger.js';
 
 // Fixed origin salt for deterministic local convenience-key derivation.
-const ORIGIN_KDF_SALT = new TextEncoder().encode('Culinaria_Haute_Cuisine_Zero_Knowledge_Salt_2026');
+const ORIGIN_KDF_SALT = new TextEncoder().encode('Culinaria_Local_Convenience_Salt_2026');
 let cachedKey = null;
 
 /**
@@ -78,7 +78,7 @@ export async function encryptPayload(data) {
     const cipherArray = Array.from(new Uint8Array(cipherBuffer));
     const ivArray = Array.from(iv);
 
-    logSecurityEvent(SecurityEventType.STORAGE_ENCRYPTION_SUCCESS, { bytes: encoded.length }, SecuritySeverity.INFO);
+    logSecurityEvent(SecurityEventType.CRYPTO_PAYLOAD_ENCRYPTED, { bytes: encoded.length }, SecuritySeverity.INFO);
 
     return {
       _enc: 'aes_gcm_256',

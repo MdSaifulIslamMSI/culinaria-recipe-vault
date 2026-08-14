@@ -271,7 +271,7 @@ async function runCDPDiagnostics() {
   await browser.close();
 
   console.log('\n========================================');
-  console.log(`🎉 [ALL 10 CDP TEST SUITES PASSED FLIE-FREE]`);
+  console.log(`🎉 [ALL 10 CDP TEST SUITES PASSED]`);
   console.log(`Errors Detected: ${errors.length}`);
   console.log(`Network Failures: ${networkFailures.length}`);
   console.log('========================================\n');

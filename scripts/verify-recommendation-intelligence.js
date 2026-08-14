@@ -107,7 +107,7 @@ async function testRecommendationEngine() {
 
   console.log('  ✅ [PASS] Live UI Modal Integration Verified\n');
   console.log('=================================================================');
-  console.log('🏆 [CULINARY RECOMMENDATION INTELLIGENCE ENGINE 100% VERIFIED]');
+  console.log('🏁 [RECOMMENDATION CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

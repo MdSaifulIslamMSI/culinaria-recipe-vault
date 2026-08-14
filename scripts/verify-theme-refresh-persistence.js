@@ -62,7 +62,7 @@ async function testThemePersistenceOnRefresh() {
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [THEME TOGGLE & REFRESH PERSISTENCE 100% VERIFIED]');
+  console.log('🏁 [THEME PERSISTENCE CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

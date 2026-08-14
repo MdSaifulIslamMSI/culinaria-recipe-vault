@@ -71,7 +71,7 @@ async function testErrorResilience() {
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [ERROR HANDLING & RESILIENCE SUITE 100% VERIFIED (LEVEL 10/10)]');
+  console.log('🏁 [ERROR HANDLING & RESILIENCE CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 

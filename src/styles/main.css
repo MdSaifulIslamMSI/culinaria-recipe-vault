@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Culinaria Michelin Haute Cuisine Main Stylesheet
+   Culinaria Cooking Studio Main Stylesheet
    ========================================================================== */
 
 *, *::before, *::after {
@@ -3488,7 +3488,7 @@ a {
   }
 
   .recipe-modal::after {
-    content: "✨ Curated by Culinaria Michelin Haute Cuisine Studio • culinaria-recipe-vault.onrender.com";
+    content: "✨ Curated by Culinaria Studio • culinaria-recipe-vault.onrender.com";
     display: block !important;
     text-align: center !important;
     margin-top: 1.25rem !important;
@@ -3951,7 +3951,7 @@ html, body {
 }
 
 /* ==========================================================================
-   10/10 Micro-Polish: Inline Step Timers & Voice Dictation Controls
+   Inline Step Timers & Voice Dictation Controls
    ========================================================================== */
 .inline-step-timer-chip {
   display: inline-flex;

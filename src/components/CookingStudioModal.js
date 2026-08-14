@@ -165,7 +165,7 @@ export class CookingStudioModal {
           <span class="modal-tag tag-area">🌍 ${r.area} Tradition</span>
           <span class="modal-tag tag-time">⏱️ ${r.estimatedTime || 30} mins</span>
           <span class="modal-tag tag-cal">🔥 ~${nutrition.calories} kcal / portion</span>
-          ${r.youtubeId ? '<span class="modal-tag tag-time">🎥 HD Video Masterclass</span>' : ''}
+          ${r.youtubeId ? '<span class="modal-tag tag-time">🎥 Video Guide</span>' : ''}
         </div>
 
         <h1 class="modal-dish-title">${r.title}</h1>
@@ -245,7 +245,7 @@ export class CookingStudioModal {
                 <span class="sommelier-icon">🍷</span>
                 <div>
                   <h3 class="sommelier-title">Sommelier Pairing</h3>
-                  <span class="sommelier-sub">Curated by our Master Cellar</span>
+                  <span class="sommelier-sub">Pairing notes</span>
                 </div>
               </div>
               <div class="sommelier-body">
@@ -316,26 +316,26 @@ export class CookingStudioModal {
 
           <div class="video-section-wrap">
             <div class="video-section-header">
-              <h3 class="modal-section-title" style="font-size: 1.15rem; margin: 0;">Video Cooking Masterclass</h3>
-              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="yt-external-btn" title="Open masterclass on YouTube">
+              <h3 class="modal-section-title" style="font-size: 1.15rem; margin: 0;">Video Cooking Guide</h3>
+              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="yt-external-btn" title="Open guide on YouTube">
                 <span>🎬 ${r.youtubeId ? 'Watch on YouTube' : 'Find on YouTube'}</span> ↗
               </a>
             </div>
             <div class="video-frame-container" id="videoContainer_${r.id || 'current'}">
-              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${r.thumbnail || fallbackCover}'); background-size: cover; background-position: center;" title="Click to watch high-definition cooking masterclass on YouTube">
-                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : (r.thumbnail || fallbackCover)}" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Masterclass Video" class="video-facade-img" />
+              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${r.thumbnail || fallbackCover}'); background-size: cover; background-position: center;" title="Open the cooking guide on YouTube">
+                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : (r.thumbnail || fallbackCover)}" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Video Guide" class="video-facade-img" />
                 <div class="video-facade-overlay">
                   <div class="btn-facade-play">
                     <span class="facade-play-icon">▶</span>
-                    <span class="facade-play-text">${r.youtubeId ? 'Watch HD Masterclass' : 'Explore Video Guides'}</span>
+                    <span class="facade-play-text">${r.youtubeId ? 'Watch on YouTube' : 'Explore Video Guides'}</span>
                   </div>
-                  <span class="video-hd-badge">${r.youtubeId ? '1080p Masterclass • YouTube' : 'YouTube Discovery'}</span>
+                  <span class="video-hd-badge">${r.youtubeId ? 'YouTube Guide' : 'YouTube Discovery'}</span>
                 </div>
               </a>
             </div>
 
             <div class="video-footer-strip">
-              <span class="video-meta-badge">📺 ${r.youtubeId ? 'Official Cooking Masterclass Stream' : 'YouTube Video Search'}</span>
+              <span class="video-meta-badge">📺 ${r.youtubeId ? 'YouTube Cooking Guide' : 'YouTube Video Search'}</span>
               <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-footer-link">
                 <span>Watch full screen on YouTube</span> ↗
               </a>
@@ -522,11 +522,11 @@ export class CookingStudioModal {
       });
     });
 
-    // Video Masterclass Click Toast Feedback
+    // External YouTube guide feedback
     this.modalContent.querySelectorAll('.video-facade-card').forEach(card => {
       card.addEventListener('click', () => {
         window.dispatchEvent(new CustomEvent('culinaria:toast', {
-          detail: { message: `🎬 Launching HD Cooking Masterclass on YouTube...` }
+          detail: { message: `🎬 Opening the cooking guide on YouTube...` }
         }));
       });
     });

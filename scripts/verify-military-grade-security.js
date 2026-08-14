@@ -2,9 +2,9 @@ import puppeteer from 'puppeteer-core';
 
 const CHROME_PATH = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 
-async function verifyMilitaryGradeSecurity() {
+async function verifyClientSecurityDiagnostics() {
   console.log('🛡️ =================================================================');
-  console.log('🔒 [MILITARY-GRADE CLIENT SECURITY PENETRATION SUITE]');
+  console.log('🔒 [CLIENT-SIDE SECURITY DIAGNOSTICS]');
   console.log('🛡️ =================================================================\n');
 
   const browser = await puppeteer.launch({
@@ -16,8 +16,8 @@ async function verifyMilitaryGradeSecurity() {
   const page = await browser.newPage();
   await page.goto('http://localhost:3000/', { waitUntil: 'networkidle2' });
 
-  // TEST 1: Web Crypto AES-GCM-256 Encryption & Decryption
-  console.log('🧪 [TEST 1] Hardware-Accelerated AES-GCM-256 Cryptographic Engine...');
+  // TEST 1: Optional Web Crypto AES-GCM-256 utility
+  console.log('🧪 [TEST 1] Web Crypto AES-GCM-256 Utility...');
   const cryptoResult = await page.evaluate(async () => {
     const testSecret = { user: 'Chef_Master', secretNotes: 'Truffle reduction recipe', timestamp: Date.now() };
     const encrypted = await window.__CULINARIA_SECURITY__.encryptPayload(testSecret);
@@ -34,12 +34,12 @@ async function verifyMilitaryGradeSecurity() {
   console.log(`  - AES-GCM Payload Encrypted: ${cryptoResult.isEncrypted}`);
   console.log(`  - Initialization Vector (IV) Generated: ${cryptoResult.hasIv}`);
   console.log(`  - Ciphertext Authenticated: ${cryptoResult.hasCipher}`);
-  console.log(`  - Zero-Knowledge Decryption Match: ${cryptoResult.matchesOriginal}`);
+  console.log(`  - Decryption Round Trip Match: ${cryptoResult.matchesOriginal}`);
 
   if (!cryptoResult.matchesOriginal) {
     throw new Error('AES-GCM encryption/decryption failed!');
   }
-  console.log('  ✅ [PASS] AES-GCM-256 Web Crypto Engine Active & Validated\n');
+  console.log('  ✅ [PASS] AES-GCM-256 utility round trip validated\n');
 
   // TEST 2: Real-time DOM Mutation Watchdog
   console.log('🧪 [TEST 2] Real-Time DOM Mutation Watchdog & Injection Interceptor...');
@@ -83,10 +83,9 @@ async function verifyMilitaryGradeSecurity() {
   }
   console.log('  ✅ [PASS] Real-Time DOM Mutation Watchdog Fully Operational\n');
 
-  // TEST 3: Storage Signature Tamper Detection
-  console.log('🧪 [TEST 3] Storage Tamper-Proofing & Integrity Check...');
-  const tamperResult = await page.evaluate(() => {
-    // Write tampered entry directly to localStorage
+  // TEST 3: Storage Corruption Detection
+  console.log('🧪 [TEST 3] Storage Corruption Detection...');
+  await page.evaluate(() => {
     const tamperedData = {
       _v: 2,
       _sig: '00000000_FORGED_HASH',
@@ -94,40 +93,42 @@ async function verifyMilitaryGradeSecurity() {
       _ts: Date.now()
     };
     localStorage.setItem('culinaria_favorites_v1', JSON.stringify(tamperedData));
-
-    // Force read favorites through Storage Service
-    const favs = JSON.parse(localStorage.getItem('culinaria_favorites_v1'));
-    return {
-      rawStored: !!favs,
-      sigIsForged: favs._sig === '00000000_FORGED_HASH'
-    };
   });
+  await page.reload({ waitUntil: 'networkidle2' });
+  const tamperResult = await page.evaluate(() => ({
+    rawStored: Boolean(localStorage.getItem('culinaria_favorites_v1')),
+    visibleFavoriteCount: Number(document.querySelector('.fav-count-pill')?.textContent || 0)
+  }));
 
   console.log(`  - Tamper payload injected into storage: ${tamperResult.rawStored}`);
-  console.log('  ✅ [PASS] Storage Signature Verification & Fallback Protection Active\n');
+  console.log(`  - Visible favorites after reload: ${tamperResult.visibleFavoriteCount}`);
+  if (tamperResult.visibleFavoriteCount !== 0) {
+    throw new Error('Corrupt favorite payload was rendered instead of falling back to an empty list.');
+  }
+  console.log('  ✅ [PASS] Corrupt favorite payload was rejected by the storage reader\n');
 
-  // TEST 4: Tamper-Evident Security Audit Ledger
-  console.log('🧪 [TEST 4] Security SIEM & Audit Ledger Verification...');
+  // TEST 4: In-memory diagnostics ledger
+  console.log('🧪 [TEST 4] In-Memory Diagnostics Ledger Verification...');
   const auditReport = await page.evaluate(() => {
     return window.__CULINARIA_SECURITY__.exportAuditReport();
   });
 
   console.log(`  - Total Security Events Tracked: ${auditReport.totalEvents}`);
-  console.log(`  - Audit Chain Cryptographically Valid: ${auditReport.tamperProofChainValid}`);
+  console.log(`  - Integrity Chain Internally Consistent: ${auditReport.integrityChainValid}`);
   console.log(`  - Security Engine: "${auditReport.engine}"`);
 
-  if (!auditReport.tamperProofChainValid || auditReport.totalEvents === 0) {
-    throw new Error('Security Audit Ledger chain invalid!');
+  if (!auditReport.integrityChainValid || auditReport.totalEvents === 0) {
+    throw new Error('Diagnostics ledger chain invalid or empty!');
   }
-  console.log('  ✅ [PASS] Security Audit Ledger Fully Verified & Chained\n');
+  console.log('  ✅ [PASS] Diagnostics ledger internally consistent\n');
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [MILITARY-GRADE SECURITY AUDIT COMPLETE - 100% PASS]');
+  console.log('🏁 [CLIENT-SIDE SECURITY DIAGNOSTICS COMPLETE]');
   console.log('=================================================================');
 }
 
-verifyMilitaryGradeSecurity().catch(err => {
-  console.error('❌ PEN-TEST SUITE FAILED:', err);
+verifyClientSecurityDiagnostics().catch(err => {
+  console.error('❌ SECURITY DIAGNOSTICS FAILED:', err);
   process.exit(1);
 });

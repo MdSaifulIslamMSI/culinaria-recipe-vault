@@ -1,13 +1,13 @@
 /**
- * Pre-Launch Evidence-First Security Audit & Production Verification
- * Complies with "Security prompts that produce evidence (V3.0)" Playbook
+ * Evidence inventory for client-side security and release verification.
+ * This script records sources of evidence; it does not certify production security.
  */
 import fs from 'fs';
 import path from 'path';
 import { execSync } from 'child_process';
 
 console.log('📋 =================================================================');
-console.log('🛡️ [EVIDENCE-FIRST SECURITY AUDIT] Executing 5-Pass Verification...');
+console.log('🛡️ [EVIDENCE INVENTORY] Recording security and release evidence sources...');
 console.log('📋 =================================================================\n');
 
 const auditLog = {
@@ -90,13 +90,13 @@ auditLog.passes.pass02 = { dataMap, thirdPartyTelemetry: 'NONE' };
 console.log('\n🚀 [PASS 03] Production Readiness & Release Headers...');
 const headersConfig = {
   renderYamlPath: 'render.yaml',
-  cspEnforced: true,
-  hstsEnforced: true,
+  headersConfigured: true,
+  liveVerificationRequired: true,
   xFrameOptions: 'DENY',
   xContentTypeOptions: 'nosniff',
   referrerPolicy: 'strict-origin-when-cross-origin'
 };
-console.log('   Security Headers verified in render.yaml & index.html meta tags.');
+console.log('   Security headers are configured in render.yaml; live response verification is a separate release check.');
 auditLog.passes.pass03 = headersConfig;
 
 // -------------------------------------------------------------
@@ -118,18 +118,17 @@ auditLog.passes.pass04 = logicInvariants;
 // -------------------------------------------------------------
 console.log('\n🛡️ [PASS 05] Authorized Adversarial Test Evidence Summary...');
 const testEvidence = {
-  functionalAssertions: 544,
-  functionalPassRate: '100%',
-  securityAttackVectors: 506,
-  securityPassRate: '100%',
-  criticalChaosSuites: 7,
-  criticalChaosPassRate: '100%',
-  totalErrorsDetected: 0
+  behavioralRegressionCommand: 'npm test',
+  browserDiagnostics: ['scripts/cdp-diagnostic.js', 'scripts/verify-production-engineering-grade.js'],
+  releaseWorkflow: 'Culinaria Quality and Pages Release',
+  passRates: 'reported by each runner; not asserted by this inventory',
+  totalErrorsDetected: 'not measured by this inventory'
 };
-console.log(`   CDP Functional Assertions: ${testEvidence.functionalAssertions} (Pass: ${testEvidence.functionalPassRate})`);
-console.log(`   CDP Security Attack Vectors: ${testEvidence.securityAttackVectors} (Pass: ${testEvidence.securityPassRate})`);
+console.log(`   Behavioral regression command: ${testEvidence.behavioralRegressionCommand}`);
+console.log(`   Browser diagnostics: ${testEvidence.browserDiagnostics.join(', ')}`);
+console.log(`   Pass rates: ${testEvidence.passRates}`);
 auditLog.passes.pass05 = testEvidence;
 
 console.log('\n=================================================================');
-console.log('🏁 [PRE-LAUNCH EVIDENCE AUDIT PASSED WITH ZERO BLOCKERS]');
+console.log('🏁 [EVIDENCE INVENTORY COMPLETE — NO CERTIFICATION CLAIM MADE]');
 console.log('=================================================================\n');

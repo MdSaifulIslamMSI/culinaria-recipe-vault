@@ -104,7 +104,7 @@ async function testChefPreferencesToggles() {
 
   await browser.close();
   console.log('=================================================================');
-  console.log('🏆 [CHEF KITCHEN PREFERENCES & 10 TOGGLES 100% VERIFIED]');
+  console.log('🏁 [CHEF PREFERENCES TOGGLE CHECKS COMPLETE]');
   console.log('=================================================================');
 }
 
