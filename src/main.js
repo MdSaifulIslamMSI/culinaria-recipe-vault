@@ -142,9 +142,9 @@ class CulinariaApp {
 
   updateFavCountBadge() {
     const count = getFavorites().length;
-    if (this.favCountPill) {
-      this.favCountPill.textContent = count;
-    }
+    document.querySelectorAll('.fav-count-pill').forEach(el => {
+      el.textContent = count;
+    });
   }
 
   /* ==========================================================================
