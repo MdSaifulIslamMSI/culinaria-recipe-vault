@@ -140,7 +140,9 @@ class CulinariaApp {
 
   updateFavCountBadge() {
     const count = getFavorites().length;
-    this.favCountPill.textContent = count;
+    if (this.favCountPill) {
+      this.favCountPill.textContent = count;
+    }
   }
 
   /* ==========================================================================
@@ -447,7 +449,7 @@ class CulinariaApp {
   }
 
   /* ==========================================================================
-     Favorites View
+     Favorites & Cookbook View
      ========================================================================== */
   renderFavoritesView() {
     const favs = getFavorites();
@@ -455,10 +457,12 @@ class CulinariaApp {
 
     if (favs.length === 0) {
       this.favoritesEmpty.classList.remove('hidden');
+      this.favoritesGrid.classList.add('hidden');
       return;
     }
 
     this.favoritesEmpty.classList.add('hidden');
+    this.favoritesGrid.classList.remove('hidden');
     favs.forEach(recipe => {
       const card = createRecipeCard(recipe);
       this.favoritesGrid.appendChild(card);
@@ -503,7 +507,7 @@ class CulinariaApp {
   }
 
   /* ==========================================================================
-     Global App Events & Toasts
+     Global App Events, Favorites Synchronization & Toasts
      ========================================================================== */
   initGlobalEvents() {
     window.addEventListener('culinaria:open-recipe', async (e) => {
@@ -520,8 +524,35 @@ class CulinariaApp {
       }
     });
 
-    window.addEventListener('culinaria:favs-updated', () => {
+    // Real-time synchronization of all heart buttons across all views & modals
+    window.addEventListener('culinaria:favs-updated', (e) => {
+      const favs = e.detail?.favorites || getFavorites();
       this.updateFavCountBadge();
+
+      const favIds = new Set(favs.map(r => String(r.id || r.idMeal)));
+
+      // 1. Sync all card heart buttons
+      document.querySelectorAll('.btn-card-fav').forEach(btn => {
+        const card = btn.closest('.recipe-card');
+        const cardId = card?.dataset?.id;
+        if (cardId) {
+          const isFav = favIds.has(String(cardId));
+          btn.classList.toggle('is-favorite', isFav);
+          btn.innerHTML = isFav ? '❤️' : '🤍';
+          btn.title = isFav ? 'Remove from favorites' : 'Save recipe';
+        }
+      });
+
+      // 2. Sync modal heart button if currently open
+      const modalFavBtn = document.getElementById('btnModalFav');
+      if (modalFavBtn && this.cookingStudio?.currentRecipe) {
+        const modalRecipeId = String(this.cookingStudio.currentRecipe.id || this.cookingStudio.currentRecipe.idMeal);
+        const isFav = favIds.has(modalRecipeId);
+        modalFavBtn.innerHTML = isFav ? '❤️' : '🤍';
+        modalFavBtn.title = isFav ? 'Remove Favorite' : 'Save Favorite';
+      }
+
+      // 3. Re-render favorites view if active
       if (this.currentView === 'favorites') {
         this.renderFavoritesView();
       }

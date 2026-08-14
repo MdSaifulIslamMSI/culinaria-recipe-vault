@@ -3,6 +3,8 @@
  * Open-source, CORS-friendly, free recipe database service
  */
 
+import { getFavorites } from './storageService.js';
+
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
 const cache = new Map();
 
@@ -265,12 +267,28 @@ export async function searchRecipes(query = '') {
  * Get full recipe details by ID
  */
 export async function getRecipeById(id) {
-  const data = await fetchWithCache(`lookup.php?i=${encodeURIComponent(id)}`);
+  if (!id) return null;
+  const strId = String(id);
+
+  // 1. Check offline saved favorites first
+  try {
+    const favs = getFavorites();
+    const favMatch = favs.find(r => String(r.id || r.idMeal) === strId);
+    if (favMatch && favMatch.ingredients && favMatch.ingredients.length > 0 && favMatch.steps && favMatch.steps.length > 0) {
+      return favMatch;
+    }
+  } catch (e) {
+    // Continue
+  }
+
+  // 2. Fetch from API with cache
+  const data = await fetchWithCache(`lookup.php?i=${encodeURIComponent(strId)}`);
   if (data && data.meals && data.meals[0]) {
     return formatRecipe(data.meals[0]);
   }
 
-  const fallback = CURATED_FALLBACK_RECIPES.find(m => m.idMeal === id) || CURATED_FALLBACK_RECIPES[0];
+  // 3. Check curated fallback dataset
+  const fallback = CURATED_FALLBACK_RECIPES.find(m => String(m.idMeal) === strId) || CURATED_FALLBACK_RECIPES[0];
   return formatRecipe(fallback);
 }
 

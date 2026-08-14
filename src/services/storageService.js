@@ -1,6 +1,6 @@
 /**
  * Storage Service
- * LocalStorage wrapper for persistent Favorites, Shopping List & User Preferences
+ * LocalStorage wrapper for persistent Favorites (Cookbook), Shopping List & User Preferences
  */
 
 const STORAGE_KEYS = {
@@ -29,41 +29,52 @@ function safeSet(key, value) {
 }
 
 /* ==========================================================================
-   Favorites API
+   Cookbook & Favorites API (Normalized & Complete Storage)
    ========================================================================== */
 export function getFavorites() {
   return safeGet(STORAGE_KEYS.FAVORITES, []);
 }
 
 export function isFavorite(recipeId) {
+  if (!recipeId) return false;
+  const strId = String(recipeId);
   const favs = getFavorites();
-  return favs.some(r => r.id === recipeId);
+  return favs.some(r => String(r.id || r.idMeal) === strId);
 }
 
 export function toggleFavorite(recipe) {
-  if (!recipe || !recipe.id) return false;
+  if (!recipe) return false;
+  const recipeId = String(recipe.id || recipe.idMeal || '');
+  if (!recipeId) return false;
+
   const favs = getFavorites();
-  const index = favs.findIndex(r => r.id === recipe.id);
+  const index = favs.findIndex(r => String(r.id || r.idMeal) === recipeId);
   let isFav = false;
 
   if (index >= 0) {
     favs.splice(index, 1);
     isFav = false;
   } else {
-    // Save lightweight recipe snapshot
+    // Save full recipe snapshot for instantaneous offline access in Cookbook
     favs.unshift({
-      id: recipe.id,
-      title: recipe.title,
-      thumbnail: recipe.thumbnail,
-      category: recipe.category,
-      area: recipe.area,
-      estimatedTime: recipe.estimatedTime || 30
+      id: recipeId,
+      title: recipe.title || recipe.strMeal || 'Gourmet Creation',
+      thumbnail: recipe.thumbnail || recipe.strMealThumb || '',
+      category: recipe.category || recipe.strCategory || 'Miscellaneous',
+      area: recipe.area || recipe.strArea || 'Global',
+      estimatedTime: recipe.estimatedTime || 30,
+      ingredients: recipe.ingredients || [],
+      steps: recipe.steps || [],
+      instructions: recipe.instructions || recipe.strInstructions || '',
+      youtubeId: recipe.youtubeId || null,
+      servings: recipe.servings || 4,
+      savedAt: Date.now()
     });
     isFav = true;
   }
 
   safeSet(STORAGE_KEYS.FAVORITES, favs);
-  window.dispatchEvent(new CustomEvent('culinaria:favs-updated', { detail: { favorites: favs } }));
+  window.dispatchEvent(new CustomEvent('culinaria:favs-updated', { detail: { favorites: favs, recipeId, isFav } }));
   return isFav;
 }
 
@@ -83,9 +94,15 @@ export function addToShoppingList(items) {
     const measure = typeof newItem === 'string' ? '' : newItem.measure || '';
     const recipeTitle = typeof newItem === 'string' ? 'Custom item' : newItem.recipeTitle || '';
 
+    if (!name || !name.trim()) return;
+
     // Check if duplicate already exists
-    const existing = currentList.find(i => i.name.toLowerCase() === name.toLowerCase());
-    if (!existing) {
+    const existingIndex = currentList.findIndex(i => i.name.toLowerCase() === name.trim().toLowerCase());
+    if (existingIndex >= 0) {
+      if (measure) {
+        currentList[existingIndex].measure = measure.trim();
+      }
+    } else {
       currentList.push({
         id: `shop-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
         name: name.trim(),
