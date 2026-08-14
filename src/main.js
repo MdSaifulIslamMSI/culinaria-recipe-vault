@@ -177,6 +177,7 @@ class CulinariaApp {
     });
 
     this.clearSearchBtn.addEventListener('click', () => {
+      clearTimeout(this.searchDebounceTimer);
       this.searchInput.value = '';
       this.searchQuery = '';
       this.clearSearchBtn.classList.add('hidden');
@@ -185,6 +186,7 @@ class CulinariaApp {
     });
 
     this.searchSubmitBtn.addEventListener('click', () => {
+      clearTimeout(this.searchDebounceTimer);
       this.searchQuery = this.searchInput.value.trim();
       this.suggestionsDropdown?.classList.add('hidden');
       this.executeFilterAndSearch();
@@ -192,6 +194,7 @@ class CulinariaApp {
 
     this.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
+        clearTimeout(this.searchDebounceTimer);
         this.searchQuery = this.searchInput.value.trim();
         this.suggestionsDropdown?.classList.add('hidden');
         this.executeFilterAndSearch();
@@ -200,6 +203,7 @@ class CulinariaApp {
 
     document.querySelectorAll('.trend-chip').forEach(chip => {
       chip.addEventListener('click', () => {
+        clearTimeout(this.searchDebounceTimer);
         const q = chip.dataset.query;
         this.searchInput.value = q;
         this.searchQuery = q;
@@ -234,6 +238,7 @@ class CulinariaApp {
     setupQuickToggle(this.filterProtein, 'highprotein');
 
     this.btnResetFilters.addEventListener('click', () => {
+      clearTimeout(this.searchDebounceTimer);
       this.activeCategory = 'all';
       this.activeArea = 'all';
       this.activeQuickFilter = null;
