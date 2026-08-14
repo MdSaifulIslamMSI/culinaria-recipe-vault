@@ -449,11 +449,38 @@ a {
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
   box-shadow: 0 4px 14px rgba(211, 84, 24, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
 }
 
 .search-submit-btn:hover {
   background: var(--accent-primary-hover);
   transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(211, 84, 24, 0.35);
+}
+
+.search-submit-btn:active {
+  transform: scale(0.96);
+}
+
+.search-submit-btn.exploring {
+  background: linear-gradient(135deg, #d35418, #f59e0b);
+  animation: explorePulse 1.2s infinite ease-in-out;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+  pointer-events: none;
+}
+
+@keyframes explorePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.97);
+    opacity: 0.9;
+  }
 }
 
 /* Suggestions Dropdown */

@@ -107,12 +107,20 @@ class CulinariaApp {
     this.navBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         const view = btn.dataset.view;
+        if (view === 'explore' && this.currentView === 'explore') {
+          this.resetFiltersToDefault();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          this.searchInput.focus();
+          this.showToast('🍽️ Refreshed to All World Dishes');
+          return;
+        }
         this.switchView(view);
       });
     });
 
     document.getElementById('navHome')?.addEventListener('click', (e) => {
       e.preventDefault();
+      this.resetFiltersToDefault();
       this.switchView('explore');
     });
 
@@ -149,6 +157,75 @@ class CulinariaApp {
   }
 
   /* ==========================================================================
+     Advanced Explore Discovery & Search Engine
+     ========================================================================== */
+  async triggerExplore(options = {}) {
+    const { scrollToResults = true, refreshIfEmpty = true } = options;
+
+    clearTimeout(this.searchDebounceTimer);
+    const query = this.searchInput.value.trim();
+    this.searchQuery = query;
+    this.suggestionsDropdown?.classList.add('hidden');
+
+    const originalBtnText = this.searchSubmitBtn.innerHTML;
+    this.searchSubmitBtn.classList.add('exploring');
+    this.searchSubmitBtn.innerHTML = '<span>✨ Exploring...</span>';
+
+    try {
+      if (this.currentView !== 'explore') {
+        this.switchView('explore');
+      }
+
+      if (!query && refreshIfEmpty) {
+        this.setGridLoading(true);
+        const allRecipes = await filterByCategoryAndArea(this.activeCategory, this.activeArea);
+        // Smart Shuffle for dynamic discovery inspiration
+        const shuffled = [...allRecipes].sort(() => 0.5 - Math.random());
+        this.currentRecipes = shuffled;
+        this.applyLocalFilters();
+        this.showToast('✨ Discovered fresh chef specials!');
+      } else {
+        await this.executeFilterAndSearch();
+        if (query) {
+          const count = this.currentRecipes ? this.currentRecipes.length : 0;
+          this.showToast(`🔍 Found ${count} ${count === 1 ? 'dish' : 'dishes'} for "${query}"`);
+        }
+      }
+
+      if (scrollToResults) {
+        setTimeout(() => {
+          const targetEl = document.getElementById('filtersContainer') || document.getElementById('recipeCardsGrid');
+          if (targetEl) {
+            targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        }, 120);
+      }
+    } finally {
+      this.searchSubmitBtn.classList.remove('exploring');
+      this.searchSubmitBtn.innerHTML = originalBtnText;
+    }
+  }
+
+  resetFiltersToDefault() {
+    clearTimeout(this.searchDebounceTimer);
+    this.activeCategory = 'all';
+    this.activeArea = 'all';
+    this.activeQuickFilter = null;
+    this.searchQuery = '';
+    this.searchInput.value = '';
+    this.clearSearchBtn.classList.add('hidden');
+    this.suggestionsDropdown?.classList.add('hidden');
+    this.cuisineSelect.value = 'all';
+    [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
+    
+    this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
+      p.classList.toggle('active', p.dataset.category === 'all');
+    });
+
+    this.executeFilterAndSearch();
+  }
+
+  /* ==========================================================================
      Search & Filters with Suggestions
      ========================================================================== */
   initSearchAndFilters() {
@@ -159,7 +236,7 @@ class CulinariaApp {
       if (query.length >= 2) {
         this.renderSuggestions(query);
       } else {
-        this.suggestionsDropdown.classList.add('hidden');
+        this.suggestionsDropdown?.classList.add('hidden');
       }
 
       clearTimeout(this.searchDebounceTimer);
@@ -177,27 +254,16 @@ class CulinariaApp {
     });
 
     this.clearSearchBtn.addEventListener('click', () => {
-      clearTimeout(this.searchDebounceTimer);
-      this.searchInput.value = '';
-      this.searchQuery = '';
-      this.clearSearchBtn.classList.add('hidden');
-      this.suggestionsDropdown?.classList.add('hidden');
-      this.executeFilterAndSearch();
+      this.resetFiltersToDefault();
     });
 
     this.searchSubmitBtn.addEventListener('click', () => {
-      clearTimeout(this.searchDebounceTimer);
-      this.searchQuery = this.searchInput.value.trim();
-      this.suggestionsDropdown?.classList.add('hidden');
-      this.executeFilterAndSearch();
+      this.triggerExplore({ scrollToResults: true, refreshIfEmpty: true });
     });
 
     this.searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        clearTimeout(this.searchDebounceTimer);
-        this.searchQuery = this.searchInput.value.trim();
-        this.suggestionsDropdown?.classList.add('hidden');
-        this.executeFilterAndSearch();
+        this.triggerExplore({ scrollToResults: true, refreshIfEmpty: false });
       }
     });
 
@@ -210,7 +276,7 @@ class CulinariaApp {
         this.clearSearchBtn.classList.remove('hidden');
         this.suggestionsDropdown?.classList.add('hidden');
         this.switchView('explore');
-        this.executeFilterAndSearch();
+        this.triggerExplore({ scrollToResults: true, refreshIfEmpty: false });
       });
     });
 
@@ -238,22 +304,7 @@ class CulinariaApp {
     setupQuickToggle(this.filterProtein, 'highprotein');
 
     this.btnResetFilters.addEventListener('click', () => {
-      clearTimeout(this.searchDebounceTimer);
-      this.activeCategory = 'all';
-      this.activeArea = 'all';
-      this.activeQuickFilter = null;
-      this.searchQuery = '';
-      this.searchInput.value = '';
-      this.clearSearchBtn.classList.add('hidden');
-      this.suggestionsDropdown?.classList.add('hidden');
-      this.cuisineSelect.value = 'all';
-      [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
-      
-      this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
-        p.classList.toggle('active', p.dataset.category === 'all');
-      });
-
-      this.executeFilterAndSearch();
+      this.resetFiltersToDefault();
     });
   }
 
