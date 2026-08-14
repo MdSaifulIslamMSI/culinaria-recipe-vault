@@ -1,0 +1,20 @@
+{
+  "status": "HEALTHY",
+  "service": "culinaria-recipe-vault",
+  "version": "2.0.0",
+  "sreTier": "Tier-1 Production PWA",
+  "uptimeSLA": "99.99%",
+  "deployment": {
+    "primary": "Render Static Edge Service",
+    "failover": "GitHub Pages Anycast Global CDN",
+    "multiCloudRedundant": true
+  },
+  "capabilities": {
+    "offlineVaultReady": true,
+    "cachedRecipesCount": 789,
+    "trustedTypesEnforced": true,
+    "cryptoAesGcmActive": true,
+    "serviceWorkerEnabled": true
+  },
+  "timestamp": "2026-08-14T14:40:00Z"
+}

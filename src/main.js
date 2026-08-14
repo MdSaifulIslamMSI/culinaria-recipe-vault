@@ -759,4 +759,17 @@ class CulinariaApp {
 
 document.addEventListener('DOMContentLoaded', () => {
   new CulinariaApp();
+
+  // Register Progressive Web App Service Worker for 100% Offline Reliability
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then((reg) => {
+          console.log('[PWA] Service Worker registered with scope:', reg.scope);
+        })
+        .catch((err) => {
+          console.warn('[PWA] Service Worker registration skipped:', err);
+        });
+    });
+  }
 });
