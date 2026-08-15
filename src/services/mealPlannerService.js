@@ -90,7 +90,11 @@ class MealPlannerService {
         if (meal && Array.isArray(meal.ingredients)) {
           meal.ingredients.forEach(ing => {
             if (ing && ing.name) {
-              addToShoppingList(ing.name, ing.measure || '');
+              addToShoppingList({
+                name: ing.name,
+                measure: ing.measure || '',
+                recipeTitle: meal.title || ''
+              });
               addedCount++;
             }
           });

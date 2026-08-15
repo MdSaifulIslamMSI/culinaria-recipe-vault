@@ -7,6 +7,7 @@ import http from 'node:http';
 import app from '../server/index.js';
 import { mealPlannerService } from '../src/services/mealPlannerService.js';
 import { timerManager } from '../src/services/timerManager.js';
+import { clearShoppingList, getShoppingList } from '../src/services/storageService.js';
 
 const storageMock = new Map();
 globalThis.localStorage = {
@@ -36,6 +37,7 @@ test.after(async () => {
 
 test('MealPlanner: schedules meals and aggregates ingredients to grocery list', () => {
   mealPlannerService.clearWeek();
+  clearShoppingList();
   const emptyPlan = mealPlannerService.getPlan();
   assert.strictEqual(emptyPlan['Monday'].lunch, null);
 
@@ -59,6 +61,11 @@ test('MealPlanner: schedules meals and aggregates ingredients to grocery list', 
   // Test ingredient export
   const exported = mealPlannerService.exportIngredientsToShoppingList();
   assert.strictEqual(exported, 2, 'Expected 2 ingredients to be exported to grocery list');
+  const groceryList = getShoppingList();
+  assert.strictEqual(groceryList.find(item => item.name === 'Chicken Breast')?.measure, '3/4 lb');
+  assert.strictEqual(groceryList.find(item => item.name === 'Chicken Breast')?.recipeTitle, 'Teriyaki Chicken Casserole');
+  assert.strictEqual(groceryList.find(item => item.name === 'Soy Sauce')?.measure, '1/2 cup');
+  clearShoppingList();
 
   // Test slot removal
   mealPlannerService.removeSlot('Monday', 'dinner');

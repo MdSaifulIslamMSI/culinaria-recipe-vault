@@ -3,7 +3,7 @@
  * Implements Cache-First for static assets and Stale-While-Revalidate for culinary data.
  */
 
-const CACHE_NAME = 'culinaria-pwa-v2.0';
+const CACHE_NAME = 'culinaria-pwa-v2.1';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -69,8 +69,9 @@ self.addEventListener('fetch', (event) => {
         }).catch(() => {
           // Fallback to index.html if navigation
           if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
+            return caches.match('./index.html').then((fallback) => fallback || Response.error());
           }
+          return Response.error();
         });
       })
     );
@@ -86,7 +87,7 @@ self.addEventListener('fetch', (event) => {
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
         }
         return networkResponse;
-      }).catch(() => cachedResponse);
+      }).catch(() => cachedResponse || Response.error());
 
       return cachedResponse || fetchPromise;
     })

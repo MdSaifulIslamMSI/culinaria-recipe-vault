@@ -11,6 +11,7 @@ export class MealPlannerDrawer {
     this.overlayEl = null;
     this.isOpen = false;
     this.previousActiveElement = null;
+    this.pendingRecipe = null;
     this.init();
   }
 
@@ -41,6 +42,10 @@ export class MealPlannerDrawer {
     
     // Listen for custom trigger to open or plan a recipe
     window.addEventListener('culinaria:open-meal-planner', () => this.open());
+    window.addEventListener('culinaria:open-meal-planner-for-recipe', (e) => {
+      const recipe = e.detail?.recipe;
+      if (recipe) this.openForRecipe(recipe);
+    });
     window.addEventListener('culinaria:plan-recipe', (e) => {
       const { day, slot, recipe } = e.detail || {};
       if (day && slot && recipe) {
@@ -69,8 +74,9 @@ export class MealPlannerDrawer {
     });
   }
 
-  open() {
+  open(recipe = null) {
     this.previousActiveElement = document.activeElement;
+    this.pendingRecipe = recipe;
     this.isOpen = true;
     this.render();
     this.setOpenState(true);
@@ -93,6 +99,11 @@ export class MealPlannerDrawer {
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }
+    this.pendingRecipe = null;
+  }
+
+  openForRecipe(recipe) {
+    this.open(recipe);
   }
 
   render() {
@@ -119,6 +130,28 @@ export class MealPlannerDrawer {
           <span>Clear Week</span>
         </button>
       </div>
+
+      ${this.pendingRecipe ? `
+        <section class="planner-add-panel" aria-labelledby="plannerAddTitle">
+          <h3 class="planner-add-title" id="plannerAddTitle">Schedule ${sanitizeHtml(this.pendingRecipe.title || 'this recipe')}</h3>
+          <div class="planner-add-controls">
+            <label class="planner-add-field">
+              Day
+              <select id="plannerPendingDay">
+                ${mealPlannerService.days.map(day => `<option value="${day}">${day}</option>`).join('')}
+              </select>
+            </label>
+            <label class="planner-add-field">
+              Meal
+              <select id="plannerPendingSlot">
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+              </select>
+            </label>
+            <button class="primary-btn planner-schedule-btn" id="btnSchedulePendingRecipe">＋ Schedule Recipe</button>
+          </div>
+        </section>
+      ` : ''}
 
       <div class="drawer-body planner-days-list">
         ${mealPlannerService.days.map(day => {
@@ -212,6 +245,23 @@ export class MealPlannerDrawer {
       clearBtn.addEventListener('click', () => {
         mealPlannerService.clearWeek();
         this.render();
+      });
+    }
+
+    const scheduleBtn = this.drawerEl.querySelector('#btnSchedulePendingRecipe');
+    if (scheduleBtn && this.pendingRecipe) {
+      scheduleBtn.addEventListener('click', () => {
+        const day = this.drawerEl.querySelector('#plannerPendingDay')?.value;
+        const slot = this.drawerEl.querySelector('#plannerPendingSlot')?.value;
+        if (!day || !slot) return;
+
+        mealPlannerService.assignRecipe(day, slot, this.pendingRecipe);
+        const title = this.pendingRecipe.title || 'Recipe';
+        this.pendingRecipe = null;
+        this.render();
+        window.dispatchEvent(new CustomEvent('culinaria:toast', {
+          detail: { message: `📅 ${sanitizeHtml(title)} scheduled for ${day} ${slot}.` }
+        }));
       });
     }
 

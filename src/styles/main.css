@@ -1621,6 +1621,26 @@ a {
   transform: translateY(-1px);
 }
 
+.btn-plan-recipe {
+  background: var(--accent-fresh-light);
+  color: var(--accent-fresh);
+  border: 1px solid rgba(77, 124, 60, 0.25);
+  font-weight: 800;
+  font-size: 0.86rem;
+  padding: 0.65rem 1rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  transition: all var(--transition-fast);
+}
+
+.btn-plan-recipe:hover {
+  background: var(--accent-fresh);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
 .btn-icon-action {
   width: 40px;
   height: 40px;
@@ -2429,6 +2449,28 @@ a {
 }
 
 .shopping-drawer.open {
+  transform: translateX(0);
+}
+
+/* Shared slide-over surface for dynamically created drawers such as the planner. */
+.side-drawer {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  z-index: 125;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(100%);
+  transition: transform var(--transition-smooth);
+}
+
+.side-drawer.open {
   transform: translateX(0);
 }
 
@@ -3947,10 +3989,14 @@ html, body {
     grid-template-columns: 1fr 1fr;
     gap: 0.45rem;
   }
-  .cook-mode-launch-btn {
+  .btn-cook-mode,
+  .btn-plan-recipe {
     grid-column: 1 / -1;
     justify-content: center;
     min-height: 44px;
+  }
+  .planner-add-controls {
+    grid-template-columns: 1fr;
   }
   .nutrition-grid {
     grid-template-columns: repeat(2, 1fr) !important;
@@ -4251,6 +4297,51 @@ html, body {
 .meal-planner-drawer {
   width: 480px;
   max-width: 92vw;
+}
+
+.planner-add-panel {
+  padding: 1rem 1.25rem;
+  background: var(--accent-primary-light);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.planner-add-title {
+  margin: 0 0 0.75rem;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.planner-add-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+  align-items: end;
+}
+
+.planner-add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.planner-add-field select {
+  min-height: 38px;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.planner-schedule-btn {
+  grid-column: 1 / -1;
+  justify-content: center;
+  min-height: 42px;
 }
 
 .planner-actions-bar {
