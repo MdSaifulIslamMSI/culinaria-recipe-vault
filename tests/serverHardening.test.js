@@ -47,6 +47,7 @@ test('2. Response includes all required modern Security Headers', async () => {
   assert.strictEqual(res.headers.get('cross-origin-opener-policy'), 'same-origin');
   assert.strictEqual(res.headers.get('cross-origin-resource-policy'), 'same-origin');
   assert(res.headers.get('strict-transport-security').includes('max-age=31536000'));
+  assert(res.headers.get('content-security-policy').includes("default-src 'self'"));
 });
 
 test('3. ETag generation and 304 Not Modified caching response', async () => {
