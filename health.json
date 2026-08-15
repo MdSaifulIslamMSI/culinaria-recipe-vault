@@ -4,8 +4,8 @@
   "version": "1.0.0",
   "buildType": "client-side-pwa",
   "deployment": {
-    "provider": "local static preview",
-    "sourceBranch": "local-development",
+    "provider": "GitHub Pages",
+    "sourceBranch": "master",
     "healthModel": "static-artifact-metadata; no server-side SLA"
   },
   "clientFeatures": {
@@ -26,8 +26,8 @@
   },
   "release": {
     "service": "culinaria-recipe-vault",
-    "commit": "local-development",
-    "generatedAt": "2026-08-15T07:32:13.051Z",
+    "commit": "da99e3cfac4f5db6279b9061c99ffebf7d60a696",
+    "generatedAt": "2026-08-15T08:04:29.748Z",
     "artifact": "dist",
     "checks": [
       "npm test",
