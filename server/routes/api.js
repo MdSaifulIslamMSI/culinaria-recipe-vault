@@ -1,54 +1,38 @@
 /**
- * Stateless REST API Routes for Culinaria Backend
+ * High-Performance Stateless REST API Routes for Culinaria Backend
  */
 import { Router } from 'express';
-import curatedRecipes from '../../src/data/curated500Recipes.js';
-import { INGREDIENT_SUBSTITUTIONS } from '../../src/services/recommendationEngine.js';
+import crypto from 'crypto';
+import { recipeEngine } from '../services/recipeEngine.js';
+import { validateRequestInput } from '../middleware/security.js';
 
 const router = Router();
 const startTime = Date.now();
 
-// Demonym Normalization Dictionary
-const AREA_DEMONYM_MAP = {
-  'indian': ['indian', 'india'],
-  'american': ['american', 'united states', 'usa', 'us'],
-  'british': ['british', 'uk', 'united kingdom', 'england'],
-  'canadian': ['canadian', 'canada'],
-  'chinese': ['chinese', 'china'],
-  'croatian': ['croatian', 'croatia'],
-  'dutch': ['dutch', 'netherlands', 'holland'],
-  'egyptian': ['egyptian', 'egypt'],
-  'filipino': ['filipino', 'philippines'],
-  'french': ['french', 'france'],
-  'greek': ['greek', 'greece'],
-  'irish': ['irish', 'ireland'],
-  'italian': ['italian', 'italy'],
-  'jamaican': ['jamaican', 'jamaica'],
-  'japanese': ['japanese', 'japan'],
-  'kenyan': ['kenyan', 'kenya'],
-  'malaysian': ['malaysian', 'malaysia'],
-  'mexican': ['mexican', 'mexico'],
-  'moroccan': ['moroccan', 'morocco'],
-  'polish': ['polish', 'poland'],
-  'portuguese': ['portuguese', 'portugal'],
-  'russian': ['russian', 'russia'],
-  'spanish': ['spanish', 'spain'],
-  'thai': ['thai', 'thailand'],
-  'tunisian': ['tunisian', 'tunisia'],
-  'turkish': ['turkish', 'turkey'],
-  'ukrainian': ['ukrainian', 'ukraine'],
-  'vietnamese': ['vietnamese', 'vietnam']
-};
+// Apply request validation to all API routes
+router.use(validateRequestInput);
 
-function matchesArea(targetArea, recipeArea) {
-  if (!targetArea || !recipeArea) return false;
-  const t = targetArea.toLowerCase().trim();
-  const r = recipeArea.toLowerCase().trim();
-  if (t === r) return true;
-  for (const aliases of Object.values(AREA_DEMONYM_MAP)) {
-    if (aliases.includes(t) && aliases.includes(r)) return true;
+/**
+ * Deterministic ETag Generator
+ */
+function computeEtag(data) {
+  const json = typeof data === 'string' ? data : JSON.stringify(data);
+  return '"' + crypto.createHash('md5').update(json).digest('hex') + '"';
+}
+
+/**
+ * Cache-Control & 304 Freshness Helper for static API responses
+ */
+function sendCachedJson(req, res, data, maxAgeSec = 300) {
+  const hash = computeEtag(data);
+  res.setHeader('ETag', hash);
+  res.setHeader('Cache-Control', `public, max-age=${maxAgeSec}, stale-while-revalidate=600`);
+  
+  const clientEtag = req.headers['if-none-match'];
+  if (clientEtag && (clientEtag === hash || clientEtag.includes(hash))) {
+    return res.status(304).end();
   }
-  return false;
+  return res.json(data);
 }
 
 /**
@@ -59,66 +43,40 @@ router.get('/health', (req, res) => {
   const uptimeSeconds = Math.floor((Date.now() - startTime) / 1000);
   const memory = process.memoryUsage();
 
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.json({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     uptimeSeconds,
     nodeVersion: process.version,
+    platform: process.platform,
+    arch: process.arch,
+    pid: process.pid,
     memory: {
       rssMB: Math.round(memory.rss / 1024 / 1024),
       heapUsedMB: Math.round(memory.heapUsed / 1024 / 1024),
       heapTotalMB: Math.round(memory.heapTotal / 1024 / 1024)
     },
     catalog: {
-      totalRecipes: curatedRecipes.length,
-      categoriesCount: new Set(curatedRecipes.map(r => r.strCategory).filter(Boolean)).size,
-      areasCount: new Set(curatedRecipes.map(r => r.strArea).filter(Boolean)).size
+      totalRecipes: recipeEngine.recipes.length,
+      categoriesCount: recipeEngine.getCategories().length,
+      areasCount: recipeEngine.getAreas().length
     }
   });
 });
 
 /**
  * GET /api/recipes/search
- * Search recipes by query text, category, or cuisine area
+ * High-speed multi-filter search using inverted token index & demonym resolution
  */
 router.get('/recipes/search', (req, res) => {
-  const q = (req.query.q || '').trim().toLowerCase();
-  const category = (req.query.category || '').trim();
-  const area = (req.query.area || '').trim();
+  const q = String(req.query.q || '').trim();
+  const category = String(req.query.category || '').trim();
+  const area = String(req.query.area || '').trim();
+  const limit = parseInt(req.query.limit, 10) || 100;
 
-  let results = curatedRecipes;
-
-  if (category) {
-    results = results.filter(r => (r.strCategory || '').toLowerCase() === category.toLowerCase());
-  }
-
-  if (area) {
-    results = results.filter(r => matchesArea(area, r.strArea));
-  }
-
-  if (q) {
-    results = results.filter(r => {
-      const title = (r.strMeal || '').toLowerCase();
-      const tags = (r.strTags || '').toLowerCase();
-      const cat = (r.strCategory || '').toLowerCase();
-      const ar = (r.strArea || '').toLowerCase();
-
-      if (title.includes(q) || tags.includes(q) || cat.includes(q) || ar.includes(q)) {
-        return true;
-      }
-
-      for (let i = 1; i <= 20; i++) {
-        const ing = (r[`strIngredient${i}`] || '').toLowerCase();
-        if (ing && ing.includes(q)) return true;
-      }
-      return false;
-    });
-  }
-
-  res.json({
-    total: results.length,
-    recipes: results.slice(0, 100) // Capped for optimal latency
-  });
+  const result = recipeEngine.search({ q, category, area, limit });
+  sendCachedJson(req, res, result, 120);
 });
 
 /**
@@ -126,96 +84,42 @@ router.get('/recipes/search', (req, res) => {
  * Retrieves a random recipe from the catalog (Chef Roulette)
  */
 router.get('/recipes/random', (req, res) => {
-  const randomIndex = Math.floor(Math.random() * curatedRecipes.length);
-  res.json({
-    recipe: curatedRecipes[randomIndex]
-  });
+  const recipe = recipeEngine.getRandom();
+  res.setHeader('Cache-Control', 'no-cache, no-store');
+  res.json({ recipe });
 });
 
 /**
  * GET /api/recipes/categories
- * Returns list of distinct categories with count
+ * Returns list of distinct categories with dish counts
  */
 router.get('/recipes/categories', (req, res) => {
-  const counts = {};
-  for (const r of curatedRecipes) {
-    if (r.strCategory) {
-      counts[r.strCategory] = (counts[r.strCategory] || 0) + 1;
-    }
-  }
-  res.json({
-    categories: Object.entries(counts).map(([name, count]) => ({ name, count }))
-  });
+  sendCachedJson(req, res, { categories: recipeEngine.getCategories() }, 600);
 });
 
 /**
  * GET /api/recipes/areas
- * Returns list of distinct areas with count
+ * Returns list of distinct areas/cuisines with dish counts
  */
 router.get('/recipes/areas', (req, res) => {
-  const counts = {};
-  for (const r of curatedRecipes) {
-    if (r.strArea) {
-      counts[r.strArea] = (counts[r.strArea] || 0) + 1;
-    }
-  }
-  res.json({
-    areas: Object.entries(counts).map(([name, count]) => ({ name, count }))
-  });
+  sendCachedJson(req, res, { areas: recipeEngine.getAreas() }, 600);
 });
 
 /**
  * POST /api/recipes/pantry
- * Multi-ingredient combinatorial matching with match percentages
+ * Multi-ingredient combinatorial matching with calculated percentages
  */
 router.post('/recipes/pantry', (req, res) => {
-  const ingredients = Array.isArray(req.body?.ingredients) 
-    ? req.body.ingredients.map(i => String(i).trim().toLowerCase()).filter(Boolean)
-    : [];
-
-  if (ingredients.length === 0) {
-    return res.json({ total: 0, matches: [] });
+  if (!req.body || !Array.isArray(req.body.ingredients)) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Body must be a JSON object with an "ingredients" array.'
+    });
   }
 
-  const matches = [];
-
-  for (const r of curatedRecipes) {
-    const recipeIngredients = [];
-    for (let i = 1; i <= 20; i++) {
-      const ing = (r[`strIngredient${i}`] || '').trim().toLowerCase();
-      if (ing) recipeIngredients.push(ing);
-    }
-
-    let matchedCount = 0;
-    for (const p of ingredients) {
-      const isMatched = recipeIngredients.some(rIng => {
-        if (rIng === p) return true;
-        if (rIng.includes(p) || p.includes(rIng)) {
-          const words = rIng.split(/\s+/);
-          return words.includes(p) || p.split(/\s+/).some(w => words.includes(w));
-        }
-        return false;
-      });
-      if (isMatched) matchedCount++;
-    }
-
-    if (matchedCount > 0) {
-      const percent = Math.min(100, Math.round((matchedCount / ingredients.length) * 100));
-      matches.push({
-        recipe: r,
-        matchedCount,
-        totalProvided: ingredients.length,
-        matchPercent: percent
-      });
-    }
-  }
-
-  matches.sort((a, b) => b.matchedCount - a.matchedCount || b.matchPercent - a.matchPercent);
-
-  res.json({
-    total: matches.length,
-    matches: matches.slice(0, 50)
-  });
+  const limit = parseInt(req.body.limit, 10) || 50;
+  const result = recipeEngine.matchPantry(req.body.ingredients, limit);
+  sendCachedJson(req, res, result, 60);
 });
 
 /**
@@ -223,29 +127,27 @@ router.post('/recipes/pantry', (req, res) => {
  * Ingredient substitution lookup
  */
 router.get('/recipes/substitutions', (req, res) => {
-  const query = (req.query.ingredient || '').trim().toLowerCase();
-  if (!query) {
-    return res.json({ substitutions: INGREDIENT_SUBSTITUTIONS });
-  }
-
-  const match = INGREDIENT_SUBSTITUTIONS[query] || null;
-  res.json({
-    ingredient: query,
-    match
-  });
+  const ingredient = String(req.query.ingredient || '').trim();
+  const result = recipeEngine.getSubstitution(ingredient);
+  sendCachedJson(req, res, result, 600);
 });
 
 /**
  * GET /api/recipes/:id
- * Single recipe lookup by ID
+ * O(1) single recipe lookup by ID
  */
 router.get('/recipes/:id', (req, res) => {
-  const id = String(req.params.id);
-  const recipe = curatedRecipes.find(r => String(r.idMeal) === id);
+  const id = String(req.params.id || '').replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!id) {
+    return res.status(400).json({ error: 'Bad Request', message: 'Invalid recipe identifier' });
+  }
+
+  const recipe = recipeEngine.getById(id);
   if (!recipe) {
     return res.status(404).json({ error: 'Recipe Not Found', id });
   }
-  res.json({ recipe });
+
+  sendCachedJson(req, res, { recipe }, 600);
 });
 
 export default router;

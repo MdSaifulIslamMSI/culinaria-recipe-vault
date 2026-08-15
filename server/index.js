@@ -1,14 +1,15 @@
 /**
  * Culinaria Production Node.js Backend Server
- * Serves Stateless REST API & High-Performance Static Frontend
+ * High-Performance Stateless REST API & Static Frontend Delivery
  */
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import apiRouter from './routes/api.js';
-import { rateLimiter, securityHeaders } from './middleware/security.js';
+import { rateLimiter, securityHeaders, requestLogger } from './middleware/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,30 +19,49 @@ const DIST_DIR = path.join(ROOT_DIR, 'dist');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Global Security & Rate Limiting Middleware
-app.use(securityHeaders);
-app.use(rateLimiter.middleware());
+// 1. Enable Strong ETags for browser caching
+app.set('etag', 'strong');
 
-// 2. CORS Policy
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+// 2. High-Performance Gzip / Brotli Compression
+app.use(compression({
+  threshold: 1024,
+  filter: (req, res) => {
+    if (req.headers['x-no-compression']) return false;
+    return compression.filter(req, res);
+  }
 }));
 
-// 3. Body Parsing for JSON payloads
-app.use(express.json({ limit: '1mb' }));
+// 3. Security Headers & Telemetry Logging
+app.use(securityHeaders);
+app.use(requestLogger);
 
-// 4. Mount Stateless API Router
+// 4. In-Memory IP Rate Limiter
+app.use(rateLimiter.middleware());
+
+// 5. Hardened CORS Policy
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'HEAD', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'If-None-Match']
+}));
+
+// 6. Body Parsing for JSON payloads with strict limits
+app.use(express.json({ limit: '512kb' }));
+
+// 7. Mount Stateless API Router
 app.use('/api', apiRouter);
 
-// 5. Serve Compiled Frontend Assets in Production Mode
+// 8. Serve Compiled Frontend Assets in Production Mode
 if (fs.existsSync(DIST_DIR)) {
   app.use(express.static(DIST_DIR, {
     maxAge: '1d',
+    etag: true,
     setHeaders: (res, filePath) => {
       if (filePath.endsWith('.html')) {
         res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+      } else if (filePath.includes('/assets/')) {
+        // Immutable hashed assets cache for 1 year
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
       }
     }
   }));
@@ -55,14 +75,27 @@ if (fs.existsSync(DIST_DIR)) {
   });
 }
 
-// 6. Global 404 for unmatched API routes
+// 9. Global 404 for unmatched API routes
 app.use('/api', (req, res) => {
   res.status(404).json({ error: 'Endpoint Not Found', path: req.originalUrl });
 });
 
+// 10. Global Error Boundary Handler
 app.use((err, req, res, next) => {
-  console.error('[SERVER ERROR]', err);
-  res.status(500).json({ error: 'Internal Server Error', message: err.message });
+  console.error('[UNHANDLED ERROR]', err);
+  res.status(err.status || 500).json({
+    error: err.name || 'Internal Server Error',
+    message: err.message || 'An unexpected error occurred.'
+  });
+});
+
+// Process-Level Exception Protection
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[FATAL] Uncaught Exception:', err);
 });
 
 // Start Server if executed directly
@@ -71,14 +104,32 @@ const isDirectRun = process.argv[1] && (
   process.argv[1].endsWith('server/index.js')
 );
 
+let serverInstance = null;
+
 if (isDirectRun) {
-  app.listen(PORT, () => {
+  serverInstance = app.listen(PORT, () => {
     console.log(`\n👨‍🍳 =================================================`);
     console.log(`✨ Culinaria Full-Stack Server Running on Port ${PORT}`);
     console.log(`🚀 API Base URL: http://localhost:${PORT}/api`);
     console.log(`🩺 Health Endpoint: http://localhost:${PORT}/api/health`);
     console.log(`👨‍🍳 =================================================\n`);
   });
+
+  // Graceful Shutdown on SIGINT / SIGTERM
+  const handleShutdown = (signal) => {
+    console.log(`\n[SERVER] Received ${signal}. Gracefully shutting down...`);
+    if (serverInstance) {
+      serverInstance.close(() => {
+        console.log('[SERVER] Closed all active connections. Exiting clean.');
+        process.exit(0);
+      });
+    } else {
+      process.exit(0);
+    }
+  };
+
+  process.on('SIGTERM', () => handleShutdown('SIGTERM'));
+  process.on('SIGINT', () => handleShutdown('SIGINT'));
 }
 
 export default app;
