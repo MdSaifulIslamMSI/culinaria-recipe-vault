@@ -4,6 +4,7 @@ services:
   - type: web
     name: culinaria-recipe-vault-server
     env: node
+    branch: main
     plan: free
     region: oregon
     buildCommand: npm ci --include=dev && npm run build

@@ -206,6 +206,9 @@ export class CookingStudioModal {
         </div>
 
         <div class="modal-cta-group">
+          <button class="btn-plan-recipe" id="btnPlanRecipe">
+            <span>📅 Plan This Recipe</span>
+          </button>
           <button class="btn-cook-mode" id="btnLaunchCookMode">
             <span>👨‍🍳 Start Cook Mode</span>
           </button>
@@ -397,6 +400,7 @@ export class CookingStudioModal {
     const scaleDown = document.getElementById('btnScaleDown');
     const unitMetric = document.getElementById('btnUnitMetric');
     const unitImperial = document.getElementById('btnUnitImperial');
+    const btnPlanRecipe = document.getElementById('btnPlanRecipe');
     const btnLaunchCook = document.getElementById('btnLaunchCookMode');
     const btnModalFav = document.getElementById('btnModalFav');
     const btnModalShare = document.getElementById('btnModalShare');
@@ -545,6 +549,13 @@ export class CookingStudioModal {
 
     btnLaunchCook?.addEventListener('click', () => {
       this.openCookMode();
+    });
+
+    btnPlanRecipe?.addEventListener('click', () => {
+      this.close();
+      window.dispatchEvent(new CustomEvent('culinaria:open-meal-planner-for-recipe', {
+        detail: { recipe: this.currentRecipe }
+      }));
     });
   }
 
