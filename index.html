@@ -14,7 +14,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
   <script>
     (function() {
@@ -30,8 +30,8 @@
       } catch (e) {}
     })();
   </script>
-  <script type="module" crossorigin src="./assets/index-B1FKvaRZ.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-BXx2B8QS.css">
+  <script type="module" crossorigin src="./assets/index-UYBnU1FJ.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Cx-82l4V.css">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -67,6 +67,11 @@
           </nav>
 
           <div class="header-actions">
+            <button class="action-btn planner-trigger" id="btnMealPlanner" title="7-Day Gourmet Meal Planner" aria-label="Open 7-Day Weekly Meal Planner">
+              <span class="planner-icon">📅</span>
+              <span class="btn-text">Planner</span>
+            </button>
+
             <button class="action-btn prefs-trigger" id="btnChefPreferences" title="Chef Kitchen Settings (10 Toggles)" aria-label="Open Chef Kitchen Preferences">
               <span class="prefs-icon">⚙️</span>
               <span class="btn-text">Settings</span>
@@ -140,6 +145,7 @@
                   class="search-input" 
                   placeholder="Search 3,000+ recipes, ingredients, or cuisines (e.g., Teriyaki, Carbonara, Salmon, Birria)..." 
                   aria-label="Search recipes, ingredients, or cuisines"
+                  maxlength="100"
                   autocomplete="off"
                 />
                 <button class="clear-search-btn hidden" id="clearSearchBtn" aria-label="Clear search">✕</button>
@@ -266,6 +272,7 @@
                 id="pantryIngredientInput" 
                 placeholder="Type an ingredient (e.g., Chicken, Eggs, Tomato, Garlic, Spinach)..."
                 aria-label="Type an ingredient to add to your pantry"
+                maxlength="60"
                 autocomplete="off"
               />
               <button class="secondary-btn btn-voice-pantry" id="btnVoicePantry" type="button" aria-label="Speak ingredients aloud" title="Speak ingredients aloud">🎙️ Speak</button>
@@ -372,7 +379,7 @@
 
       <div class="drawer-input-row">
         <label for="manualGroceryInput" class="sr-only">Add custom grocery item</label>
-        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" />
+        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" maxlength="60" />
         <button class="primary-btn" id="btnAddManualGrocery" aria-label="Add ingredient">+</button>
       </div>
 
@@ -671,6 +678,6 @@
 
   <!-- Global Application Error Boundary Recovery Overlay -->
   <div class="error-boundary-overlay hidden" id="errorBoundaryOverlay"></div>
-
+
 </body>
 </html>
