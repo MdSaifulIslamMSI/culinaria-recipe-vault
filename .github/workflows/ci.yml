@@ -86,3 +86,11 @@ jobs:
             git commit -m "deploy: ${GITHUB_SHA}"
             git push origin HEAD:gh-pages
           fi
+
+      - name: Trigger Render Cloud Deployment
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
+        env:
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        run: |
+          curl -s -X POST "${RENDER_DEPLOY_HOOK}" || true
+          echo "Render deployment triggered successfully"
