@@ -14,7 +14,16 @@ export class PreferencesDrawer {
     this.btnReset = document.getElementById('btnResetAllPrefs');
     this.paletteGrid = document.getElementById('paletteSwatchesGrid');
 
+    this.setOpenState(false);
     this.init();
+  }
+
+  setOpenState(isOpen) {
+    [this.drawer, this.overlay].forEach((element) => {
+      if (!element) return;
+      element.setAttribute('aria-hidden', String(!isOpen));
+      element.inert = !isOpen;
+    });
   }
 
   init() {
@@ -81,6 +90,7 @@ export class PreferencesDrawer {
     this.previousActiveElement = document.activeElement;
     this.syncToggleUI();
     this.syncActivePaletteUI();
+    this.setOpenState(true);
     this.overlay?.classList.add('open');
     this.drawer?.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -88,6 +98,7 @@ export class PreferencesDrawer {
   }
 
   close() {
+    this.setOpenState(false);
     this.overlay?.classList.remove('open');
     this.drawer?.classList.remove('open');
     document.body.style.overflow = '';

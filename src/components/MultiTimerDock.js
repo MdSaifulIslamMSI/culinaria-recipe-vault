@@ -40,10 +40,14 @@ export class MultiTimerDock {
     
     if (timers.length === 0) {
       this.dockEl.classList.add('hidden');
+      this.dockEl.setAttribute('aria-hidden', 'true');
+      this.dockEl.inert = true;
       return;
     }
 
     this.dockEl.classList.remove('hidden');
+    this.dockEl.setAttribute('aria-hidden', 'false');
+    this.dockEl.inert = false;
     const runningCount = timers.filter(t => t.status === 'running').length;
 
     this.dockEl.innerHTML = `

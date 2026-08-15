@@ -12,7 +12,7 @@
     "dev": "vite --port 5173",
     "build": "vite build && node scripts/write-release-metadata.js",
     "preview": "vite preview",
-    "test": "node --test tests/mealDbApi.test.js tests/serverApi.test.js tests/serverHardening.test.js tests/mealPlannerAndTimers.test.js tests/securityPenetration.test.js",
+    "test": "node --test tests/mealDbApi.test.js tests/serverApi.test.js tests/serverHardening.test.js tests/mealPlannerAndTimers.test.js tests/securityPenetration.test.js tests/frontendAccessibility.test.js",
     "doctor": "npm run test && npm run build"
   },
   "devDependencies": {

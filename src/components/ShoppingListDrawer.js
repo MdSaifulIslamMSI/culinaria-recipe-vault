@@ -35,7 +35,16 @@ export class ShoppingListDrawer {
     this.btnCopy = document.getElementById('btnCopyShoppingList');
     this.btnClear = document.getElementById('btnClearShoppingList');
 
+    this.setOpenState(false);
     this.init();
+  }
+
+  setOpenState(isOpen) {
+    [this.drawer, this.overlay].forEach((element) => {
+      if (!element) return;
+      element.setAttribute('aria-hidden', String(!isOpen));
+      element.inert = !isOpen;
+    });
   }
 
   init() {
@@ -97,6 +106,7 @@ export class ShoppingListDrawer {
 
   open() {
     this.previousActiveElement = document.activeElement;
+    this.setOpenState(true);
     this.drawer.classList.add('open');
     this.overlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -104,6 +114,7 @@ export class ShoppingListDrawer {
   }
 
   close() {
+    this.setOpenState(false);
     this.drawer.classList.remove('open');
     this.overlay.classList.remove('open');
     document.body.style.overflow = '';
