@@ -61,6 +61,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+    env:
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
     steps:
       - name: Download verified production artifact
         uses: actions/download-artifact@v4
@@ -86,3 +88,9 @@ jobs:
             git commit -m "deploy: ${GITHUB_SHA}"
             git push origin HEAD:gh-pages
           fi
+
+      - name: Trigger Render Cloud Deployment
+        if: ${{ env.RENDER_DEPLOY_HOOK != '' }}
+        run: |
+          curl --fail-with-body --show-error --silent --request POST --retry 2 --retry-delay 2 "${RENDER_DEPLOY_HOOK}"
+          echo "Render deployment hook accepted"

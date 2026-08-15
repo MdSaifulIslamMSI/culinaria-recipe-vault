@@ -1,0 +1,8 @@
+node_modules
+dist
+.git
+.github
+cdp-screenshots
+cdp-rigorous-reports
+*.log
+.DS_Store

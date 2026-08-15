@@ -86,7 +86,17 @@ export function sanitizeIdentifier(id) {
  */
 export function sanitizeTextInput(input, maxLength = 120) {
   if (!input || typeof input !== 'string') return '';
-  return sanitizeHtml(input.trim().slice(0, maxLength));
+  const noCtrl = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
+  return sanitizeHtml(noCtrl.trim().slice(0, maxLength));
+}
+
+/**
+ * Sanitizes plain text before copying to clipboard, stripping non-printable control characters
+ * and potential terminal escape sequences.
+ */
+export function sanitizeClipboardText(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 }
 
 /**

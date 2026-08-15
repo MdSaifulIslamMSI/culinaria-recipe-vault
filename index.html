@@ -67,6 +67,11 @@
           </nav>
 
           <div class="header-actions">
+            <button class="action-btn planner-trigger" id="btnMealPlanner" title="7-Day Gourmet Meal Planner" aria-label="Open 7-Day Weekly Meal Planner">
+              <span class="planner-icon">📅</span>
+              <span class="btn-text">Planner</span>
+            </button>
+
             <button class="action-btn prefs-trigger" id="btnChefPreferences" title="Chef Kitchen Settings (10 Toggles)" aria-label="Open Chef Kitchen Preferences">
               <span class="prefs-icon">⚙️</span>
               <span class="btn-text">Settings</span>
@@ -140,6 +145,7 @@
                   class="search-input" 
                   placeholder="Search 3,000+ recipes, ingredients, or cuisines (e.g., Teriyaki, Carbonara, Salmon, Birria)..." 
                   aria-label="Search recipes, ingredients, or cuisines"
+                  maxlength="100"
                   autocomplete="off"
                 />
                 <button class="clear-search-btn hidden" id="clearSearchBtn" aria-label="Clear search">✕</button>
@@ -266,6 +272,7 @@
                 id="pantryIngredientInput" 
                 placeholder="Type an ingredient (e.g., Chicken, Eggs, Tomato, Garlic, Spinach)..."
                 aria-label="Type an ingredient to add to your pantry"
+                maxlength="60"
                 autocomplete="off"
               />
               <button class="secondary-btn btn-voice-pantry" id="btnVoicePantry" type="button" aria-label="Speak ingredients aloud" title="Speak ingredients aloud">🎙️ Speak</button>
@@ -372,7 +379,7 @@
 
       <div class="drawer-input-row">
         <label for="manualGroceryInput" class="sr-only">Add custom grocery item</label>
-        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" />
+        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" maxlength="60" />
         <button class="primary-btn" id="btnAddManualGrocery" aria-label="Add ingredient">+</button>
       </div>
 
