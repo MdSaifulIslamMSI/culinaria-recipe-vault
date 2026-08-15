@@ -4,7 +4,7 @@
 
 // In-memory sliding window IP rate limiter
 class ServerRateLimiter {
-  constructor(maxRequests = 120, windowMs = 60000) {
+  constructor(maxRequests = 150, windowMs = 60000) {
     this.maxRequests = maxRequests;
     this.windowMs = windowMs;
     this.requests = new Map();
@@ -90,10 +90,27 @@ export function requestLogger(req, res, next) {
 }
 
 /**
- * Input Sanitation & Parameter Bounding Middleware
+ * Advanced Input Validation, Method Bounding & Deep Inspection Middleware
  */
 export function validateRequestInput(req, res, next) {
-  // 1. Sanitize Query Parameters
+  // 1. Block Dangerous / Deprecated HTTP Methods (e.g. TRACE, TRACK)
+  const allowedMethods = ['GET', 'POST', 'HEAD', 'OPTIONS'];
+  if (!allowedMethods.includes(req.method)) {
+    return res.status(405).json({
+      error: 'Method Not Allowed',
+      message: `HTTP method "${req.method}" is not permitted.`
+    });
+  }
+
+  // 2. Block Path Traversal & Null Byte in Request URL
+  if (req.url && (req.url.includes('%00') || req.url.includes('\0'))) {
+    return res.status(400).json({
+      error: 'Bad Request',
+      message: 'Illegal control character or null byte in request path.'
+    });
+  }
+
+  // 3. Sanitize Query Parameters
   if (req.query) {
     for (const [key, value] of Object.entries(req.query)) {
       if (typeof value === 'string') {
@@ -104,8 +121,8 @@ export function validateRequestInput(req, res, next) {
             message: `Query parameter "${key}" exceeds maximum allowed length of 150 characters.`
           });
         }
-        // Disallow dangerous control characters
-        if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(value)) {
+        // Disallow dangerous control characters and CRLF
+        if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\r\n]/.test(value)) {
           return res.status(400).json({
             error: 'Bad Request',
             message: `Illegal control character in parameter "${key}".`
@@ -115,25 +132,50 @@ export function validateRequestInput(req, res, next) {
     }
   }
 
-  // 2. Sanitize JSON Body
+  // 4. Deep Inspection & Sanitation for JSON Body
   if (req.body && typeof req.body === 'object') {
-    // Check for prototype pollution keys
-    const checkPollution = (obj) => {
+    const checkSafety = (obj, depth = 0) => {
+      // Prevent deeply nested payload bombs
+      if (depth > 6) {
+        throw new Error('JSON structure exceeds maximum nesting depth.');
+      }
+
+      if (Array.isArray(obj)) {
+        // Prevent array payload bombs (max 100 items)
+        if (obj.length > 100) {
+          throw new Error('Array payload exceeds maximum allowed size of 100 elements.');
+        }
+        for (const item of obj) {
+          if (typeof item === 'string' && item.length > 200) {
+            throw new Error('Array string element exceeds maximum length of 200 characters.');
+          }
+          if (typeof item === 'object' && item !== null) {
+            checkSafety(item, depth + 1);
+          }
+        }
+        return;
+      }
+
       for (const k of Object.keys(obj)) {
+        // Prototype pollution check
         if (['__proto__', 'constructor', 'prototype'].includes(k)) {
-          return true;
+          throw new Error('Illegal object key detected in request body.');
+        }
+        if (typeof obj[k] === 'string' && obj[k].length > 1000) {
+          throw new Error(`Field "${k}" exceeds maximum length of 1000 characters.`);
         }
         if (obj[k] && typeof obj[k] === 'object') {
-          if (checkPollution(obj[k])) return true;
+          checkSafety(obj[k], depth + 1);
         }
       }
-      return false;
     };
 
-    if (checkPollution(req.body)) {
+    try {
+      checkSafety(req.body);
+    } catch (err) {
       return res.status(400).json({
         error: 'Bad Request',
-        message: 'Illegal object key detected in request body.'
+        message: err.message || 'Illegal request payload.'
       });
     }
   }

@@ -105,7 +105,7 @@ export function getFavorites() {
   return stored.map(normalizeFavoriteRecord).filter(Boolean);
 }
 
-function normalizeFavoriteRecord(recipe) {
+export function normalizeFavoriteRecord(recipe) {
   if (!recipe || typeof recipe !== 'object') return null;
 
   const id = sanitizeIdentifier(recipe.id || recipe.idMeal);
@@ -141,6 +141,8 @@ function normalizeFavoriteRecord(recipe) {
     savedAt: Number.isFinite(recipe.savedAt) ? recipe.savedAt : Date.now()
   };
 }
+
+export const normalizeRecipe = normalizeFavoriteRecord;
 
 export function isFavorite(recipeId) {
   if (!recipeId) return false;
