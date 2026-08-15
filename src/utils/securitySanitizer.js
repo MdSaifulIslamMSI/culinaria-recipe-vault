@@ -90,6 +90,15 @@ export function sanitizeTextInput(input, maxLength = 120) {
 }
 
 /**
+ * Sanitizes plain text before copying to clipboard, stripping non-printable control characters
+ * and potential terminal escape sequences.
+ */
+export function sanitizeClipboardText(text) {
+  if (!text || typeof text !== 'string') return '';
+  return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
+}
+
+/**
  * Deep-clean objects against Prototype Pollution attacks
  */
 export function sanitizeObject(obj) {

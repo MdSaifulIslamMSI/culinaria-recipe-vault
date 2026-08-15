@@ -9,6 +9,7 @@ import {
   clearShoppingList,
   addToShoppingList
 } from '../services/storageService.js';
+import { sanitizeClipboardText } from '../utils/securitySanitizer.js';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -169,8 +170,9 @@ export class ShoppingListDrawer {
       return;
     }
 
-    const text = list.map(item => `- [${item.checked ? 'x' : ' '}] ${item.measure ? item.measure + ' ' : ''}${item.name}`).join('\n');
-    navigator.clipboard.writeText(`🛒 Culinaria Grocery List:\n\n${text}`).then(() => {
+    const rawText = `🛒 Culinaria Grocery List:\n\n${text}`;
+    const safeText = sanitizeClipboardText(rawText);
+    navigator.clipboard.writeText(safeText).then(() => {
       window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '📋 Grocery list copied to clipboard!' } }));
     }).catch(err => {
       console.error(err);

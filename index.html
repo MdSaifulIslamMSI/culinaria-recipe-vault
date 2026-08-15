@@ -140,6 +140,7 @@
                   class="search-input" 
                   placeholder="Search 3,000+ recipes, ingredients, or cuisines (e.g., Teriyaki, Carbonara, Salmon, Birria)..." 
                   aria-label="Search recipes, ingredients, or cuisines"
+                  maxlength="100"
                   autocomplete="off"
                 />
                 <button class="clear-search-btn hidden" id="clearSearchBtn" aria-label="Clear search">✕</button>
@@ -266,6 +267,7 @@
                 id="pantryIngredientInput" 
                 placeholder="Type an ingredient (e.g., Chicken, Eggs, Tomato, Garlic, Spinach)..."
                 aria-label="Type an ingredient to add to your pantry"
+                maxlength="60"
                 autocomplete="off"
               />
               <button class="secondary-btn btn-voice-pantry" id="btnVoicePantry" type="button" aria-label="Speak ingredients aloud" title="Speak ingredients aloud">🎙️ Speak</button>
@@ -372,7 +374,7 @@
 
       <div class="drawer-input-row">
         <label for="manualGroceryInput" class="sr-only">Add custom grocery item</label>
-        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" />
+        <input type="text" id="manualGroceryInput" placeholder="Add custom ingredient (e.g., Flaky Sea Salt)..." aria-label="Add custom ingredient to grocery list" maxlength="60" />
         <button class="primary-btn" id="btnAddManualGrocery" aria-label="Add ingredient">+</button>
       </div>
 
