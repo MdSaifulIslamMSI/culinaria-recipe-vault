@@ -18,6 +18,7 @@ import confetti from 'canvas-confetti';
 export class CookingStudioModal {
   constructor() {
     this.modalBackdrop = document.getElementById('recipeModalBackdrop');
+    this.modal = document.getElementById('recipeModal');
     this.modalContent = document.getElementById('modalRecipeContent');
     this.closeBtn = document.getElementById('btnCloseRecipeModal');
 
@@ -45,7 +46,16 @@ export class CookingStudioModal {
     this.voiceActive = true;
     this.checkedIngredientNames = new Set();
 
+    this.setOpenState(false);
     this.initEvents();
+  }
+
+  setOpenState(isOpen) {
+    [this.modalBackdrop, this.modal].forEach((element) => {
+      if (!element) return;
+      element.setAttribute('aria-hidden', String(!isOpen));
+      element.inert = !isOpen;
+    });
   }
 
   initEvents() {
@@ -130,12 +140,14 @@ export class CookingStudioModal {
     this.checkedIngredientNames.clear();
 
     await this.render();
+    this.setOpenState(true);
     this.modalBackdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
     setTimeout(() => this.closeBtn.focus(), 50);
   }
 
   close() {
+    this.setOpenState(false);
     this.modalBackdrop.classList.remove('open');
     document.body.style.overflow = '';
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
@@ -552,6 +564,8 @@ export class CookingStudioModal {
     this.currentCookStepIndex = 0;
     this.cookTitle.textContent = this.currentRecipe.title;
     this.cookOverlay.classList.add('open');
+    this.cookOverlay.setAttribute('aria-hidden', 'false');
+    this.cookOverlay.inert = false;
     this.btnToggleVoice.classList.add('active');
     this.btnToggleVoice.querySelector('.voice-label').textContent = 'Voice On';
     this.voiceActive = true;
@@ -560,6 +574,8 @@ export class CookingStudioModal {
 
   closeCookMode() {
     voiceAssistant.stop();
+    this.cookOverlay.setAttribute('aria-hidden', 'true');
+    this.cookOverlay.inert = true;
     this.cookOverlay.classList.remove('open');
   }
 

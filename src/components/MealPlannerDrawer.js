@@ -35,6 +35,8 @@ export class MealPlannerDrawer {
       this.overlayEl = document.getElementById('mealPlannerOverlay');
     }
 
+    this.setOpenState(false);
+
     this.overlayEl.addEventListener('click', () => this.close());
     
     // Listen for custom trigger to open or plan a recipe
@@ -59,10 +61,19 @@ export class MealPlannerDrawer {
     });
   }
 
+  setOpenState(isOpen) {
+    [this.drawerEl, this.overlayEl].forEach((element) => {
+      if (!element) return;
+      element.setAttribute('aria-hidden', String(!isOpen));
+      element.inert = !isOpen;
+    });
+  }
+
   open() {
     this.previousActiveElement = document.activeElement;
     this.isOpen = true;
     this.render();
+    this.setOpenState(true);
     this.drawerEl.classList.add('open');
     this.overlayEl.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -74,6 +85,7 @@ export class MealPlannerDrawer {
 
   close() {
     this.isOpen = false;
+    this.setOpenState(false);
     this.drawerEl.classList.remove('open');
     this.overlayEl.classList.remove('open');
     document.body.style.overflow = '';

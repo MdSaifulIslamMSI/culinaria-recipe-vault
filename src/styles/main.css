@@ -61,6 +61,15 @@ textarea:focus-visible {
   outline-offset: 2px;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 button {
   cursor: pointer;
 }
@@ -3625,10 +3634,13 @@ html, body {
     display: none;
   }
   .brand-title {
-    font-size: 1.3rem;
+    font-size: 1rem;
   }
   .logo-emblem {
-    font-size: 1.6rem;
+    font-size: 1.35rem;
+  }
+  .brand-logo {
+    gap: 0.2rem;
   }
   .desktop-nav {
     display: none !important;
@@ -3637,11 +3649,14 @@ html, body {
     display: flex !important;
   }
   .header-actions {
-    gap: 0.35rem;
+    gap: 0.15rem !important;
+    flex-shrink: 0;
   }
   .action-btn {
-    padding: 0.45rem 0.6rem;
-    min-height: 36px;
+    width: 44px;
+    min-width: 44px;
+    min-height: 44px !important;
+    padding: 0;
   }
   .action-btn .btn-text {
     display: none !important;
@@ -3698,6 +3713,7 @@ html, body {
     font-size: 0.8rem !important;
   }
   .search-submit-btn {
+    min-height: 44px !important;
     padding: 0.5rem 0.95rem !important;
     font-size: 0.84rem !important;
     flex-shrink: 0 !important;
@@ -3777,6 +3793,7 @@ html, body {
     min-width: 0 !important;
     flex: 1 !important;
     padding: 0.45rem 0.2rem !important;
+    min-height: 44px !important;
     font-size: 0.72rem !important;
     white-space: nowrap !important;
     justify-content: center !important;
@@ -3868,6 +3885,22 @@ html, body {
   .shopping-drawer {
     width: 100vw;
     max-width: 100vw;
+  }
+
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    flex: 0 0 44px;
+  }
+
+  .mobile-nav .nav-btn {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .brand-text {
+    display: none;
   }
 }
 

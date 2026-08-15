@@ -16,7 +16,17 @@ export class RouletteModal {
 
     this.currentRecipe = null;
     this.spinRequestId = 0;
+    this.previousActiveElement = null;
+    this.setOpenState(false);
     this.init();
+  }
+
+  setOpenState(isOpen) {
+    [this.backdrop, this.modal].forEach((element) => {
+      if (!element) return;
+      element.setAttribute('aria-hidden', String(!isOpen));
+      element.inert = !isOpen;
+    });
   }
 
   init() {
@@ -35,17 +45,47 @@ export class RouletteModal {
         }));
       }
     });
+
+    document.addEventListener('keydown', (e) => {
+      if (!this.backdrop.classList.contains('open')) return;
+      if (e.key === 'Escape') {
+        this.close();
+      } else if (e.key === 'Tab') {
+        this.trapFocus(e);
+      }
+    });
+  }
+
+  trapFocus(e) {
+    const focusable = Array.from(this.modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
+    if (focusable.length === 0) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      last.focus();
+      e.preventDefault();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      first.focus();
+      e.preventDefault();
+    }
   }
 
   open() {
+    this.previousActiveElement = document.activeElement;
+    this.setOpenState(true);
     this.backdrop.classList.add('open');
     document.body.style.overflow = 'hidden';
+    this.closeBtn.focus();
     this.spin();
   }
 
   close() {
+    this.setOpenState(false);
     this.backdrop.classList.remove('open');
     document.body.style.overflow = '';
+    if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
+      this.previousActiveElement.focus();
+    }
   }
 
   async spin() {
