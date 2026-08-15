@@ -46,8 +46,29 @@ test('2. Response includes all required modern Security Headers', async () => {
   assert.strictEqual(res.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
   assert.strictEqual(res.headers.get('cross-origin-opener-policy'), 'same-origin');
   assert.strictEqual(res.headers.get('cross-origin-resource-policy'), 'same-origin');
-  assert(res.headers.get('strict-transport-security').includes('max-age=31536000'));
+  const hsts = res.headers.get('strict-transport-security');
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HSTS === 'true') {
+    assert(hsts.includes('max-age=31536000'));
+  } else {
+    assert.strictEqual(hsts, null, 'HSTS must not be set on local HTTP test servers');
+  }
   assert(res.headers.get('content-security-policy').includes("default-src 'self'"));
+  assert.strictEqual(res.headers.get('x-powered-by'), null);
+  assert.match(res.headers.get('x-request-id'), /^[0-9a-f-]{36}$/);
+});
+
+test('2a. CORS allows trusted origins and omits headers for untrusted origins', async () => {
+  const trusted = await fetch(`${baseUrl}/health`, {
+    headers: { Origin: 'http://localhost:5173' }
+  });
+  assert.strictEqual(trusted.status, 200);
+  assert.strictEqual(trusted.headers.get('access-control-allow-origin'), 'http://localhost:5173');
+
+  const untrusted = await fetch(`${baseUrl}/health`, {
+    headers: { Origin: 'https://evil.example' }
+  });
+  assert.strictEqual(untrusted.status, 200);
+  assert.strictEqual(untrusted.headers.get('access-control-allow-origin'), null);
 });
 
 test('3. ETag generation and 304 Not Modified caching response', async () => {

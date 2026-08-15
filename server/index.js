@@ -19,6 +19,34 @@ const DIST_DIR = path.join(ROOT_DIR, 'dist');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const configuredProxyHops = Number.parseInt(
+  process.env.TRUST_PROXY_HOPS ?? (process.env.NODE_ENV === 'production' ? '1' : '0'),
+  10
+);
+
+if (!Number.isInteger(configuredProxyHops) || configuredProxyHops < 0) {
+  throw new Error('TRUST_PROXY_HOPS must be a non-negative integer.');
+}
+
+const defaultCorsOrigins = [
+  'https://culinaria-recipe-vault-server.onrender.com',
+  'https://culinaria-recipe-vault.onrender.com',
+  'https://mdsaifulislammsi.github.io',
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+  'http://127.0.0.1:5173'
+];
+const allowedCorsOrigins = new Set(
+  (process.env.CORS_ORIGINS || defaultCorsOrigins.join(','))
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean)
+);
+
+// Render terminates TLS at one trusted reverse-proxy hop. Local development does not trust client-supplied forwarding headers.
+app.set('trust proxy', configuredProxyHops);
+app.disable('x-powered-by');
 
 // 1. Enable Strong ETags for browser caching
 app.set('etag', 'strong');
@@ -36,12 +64,17 @@ app.use(compression({
 app.use(securityHeaders);
 app.use(requestLogger);
 
-// 4. In-Memory IP Rate Limiter
-app.use(rateLimiter.middleware());
+// 4. In-memory IP rate limiter for API traffic only. Use a shared store before scaling beyond one instance.
+app.use('/api', rateLimiter.middleware());
 
-// 5. Hardened CORS Policy
+// 5. Explicit CORS allowlist. Same-origin and non-browser requests do not need CORS headers.
 app.use(cors({
-  origin: '*',
+  origin: (origin, callback) => {
+    if (!origin || allowedCorsOrigins.has(origin)) {
+      return callback(null, true);
+    }
+    return callback(null, false);
+  },
   methods: ['GET', 'POST', 'HEAD', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'If-None-Match']
 }));
@@ -81,15 +114,36 @@ if (fs.existsSync(DIST_DIR)) {
 
 // 9. Global 404 for unmatched API routes
 app.use('/api', (req, res) => {
-  res.status(404).json({ error: 'Endpoint Not Found', path: req.originalUrl });
+  res.status(404).json({
+    error: 'Endpoint Not Found',
+    requestId: req.requestId
+  });
 });
 
 // 10. Global Error Boundary Handler
 app.use((err, req, res, next) => {
-  console.error('[UNHANDLED ERROR]', err);
-  res.status(err.status || 500).json({
-    error: err.name || 'Internal Server Error',
-    message: err.message || 'An unexpected error occurred.'
+  if (res.headersSent) return next(err);
+
+  const statusCode = Number.isInteger(err.status) && err.status >= 400 && err.status < 600
+    ? err.status
+    : 500;
+  const isProduction = process.env.NODE_ENV === 'production';
+  console.error(JSON.stringify({
+    event: 'http_error',
+    requestId: req.requestId,
+    method: req.method,
+    path: req.path,
+    statusCode,
+    error: err.name || 'Error',
+    message: err.message || 'Unexpected server error.'
+  }));
+
+  res.status(statusCode).json({
+    error: statusCode >= 500 ? 'Internal Server Error' : (err.name || 'Bad Request'),
+    message: isProduction && statusCode >= 500
+      ? 'An unexpected server error occurred.'
+      : (err.message || 'An unexpected server error occurred.'),
+    requestId: req.requestId
   });
 });
 

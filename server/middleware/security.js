@@ -1,6 +1,7 @@
 /**
  * Advanced Production Security, Validation & Observability Middleware
  */
+import { randomUUID } from 'node:crypto';
 
 // In-memory sliding window IP rate limiter
 class ServerRateLimiter {
@@ -26,7 +27,7 @@ class ServerRateLimiter {
 
   middleware() {
     return (req, res, next) => {
-      const ip = req.ip || req.headers['x-forwarded-for'] || req.socket?.remoteAddress || '127.0.0.1';
+      const ip = req.ip || req.socket?.remoteAddress || 'unknown';
       const now = Date.now();
       
       const timestamps = (this.requests.get(ip) || []).filter(t => now - t < this.windowMs);
@@ -35,6 +36,7 @@ class ServerRateLimiter {
         res.setHeader('Retry-After', Math.ceil(this.windowMs / 1000));
         res.setHeader('X-RateLimit-Limit', this.maxRequests);
         res.setHeader('X-RateLimit-Remaining', 0);
+        res.setHeader('X-RateLimit-Reset', Math.ceil((now + this.windowMs) / 1000));
         return res.status(429).json({
           error: 'Too Many Requests',
           message: 'API rate limit exceeded. Please throttle your requests.',
@@ -47,6 +49,7 @@ class ServerRateLimiter {
       
       res.setHeader('X-RateLimit-Limit', this.maxRequests);
       res.setHeader('X-RateLimit-Remaining', Math.max(0, this.maxRequests - timestamps.length));
+      res.setHeader('X-RateLimit-Reset', Math.ceil((now + this.windowMs) / 1000));
       
       next();
     };
@@ -66,7 +69,9 @@ export function securityHeaders(req, res, next) {
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
   res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
-  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HSTS === 'true') {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';"
@@ -79,6 +84,9 @@ export function securityHeaders(req, res, next) {
  */
 export function requestLogger(req, res, next) {
   const start = process.hrtime.bigint();
+  const requestId = randomUUID();
+  req.requestId = requestId;
+  res.setHeader('X-Request-ID', requestId);
 
   const originalWriteHead = res.writeHead;
   res.writeHead = function (...args) {
@@ -89,6 +97,20 @@ export function requestLogger(req, res, next) {
     }
     return originalWriteHead.apply(this, args);
   };
+
+  res.on('finish', () => {
+    if (process.env.NODE_ENV !== 'production' && process.env.LOG_REQUESTS !== 'true') return;
+
+    const durationMs = Number(process.hrtime.bigint() - start) / 1e6;
+    console.log(JSON.stringify({
+      event: 'http_request',
+      requestId,
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      durationMs: Number(durationMs.toFixed(2))
+    }));
+  });
 
   next();
 }
