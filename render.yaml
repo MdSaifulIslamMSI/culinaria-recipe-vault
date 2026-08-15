@@ -14,3 +14,5 @@ services:
         value: production
       - key: PORT
         value: 3000
+      - key: CORS_ORIGINS
+        value: https://culinaria-recipe-vault-server.onrender.com,https://culinaria-recipe-vault.onrender.com,https://mdsaifulislammsi.github.io
