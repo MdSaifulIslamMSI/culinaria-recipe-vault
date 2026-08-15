@@ -37,7 +37,7 @@ Click the button below to deploy this application to your Render account in one 
 ## Verification and storage model
 
 The release gate runs `npm test`, `npm run build`, and `npm audit --audit-level=high`.
-Successful pushes to `master` publish the verified `dist/` artifact to the configured
+Successful pushes to `main` publish the verified `dist/` artifact to the configured
 GitHub Pages `gh-pages` branch and write `release.json` with the source commit.
 
 Favorites, pantry items, preferences, and shopping items are sanitized client-local
