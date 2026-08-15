@@ -30,8 +30,8 @@
       } catch (e) {}
     })();
   </script>
-  <script type="module" crossorigin src="./assets/index-UYBnU1FJ.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/index-Cx-82l4V.css">
+  <script type="module" crossorigin src="./assets/index-DqNscWf0.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BgoYUzbO.css">
 </head>
 <body>
   <div id="app" class="app-container">
@@ -40,7 +40,7 @@
       <div class="header-inner">
         <div class="header-top-bar">
           <div class="brand-group">
-            <a href="#" class="brand-logo" id="navHome">
+            <a href="#" class="brand-logo" id="navHome" aria-label="Culinaria home">
               <span class="logo-emblem">🍲</span>
               <div class="brand-text">
                 <span class="brand-title">Culinaria</span>
@@ -364,8 +364,8 @@
     </aside>
 
     <!-- Slide-over Grocery Shopping List Drawer -->
-    <div class="drawer-overlay" id="shoppingDrawerOverlay"></div>
-    <aside class="shopping-drawer" id="shoppingDrawer" role="dialog" aria-modal="true" aria-label="Gourmet Grocery List">
+    <div class="drawer-overlay" id="shoppingDrawerOverlay" aria-hidden="true" inert></div>
+    <aside class="shopping-drawer" id="shoppingDrawer" role="dialog" aria-modal="true" aria-label="Gourmet Grocery List" aria-hidden="true" inert>
       <div class="drawer-header">
         <div class="drawer-title-wrap">
           <span class="drawer-icon">🛒</span>
@@ -398,8 +398,8 @@
     </aside>
 
     <!-- Slide-over Gourmet Chef Preferences Drawer (10 Interactive Toggles) -->
-    <div class="drawer-overlay" id="prefsOverlay"></div>
-    <aside class="shopping-drawer prefs-drawer" id="prefsDrawer" role="dialog" aria-modal="true" aria-label="Chef Kitchen Preferences">
+    <div class="drawer-overlay" id="prefsOverlay" aria-hidden="true" inert></div>
+    <aside class="shopping-drawer prefs-drawer" id="prefsDrawer" role="dialog" aria-modal="true" aria-label="Chef Kitchen Preferences" aria-hidden="true" inert>
       <div class="drawer-header">
         <div class="drawer-title-wrap">
           <span class="drawer-icon">⚙️</span>
@@ -569,8 +569,8 @@
     </aside>
 
     <!-- Modal: Interactive Recipe Studio & Scaler -->
-    <div class="modal-backdrop" id="recipeModalBackdrop">
-      <div class="recipe-modal" id="recipeModal" role="dialog" aria-modal="true" aria-label="Recipe Studio and Cooking Method">
+    <div class="modal-backdrop" id="recipeModalBackdrop" aria-hidden="true" inert>
+      <div class="recipe-modal" id="recipeModal" role="dialog" aria-modal="true" aria-label="Recipe Studio and Cooking Method" aria-hidden="true" inert>
         <button class="modal-close-btn" id="btnCloseRecipeModal" aria-label="Close recipe details">✕</button>
         <div class="modal-scroll-body" id="modalRecipeContent">
           <!-- Injected dynamically -->
@@ -579,7 +579,7 @@
     </div>
 
     <!-- Modal: Fullscreen Hands-Free Guided Cook Mode with Voice Narration -->
-    <div class="cook-mode-overlay" id="cookModeOverlay" role="dialog" aria-modal="true" aria-labelledby="cookModeTitle">
+    <div class="cook-mode-overlay" id="cookModeOverlay" role="dialog" aria-modal="true" aria-labelledby="cookModeTitle" aria-hidden="true" inert>
       <div class="cook-mode-container">
         <!-- Cook Mode Header -->
         <div class="cook-mode-header">
@@ -632,12 +632,12 @@
     </div>
 
     <!-- Modal: Chef's Roulette (Surprise Me) -->
-    <div class="modal-backdrop" id="rouletteModalBackdrop">
-      <div class="roulette-modal" id="rouletteModal">
-        <button class="modal-close-btn" id="btnCloseRouletteModal">✕</button>
+    <div class="modal-backdrop" id="rouletteModalBackdrop" aria-hidden="true" inert>
+      <div class="roulette-modal" id="rouletteModal" role="dialog" aria-modal="true" aria-labelledby="rouletteTitle" aria-hidden="true" inert>
+        <button class="modal-close-btn" id="btnCloseRouletteModal" aria-label="Close Chef's Culinary Roulette">✕</button>
         <div class="roulette-header">
           <span class="roulette-emoji">✨🎲</span>
-          <h3 class="roulette-title">Chef's Culinary Roulette</h3>
+          <h3 class="roulette-title" id="rouletteTitle">Chef's Culinary Roulette</h3>
           <p class="roulette-subtitle">Can't decide what to savor? Let the gourmet fates choose your next feast!</p>
         </div>
         <div class="roulette-stage" id="rouletteStage">
