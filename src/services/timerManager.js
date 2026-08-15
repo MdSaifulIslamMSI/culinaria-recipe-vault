@@ -1,12 +1,12 @@
 /**
- * Kitchen Timer Manager & Web Audio Chime Synthesizer
- * Provides crisp audio notifications without external mp3 dependencies
- * Uses timestamp delta tracking to prevent background tab drift
+ * Advanced Multi-Timer Kitchen Manager & Web Audio DSP Chime Synthesizer
+ * Supports multiple concurrent timers with pitch variation and drift-free delta tracking
  */
 
 let audioCtx = null;
 
 function getAudioContext() {
+  if (typeof window === 'undefined') return null;
   if (!audioCtx) {
     const AudioContext = window.AudioContext || window.webkitAudioContext;
     if (AudioContext) {
@@ -20,14 +20,16 @@ function getAudioContext() {
 }
 
 /**
- * Synthesizes a pleasant culinary bell chime sequence (E5 -> G#5 -> B5 -> E6)
+ * Synthesizes a pleasant culinary bell chime sequence with optional base pitch multiplier
  */
-export function playChimeSound() {
+export function playChimeSound(pitchMultiplier = 1.0) {
   try {
     const ctx = getAudioContext();
     if (!ctx) return;
 
-    const notes = [659.25, 830.61, 987.77, 1318.51]; // E5, G#5, B5, E6
+    const baseNotes = [659.25, 830.61, 987.77, 1318.51]; // E5, G#5, B5, E6
+    const notes = baseNotes.map(f => f * pitchMultiplier);
+
     notes.forEach((freq, index) => {
       const startTime = ctx.currentTime + index * 0.15;
       const osc = ctx.createOscillator();
@@ -51,121 +53,161 @@ export function playChimeSound() {
   }
 }
 
-class TimerManager {
+class MultiTimerManager {
   constructor() {
-    this.remainingSeconds = 0;
-    this.totalSeconds = 0;
-    this.endTime = 0;
+    this.timers = new Map(); // id -> TimerObject
     this.intervalId = null;
-    this.isRunning = false;
-    this.title = 'Kitchen Timer';
     this.listeners = [];
+    this.startGlobalLoop();
   }
 
-  start(seconds, title = 'Step Timer') {
-    this.stop();
-    const safeSecs = Math.max(1, Math.round(seconds) || 60);
-    this.totalSeconds = safeSecs;
-    this.remainingSeconds = safeSecs;
-    this.endTime = Date.now() + safeSecs * 1000;
-    this.title = title || 'Kitchen Timer';
-    this.isRunning = true;
+  startGlobalLoop() {
+    if (typeof window === 'undefined') return;
+    if (this.intervalId) clearInterval(this.intervalId);
 
-    // Wake up audio context on user interaction
+    this.intervalId = setInterval(() => {
+      if (this.timers.size === 0) return;
+      const now = Date.now();
+      let hasChanges = false;
+
+      for (const [id, timer] of this.timers.entries()) {
+        if (timer.status === 'running') {
+          const left = Math.max(0, Math.round((timer.endTime - now) / 1000));
+          if (left !== timer.remainingSeconds) {
+            timer.remainingSeconds = left;
+            hasChanges = true;
+          }
+
+          if (left === 0) {
+            timer.status = 'completed';
+            hasChanges = true;
+            playChimeSound(timer.pitch || 1.0);
+            this.notify('completed', timer);
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('culinaria:toast', {
+                detail: { message: `🔔 Timer Done: ${timer.title}!` }
+              }));
+            }
+          }
+        }
+      }
+
+      if (hasChanges) {
+        this.notify('tick');
+      }
+    }, 500);
+  }
+
+  createTimer(title = 'Kitchen Timer', seconds = 60, pitch = 1.0) {
     getAudioContext();
+    const id = 'timer_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6);
+    const safeSecs = Math.max(1, Math.round(seconds) || 60);
 
-    this.intervalId = setInterval(() => {
-      const now = Date.now();
-      const left = Math.max(0, Math.round((this.endTime - now) / 1000));
-      this.remainingSeconds = left;
+    const timer = {
+      id,
+      title: title || 'Step Timer',
+      totalSeconds: safeSecs,
+      remainingSeconds: safeSecs,
+      endTime: Date.now() + safeSecs * 1000,
+      status: 'running',
+      pitch
+    };
 
-      if (left > 0) {
-        this.notify('tick');
-      } else {
-        this.stop();
-        playChimeSound();
-        this.notify('completed');
-      }
-    }, 500);
-
-    this.notify('started');
+    this.timers.set(id, timer);
+    this.notify('started', timer);
+    return timer;
   }
 
-  pause() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+  pauseTimer(id) {
+    const timer = this.timers.get(id);
+    if (!timer || timer.status !== 'running') return;
+    timer.status = 'paused';
+    this.notify('paused', timer);
+  }
+
+  resumeTimer(id) {
+    const timer = this.timers.get(id);
+    if (!timer || timer.status !== 'paused') return;
+    getAudioContext();
+    timer.endTime = Date.now() + timer.remainingSeconds * 1000;
+    timer.status = 'running';
+    this.notify('resumed', timer);
+  }
+
+  addTime(id, extraSeconds = 60) {
+    const timer = this.timers.get(id);
+    if (!timer) return;
+    timer.totalSeconds += extraSeconds;
+    timer.remainingSeconds += extraSeconds;
+    if (timer.status === 'running') {
+      timer.endTime += extraSeconds * 1000;
     }
-    this.isRunning = false;
-    this.notify('paused');
+    this.notify('updated', timer);
   }
 
-  resume() {
-    if (this.remainingSeconds <= 0 || this.isRunning) return;
-    this.isRunning = true;
-    this.endTime = Date.now() + this.remainingSeconds * 1000;
-
-    this.intervalId = setInterval(() => {
-      const now = Date.now();
-      const left = Math.max(0, Math.round((this.endTime - now) / 1000));
-      this.remainingSeconds = left;
-
-      if (left > 0) {
-        this.notify('tick');
-      } else {
-        this.stop();
-        playChimeSound();
-        this.notify('completed');
-      }
-    }, 500);
-
-    this.notify('resumed');
+  removeTimer(id) {
+    if (this.timers.has(id)) {
+      this.timers.delete(id);
+      this.notify('removed', { id });
+    }
   }
 
-  reset() {
-    this.remainingSeconds = this.totalSeconds;
-    this.pause();
-    this.notify('reset');
+  clearAll() {
+    this.timers.clear();
+    this.notify('cleared');
+  }
+
+  getAll() {
+    return Array.from(this.timers.values());
+  }
+
+  // Backwards compatibility methods
+  start(seconds, title = 'Step Timer') {
+    // Clear old default single timer if exists
+    for (const [id, t] of this.timers.entries()) {
+      if (t.isDefault) this.timers.delete(id);
+    }
+    const timer = this.createTimer(title, seconds);
+    timer.isDefault = true;
+    return timer;
   }
 
   stop() {
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
+    for (const [id, t] of this.timers.entries()) {
+      if (t.isDefault) this.removeTimer(id);
     }
-    this.isRunning = false;
   }
 
-  subscribe(callback) {
-    if (typeof callback === 'function') {
-      this.listeners.push(callback);
-    }
+  subscribe(listener) {
+    this.listeners.push(listener);
     return () => {
-      this.listeners = this.listeners.filter(l => l !== callback);
+      this.listeners = this.listeners.filter(l => l !== listener);
     };
   }
 
-  notify(event = 'tick') {
-    const safeSecs = Math.max(0, parseInt(this.remainingSeconds, 10) || 0);
-    const mins = Math.floor(safeSecs / 60);
-    const secs = safeSecs % 60;
-    const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  notify(event, data = null) {
+    const state = {
+      event,
+      data,
+      timers: this.getAll(),
+      activeCount: this.getAll().filter(t => t.status === 'running').length
+    };
 
     this.listeners.forEach(fn => {
-      try {
-        fn({
-          event,
-          title: this.title,
-          remainingSeconds: safeSecs,
-          totalSeconds: this.totalSeconds,
-          formatted,
-          isRunning: this.isRunning
-        });
-      } catch (e) {
-        console.error('Timer listener error:', e);
-      }
+      try { fn(state); } catch (e) { console.error('Timer listener error:', e); }
     });
+
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('culinaria:timers-updated', { detail: state }));
+    }
+  }
+
+  formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   }
 }
 
-export const activeTimer = new TimerManager();
+export const timerManager = new MultiTimerManager();
+export const activeTimer = timerManager;

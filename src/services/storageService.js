@@ -182,7 +182,9 @@ export function toggleFavorite(recipe) {
   }
 
   safeSet(STORAGE_KEYS.FAVORITES, favs);
-  window.dispatchEvent(new CustomEvent('culinaria:favs-updated', { detail: { favorites: favs, recipeId, isFav } }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('culinaria:favs-updated', { detail: { favorites: favs, recipeId, isFav } }));
+  }
   return isFav;
 }
 
@@ -242,7 +244,9 @@ export function addToShoppingList(items) {
   });
 
   safeSet(STORAGE_KEYS.SHOPPING_LIST, currentList);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: currentList } }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: currentList } }));
+  }
 }
 
 export function toggleShoppingItem(itemId) {
@@ -252,7 +256,9 @@ export function toggleShoppingItem(itemId) {
   if (item) {
     item.checked = !item.checked;
     safeSet(STORAGE_KEYS.SHOPPING_LIST, list);
-    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
+    }
   }
 }
 
@@ -261,12 +267,16 @@ export function removeShoppingItem(itemId) {
   let list = getShoppingList();
   list = list.filter(i => i.id !== cleanId);
   safeSet(STORAGE_KEYS.SHOPPING_LIST, list);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: list } }));
+  }
 }
 
 export function clearShoppingList() {
   safeSet(STORAGE_KEYS.SHOPPING_LIST, []);
-  window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: [] } }));
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('culinaria:cart-updated', { detail: { shoppingList: [] } }));
+  }
 }
 
 /* ==========================================================================

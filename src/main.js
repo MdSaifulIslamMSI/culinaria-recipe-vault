@@ -31,6 +31,8 @@ import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
 import { PreferencesDrawer } from './components/PreferencesDrawer.js';
+import { MultiTimerDock } from './components/MultiTimerDock.js';
+import { MealPlannerDrawer, mealPlannerDrawer } from './components/MealPlannerDrawer.js';
 import { getActivePaletteId, setActivePalette } from './services/paletteService.js';
 
 // Arm real-time defenses, error boundary, and offline network monitor
@@ -65,6 +67,7 @@ class CulinariaApp {
     this.shoppingDrawer = new ShoppingListDrawer();
     this.rouletteModal = new RouletteModal();
     this.preferencesDrawer = new PreferencesDrawer();
+    this.mealPlannerDrawer = mealPlannerDrawer;
 
     this.initDOM();
     this.initTheme();
@@ -181,6 +184,10 @@ class CulinariaApp {
 
     this.btnExploreFromFavs?.addEventListener('click', () => {
       this.switchView('explore');
+    });
+
+    document.getElementById('btnMealPlanner')?.addEventListener('click', () => {
+      this.mealPlannerDrawer.open();
     });
 
     this.updateFavCountBadge();

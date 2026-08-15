@@ -4006,10 +4006,377 @@ html, body {
   animation: pulseMic 1.2s infinite;
 }
 
-@keyframes pulseMic {
-  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0.7); }
-  70% { transform: scale(1.04); box-shadow: 0 0 0 8px rgba(229, 57, 53, 0); }
-  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(229, 57, 53, 0); }
+/* ==========================================================================
+   Multi-Timer Floating Kitchen Dock Styles
+   ========================================================================== */
+.timer-dock-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  max-width: 380px;
+  width: calc(100vw - 48px);
+  pointer-events: auto;
+  transition: all var(--transition-normal);
+}
+
+.timer-dock-pill {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.22);
+  backdrop-filter: blur(16px);
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.dock-pill-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  background: var(--bg-surface-subtle);
+  user-select: none;
+}
+
+.dock-pill-icon {
+  font-size: 1.3rem;
+  animation: pulseRotate 4s infinite ease-in-out;
+}
+
+.dock-pill-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.dock-pill-count {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.dock-pill-preview {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono, monospace);
+}
+
+.dock-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+}
+
+.dock-body {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.dock-timers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.dock-timer-card {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dock-timer-card.timer-done {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+  animation: pulseCard 1s infinite alternate;
+}
+
+.dock-timer-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.dock-timer-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.dock-timer-digits {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.dock-timer-digits.digits-done {
+  color: #22c55e;
+}
+
+.dock-progress-bar {
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.dock-progress-fill {
+  height: 100%;
+  background: var(--accent-primary);
+  transition: width 300ms linear;
+}
+
+.dock-timer-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.dock-btn-sm {
+  padding: 0.25rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dock-btn-sm:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.dock-btn-dismiss {
+  color: var(--text-muted);
+}
+
+.dock-btn-dismiss:hover {
+  color: #e53935;
+  border-color: #e53935;
+}
+
+.dock-quick-add {
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.quick-add-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.quick-add-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.dock-chip {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--border-medium);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.dock-chip:hover {
+  background: var(--accent-primary);
+  color: #ffffff;
+  border-color: var(--accent-primary);
+}
+
+/* ==========================================================================
+   Weekly Meal Planner Drawer Styles
+   ========================================================================== */
+.meal-planner-drawer {
+  width: 480px;
+  max-width: 92vw;
+}
+
+.planner-actions-bar {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 1.25rem;
+  background: var(--bg-surface-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.btn-export-planner {
+  flex: 1;
+  font-size: 0.85rem;
+  padding: 0.6rem 1rem;
+}
+
+.btn-clear-planner {
+  font-size: 0.82rem;
+  padding: 0.6rem 0.85rem;
+}
+
+.planner-days-list {
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  overflow-y: auto;
+}
+
+.planner-day-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.planner-day-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 0.4rem;
+}
+
+.planner-day-name {
+  font-family: var(--font-heading, serif);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.planner-slots-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.planner-slot {
+  background: var(--bg-surface-subtle);
+  border: 1px dashed var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 0.65rem;
+  min-height: 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.planner-slot.slot-filled {
+  border-style: solid;
+  border-color: var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.slot-type-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.slot-recipe-card {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slot-recipe-img {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.slot-recipe-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.slot-recipe-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-recipe-cat {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+}
+
+.slot-recipe-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.slot-btn-view, .slot-btn-remove {
+  background: transparent;
+  border: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  padding: 0.15rem;
+  border-radius: var(--radius-sm);
+}
+
+.slot-btn-view:hover {
+  color: var(--accent-primary);
+}
+
+.slot-btn-remove:hover {
+  color: #e53935;
+}
+
+.slot-placeholder {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-empty-text {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+@media (max-width: 600px) {
+  .planner-slots-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 

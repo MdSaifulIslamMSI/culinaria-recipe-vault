@@ -9,6 +9,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import apiRouter from './routes/api.js';
+import docsRouter from './routes/docs.js';
 import { rateLimiter, securityHeaders, requestLogger } from './middleware/security.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -48,7 +49,10 @@ app.use(cors({
 // 6. Body Parsing for JSON payloads with strict limits
 app.use(express.json({ limit: '512kb' }));
 
-// 7. Mount Stateless API Router
+// 7. Mount Interactive API Documentation
+app.use('/api/docs', docsRouter);
+
+// 8. Mount Stateless API Router
 app.use('/api', apiRouter);
 
 // 8. Serve Compiled Frontend Assets in Production Mode
