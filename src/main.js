@@ -1,13 +1,10 @@
 /**
  * Culinaria - Application Orchestrator
  */
-import './utils/zeroTrustDefense.js';
 import { sanitizeHtml, sanitizeUrl } from './utils/securitySanitizer.js';
 import { initDomWatchdog } from './utils/domWatchdog.js';
-import { initErrorBoundary, renderRecoveryScreen } from './utils/errorBoundary.js';
+import { initErrorBoundary } from './utils/errorBoundary.js';
 import { initNetworkMonitor } from './utils/networkMonitor.js';
-import { exportAuditReport, getAuditLedger } from './utils/securityAuditLedger.js';
-import { encryptPayload, decryptPayload } from './utils/cryptoEngine.js';
 import {
   searchRecipes,
   getRecipeById,
@@ -36,17 +33,6 @@ import { getActivePaletteId, setActivePalette } from './services/paletteService.
 initErrorBoundary();
 initDomWatchdog();
 initNetworkMonitor();
-
-// Expose security diagnostic interface for audit verification
-if (typeof window !== 'undefined') {
-  window.__CULINARIA_SECURITY__ = {
-    exportAuditReport,
-    getAuditLedger,
-    encryptPayload,
-    decryptPayload,
-    renderRecoveryScreen
-  };
-}
 
 class CulinariaApp {
   constructor() {
@@ -238,8 +224,12 @@ class CulinariaApp {
       if (!query && refreshIfEmpty) {
         this.setGridLoading(true);
         const allRecipes = await filterByCategoryAndArea(this.activeCategory, this.activeArea);
-        // Smart Shuffle for dynamic discovery inspiration
-        const shuffled = [...allRecipes].sort(() => 0.5 - Math.random());
+        // Fisher-Yates shuffle for unbiased dynamic discovery inspiration
+        const shuffled = [...allRecipes];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
         this.currentRecipes = shuffled;
         this.applyLocalFilters();
         this.setGridLoading(false);
@@ -280,10 +270,15 @@ class CulinariaApp {
     this.clearSearchBtn.classList.add('hidden');
     this.suggestionsDropdown?.classList.add('hidden');
     this.cuisineSelect.value = 'all';
-    [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
-    
+    [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+
     this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.category === 'all');
+      const active = p.dataset.category === 'all';
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', String(active));
     });
 
     this.executeFilterAndSearch();
@@ -350,14 +345,20 @@ class CulinariaApp {
     });
 
     const setupQuickToggle = (btn, filterKey) => {
+      btn.setAttribute('aria-pressed', 'false');
       btn.addEventListener('click', () => {
         if (this.activeQuickFilter === filterKey) {
           this.activeQuickFilter = null;
           btn.classList.remove('active');
+          btn.setAttribute('aria-pressed', 'false');
         } else {
-          [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
+          [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
           this.activeQuickFilter = filterKey;
           btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
         }
         this.applyLocalFilters();
       });
@@ -464,7 +465,7 @@ class CulinariaApp {
     const pillsHtml = categories.map(cat => {
       const emoji = categoryEmojis[cat.name] || '🍽️';
       return `
-        <button class="cat-pill" data-category="${cat.name}">
+        <button class="cat-pill" data-category="${cat.name}" aria-pressed="${cat.name === 'all'}">
           <span class="cat-icon">${emoji}</span>
           <span>${cat.name}</span>
         </button>
@@ -475,8 +476,11 @@ class CulinariaApp {
 
     this.categoryNav.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', () => {
-        this.categoryNav.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
+        this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
+          const active = p === pill;
+          p.classList.toggle('active', active);
+          p.setAttribute('aria-pressed', String(active));
+        });
         this.activeCategory = pill.dataset.category;
         this.executeFilterAndSearch();
       });

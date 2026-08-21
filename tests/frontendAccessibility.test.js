@@ -35,8 +35,25 @@ test('frontend overlays explicitly toggle inert state when opened', () => {
   ].forEach((relativePath) => {
     const source = read(relativePath);
     assert.match(source, /setOpenState\(isOpen\)/, `expected open state helper in ${relativePath}`);
-    assert.match(source, /element\.inert = !isOpen/, `expected inert toggle in ${relativePath}`);
+    assert.match(source, /setOverlayState\(/, `expected shared inert toggle in ${relativePath}`);
   });
+});
+
+test('all interactive overlays register with the shared keyboard coordinator', () => {
+  [
+    'src/components/ShoppingListDrawer.js',
+    'src/components/PreferencesDrawer.js',
+    'src/components/MealPlannerDrawer.js',
+    'src/components/RouletteModal.js',
+    'src/components/CookingStudioModal.js'
+  ].forEach((relativePath) => {
+    const source = read(relativePath);
+    assert.match(source, /registerOverlay\(\{/, `expected overlay registration in ${relativePath}`);
+  });
+
+  const manager = read('src/utils/overlayManager.js');
+  assert.match(manager, /addEventListener\('keydown'/, 'coordinator must own global keydown');
+  assert.match(manager, /acquireScrollLock/, 'coordinator must refcount scroll locks');
 });
 
 test('responsive frontend includes reduced-motion and mobile touch-target safeguards', () => {

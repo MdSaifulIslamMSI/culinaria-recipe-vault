@@ -29,7 +29,11 @@ function sendCachedJson(req, res, data, maxAgeSec = 300) {
   res.setHeader('Cache-Control', `public, max-age=${maxAgeSec}, stale-while-revalidate=600`);
   
   const clientEtag = req.headers['if-none-match'];
-  if (clientEtag && (clientEtag === hash || clientEtag.includes(hash))) {
+  const matchesClientCache = Boolean(clientEtag) && clientEtag
+    .split(',')
+    .map(tag => tag.trim())
+    .some(tag => tag === hash || tag === `W/${hash}`);
+  if (matchesClientCache) {
     return res.status(304).end();
   }
   return res.json(data);

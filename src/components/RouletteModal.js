@@ -4,6 +4,12 @@
  */
 import { getRandomRecipe } from '../services/mealDbApi.js';
 import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 
 export class RouletteModal {
   constructor() {
@@ -23,11 +29,7 @@ export class RouletteModal {
   }
 
   setOpenState(isOpen) {
-    [this.backdrop, this.modal].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
-    });
+    setOverlayState([this.backdrop, this.modal], isOpen);
   }
 
   init() {
@@ -47,35 +49,20 @@ export class RouletteModal {
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (!this.backdrop.classList.contains('open')) return;
-      if (e.key === 'Escape') {
-        this.close();
-      } else if (e.key === 'Tab') {
-        this.trapFocus(e);
-      }
+    // Escape/Tab handled centrally by overlayManager
+    registerOverlay({
+      name: 'roulette-modal',
+      getContainer: () => this.modal,
+      isOpen: () => this.backdrop?.classList.contains('open') ?? false,
+      close: () => this.close()
     });
-  }
-
-  trapFocus(e) {
-    const focusable = Array.from(this.modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      last.focus();
-      e.preventDefault();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      first.focus();
-      e.preventDefault();
-    }
   }
 
   open() {
     this.previousActiveElement = document.activeElement;
     this.setOpenState(true);
     this.backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
     this.closeBtn.focus();
     this.spin();
   }
@@ -83,7 +70,7 @@ export class RouletteModal {
   close() {
     this.setOpenState(false);
     this.backdrop.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }

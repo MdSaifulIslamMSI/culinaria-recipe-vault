@@ -5,6 +5,19 @@ import { Router } from 'express';
 
 const router = Router();
 
+/**
+ * HTML-escapes interpolated spec fields. The spec is static today, but this
+ * keeps the docs page safe if it ever becomes dynamic or spec-driven.
+ */
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 const OPENAPI_SPEC = {
   openapi: '3.1.0',
   info: {
@@ -187,19 +200,19 @@ router.get('/', (req, res) => {
       return Object.entries(methods).map(([method, details]) => `
         <div class="endpoint-card">
           <div class="endpoint-header">
-            <span class="method ${method.toLowerCase()}">${method.toUpperCase()}</span>
-            <span class="path">/api${path}</span>
-            <span class="desc">${details.summary}</span>
+            <span class="method ${escapeHtml(method.toLowerCase())}">${escapeHtml(method.toUpperCase())}</span>
+            <span class="path">/api${escapeHtml(path)}</span>
+            <span class="desc">${escapeHtml(details.summary)}</span>
           </div>
           <div class="endpoint-body">
-            <p>${details.description}</p>
+            <p>${escapeHtml(details.description)}</p>
             ${details.parameters ? `
               <p><strong>Query Parameters:</strong></p>
               <ul>
-                ${details.parameters.map(p => `<li><code>${p.name}</code> (${p.schema.type}) - ${p.description}</li>`).join('')}
+                ${details.parameters.map(p => `<li><code>${escapeHtml(p.name)}</code> (${escapeHtml(p.schema.type)}) - ${escapeHtml(p.description)}</li>`).join('')}
               </ul>
             ` : ''}
-            <div class="code-box">curl -X ${method.toUpperCase()} "http://localhost:3000/api${path}"</div>
+            <div class="code-box">curl -X ${escapeHtml(method.toUpperCase())} "http://localhost:3000/api${escapeHtml(path)}"</div>
           </div>
         </div>
       `).join('');

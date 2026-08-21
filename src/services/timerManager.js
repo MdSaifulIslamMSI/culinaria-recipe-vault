@@ -2,8 +2,17 @@
  * Advanced Multi-Timer Kitchen Manager & Web Audio DSP Chime Synthesizer
  * Supports multiple concurrent timers with pitch variation and drift-free delta tracking
  */
+import { getChefPreferences } from './preferencesService.js';
 
 let audioCtx = null;
+
+function isTimerSoundEnabled() {
+  try {
+    return getChefPreferences().timerSound !== false;
+  } catch {
+    return true;
+  }
+}
 
 function getAudioContext() {
   if (typeof window === 'undefined') return null;
@@ -81,7 +90,9 @@ class MultiTimerManager {
           if (left === 0) {
             timer.status = 'completed';
             hasChanges = true;
-            playChimeSound(timer.pitch || 1.0);
+            if (isTimerSoundEnabled()) {
+              playChimeSound(timer.pitch || 1.0);
+            }
             this.notify('completed', timer);
             if (typeof window !== 'undefined') {
               window.dispatchEvent(new CustomEvent('culinaria:toast', {

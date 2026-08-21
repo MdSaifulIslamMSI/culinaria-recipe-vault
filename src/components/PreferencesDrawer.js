@@ -4,6 +4,12 @@
  */
 import { getChefPreferences, updateChefPreference } from '../services/preferencesService.js';
 import { GOURMET_PALETTES, getActivePaletteId, setActivePalette, resetPaletteToDefault } from '../services/paletteService.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 
 export class PreferencesDrawer {
   constructor() {
@@ -19,11 +25,7 @@ export class PreferencesDrawer {
   }
 
   setOpenState(isOpen) {
-    [this.drawer, this.overlay].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
-    });
+    setOverlayState([this.drawer, this.overlay], isOpen);
   }
 
   init() {
@@ -37,10 +39,11 @@ export class PreferencesDrawer {
       const defaultKeys = [
         'keepScreenAwake', 'unitSystem', 'voiceNarration',
         'vegetarianOnly', 'highProteinOnly', 'quickUnder30',
-        'showMacros', 'showSommelier', 'autoSubstitutions', 'compactGrid'
+        'showMacros', 'showSommelier', 'autoSubstitutions', 'compactGrid',
+        'timerSound'
       ];
       defaultKeys.forEach(k => {
-        const val = k === 'unitSystem' ? 'metric' : (k === 'voiceNarration' || k === 'showMacros' || k === 'showSommelier');
+        const val = k === 'unitSystem' ? 'metric' : (k === 'voiceNarration' || k === 'showMacros' || k === 'showSommelier' || k === 'timerSound');
         updateChefPreference(k, val);
       });
       resetPaletteToDefault();
@@ -60,30 +63,13 @@ export class PreferencesDrawer {
       this.syncActivePaletteUI();
     });
 
-    // Listen to ESC key & Tab trapping
-    window.addEventListener('keydown', (e) => {
-      if (this.isOpen()) {
-        if (e.key === 'Escape') {
-          this.close();
-        } else if (e.key === 'Tab') {
-          this.trapFocus(e);
-        }
-      }
+    // Escape/Tab handled centrally by overlayManager
+    registerOverlay({
+      name: 'preferences-drawer',
+      getContainer: () => this.drawer,
+      isOpen: () => this.isOpen(),
+      close: () => this.close()
     });
-  }
-
-  trapFocus(e) {
-    const focusable = Array.from(this.drawer.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      last.focus();
-      e.preventDefault();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      first.focus();
-      e.preventDefault();
-    }
   }
 
   open() {
@@ -93,7 +79,7 @@ export class PreferencesDrawer {
     this.setOpenState(true);
     this.overlay?.classList.add('open');
     this.drawer?.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
     setTimeout(() => this.closeBtn?.focus(), 50);
   }
 
@@ -101,7 +87,7 @@ export class PreferencesDrawer {
     this.setOpenState(false);
     this.overlay?.classList.remove('open');
     this.drawer?.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }
@@ -223,5 +209,8 @@ export class PreferencesDrawer {
     attachChange('prefShowSommelier', 'showSommelier');
     attachChange('prefAutoSubs', 'autoSubstitutions');
     attachChange('prefCompactGrid', 'compactGrid');
+
+    // 4. Audio Feedback
+    attachChange('prefTimerSound', 'timerSound');
   }
 }

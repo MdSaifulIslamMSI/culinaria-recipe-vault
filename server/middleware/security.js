@@ -74,7 +74,7 @@ export function securityHeaders(req, res, next) {
   }
   res.setHeader(
     'Content-Security-Policy',
-    "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com https://fonts.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';"
+    "default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com https://fonts.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';"
   );
   next();
 }
