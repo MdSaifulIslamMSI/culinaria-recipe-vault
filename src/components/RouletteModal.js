@@ -3,6 +3,7 @@
  * Chef's Surprise Dish Roulette with race-condition prevention & image fallback
  */
 import { getRandomRecipe } from '../services/mealDbApi.js';
+import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
 
 export class RouletteModal {
   constructor() {
@@ -105,19 +106,23 @@ export class RouletteModal {
 
       this.currentRecipe = recipe;
       const fallbackThumb = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+      const safeThumb = sanitizeUrl(recipe.thumbnail || '', fallbackThumb);
+      const safeTitle = sanitizeHtml(recipe.title);
+      const safeArea = sanitizeHtml(recipe.area || 'Global');
+      const safeCategory = sanitizeHtml(recipe.category || 'Specialty');
 
       setTimeout(() => {
         if (currentRequestId !== this.spinRequestId || !this.currentRecipe) return;
         this.stage.innerHTML = `
           <div style="text-align: center; width: 100%;">
             <div style="width: 140px; height: 140px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-md); border: 3px solid var(--accent-primary);">
-              <img src="${recipe.thumbnail || fallbackThumb}" alt="${recipe.title}" class="roulette-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img src="${safeThumb}" alt="${safeTitle}" class="roulette-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
             <span style="font-size: 0.8rem; font-weight: 700; background: var(--accent-primary-light); color: var(--accent-primary); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">
-              🌍 ${recipe.area || 'Global'} • ${recipe.category || 'Specialty'}
+              🌍 ${safeArea} • ${safeCategory}
             </span>
-            <h4 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">${recipe.title}</h4>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${recipe.estimatedTime || 30} minutes</p>
+            <h4 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">${safeTitle}</h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${sanitizeHtml(recipe.estimatedTime || 30)} minutes</p>
           </div>
         `;
 

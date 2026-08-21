@@ -3,6 +3,7 @@
  * Renders high-aesthetic recipe cards with interactive favorite button & details trigger
  */
 import { isFavorite, toggleFavorite } from '../services/storageService.js';
+import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
 
 export function createRecipeCard(recipe, options = {}) {
   const isFav = isFavorite(recipe.id);
@@ -10,46 +11,49 @@ export function createRecipeCard(recipe, options = {}) {
 
   const card = document.createElement('article');
   card.className = 'recipe-card';
-  card.dataset.id = recipe.id;
+  card.dataset.id = sanitizeHtml(recipe.id);
 
   const fallbackImg = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80';
-  const imgUrl = recipe.thumbnail || fallbackImg;
+  const imgUrl = sanitizeUrl(recipe.thumbnail || '', fallbackImg);
+  const safeTitle = sanitizeHtml(recipe.title);
+  const safeCategory = sanitizeHtml(recipe.category || 'Dish');
+  const safeArea = sanitizeHtml(recipe.area || '');
 
   card.innerHTML = `
     <div class="recipe-image-wrap">
-      <img src="${imgUrl}" alt="${recipe.title}" class="recipe-image" loading="lazy" />
+      <img src="${imgUrl}" alt="${safeTitle}" class="recipe-image" loading="lazy" />
       <div class="card-badges-top">
-        <span class="card-cat-badge">${recipe.category || 'Dish'}</span>
-        ${recipe.area && recipe.area !== 'Global' ? `<span class="card-area-badge">${recipe.area}</span>` : ''}
+        <span class="card-cat-badge">${safeCategory}</span>
+        ${recipe.area && recipe.area !== 'Global' ? `<span class="card-area-badge">${safeArea}</span>` : ''}
       </div>
       <button class="btn-card-fav ${isFav ? 'is-favorite' : ''}" aria-label="Save to favorites" title="${isFav ? 'Remove from favorites' : 'Save recipe'}">
         ${isFav ? '❤️' : '🤍'}
       </button>
     </div>
-    
+
     <div class="recipe-card-content">
       ${pantryMatch ? `
         <div class="pantry-match-badge">
           <span>✨</span>
-          <span>${pantryMatch.matchedCount} of ${pantryMatch.totalCount} pantry items (${pantryMatch.percent}%)</span>
+          <span>${sanitizeHtml(pantryMatch.matchedCount)} of ${sanitizeHtml(pantryMatch.totalCount)} pantry items (${sanitizeHtml(pantryMatch.percent)}%)</span>
         </div>
       ` : ''}
 
-      <h3 class="recipe-card-title" title="${recipe.title}">${recipe.title}</h3>
-      
+      <h3 class="recipe-card-title" title="${safeTitle}">${safeTitle}</h3>
+
       <div class="recipe-card-meta">
         <span class="meta-item">
           <span>⏱️</span>
-          <span>${recipe.estimatedTime || 30} mins</span>
+          <span>${sanitizeHtml(recipe.estimatedTime || 30)} mins</span>
         </span>
         <span class="meta-item">
           <span>🔥</span>
-          <span>~${recipe.calories || (recipe.estimatedTime ? recipe.estimatedTime * 14 : 450)} kcal</span>
+          <span>~${sanitizeHtml(recipe.calories || (recipe.estimatedTime ? recipe.estimatedTime * 14 : 450))} kcal</span>
         </span>
       </div>
 
       <div class="recipe-card-footer">
-        <button class="card-view-btn" data-action="open-modal" data-id="${recipe.id}">
+        <button class="card-view-btn" data-action="open-modal" data-id="${sanitizeHtml(recipe.id)}">
           <span>View Recipe & Cook</span>
           <span>→</span>
         </button>

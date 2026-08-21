@@ -4,7 +4,21 @@
  */
 import { filterByIngredient } from '../services/mealDbApi.js';
 import { getPantryBasket, savePantryBasket } from '../services/storageService.js';
+import { sanitizeHtml } from '../utils/securitySanitizer.js';
 import { createRecipeCard } from './RecipeCard.js';
+
+/**
+ * Builds the pantry chip strip markup. Exported as a pure function so the
+ * user-input escaping contract is directly unit-testable.
+ */
+export function buildPantryChipsHtml(items) {
+  return items.map(item => `
+    <span class="pantry-item-chip">
+      <span>${sanitizeHtml(item)}</span>
+      <button type="button" data-remove="${encodeURIComponent(item)}" aria-label="Remove ${sanitizeHtml(item)}">✕</button>
+    </span>
+  `).join('');
+}
 
 export class PantryFinder {
   constructor() {
@@ -180,17 +194,12 @@ export class PantryFinder {
       return;
     }
 
-    this.chipsBox.innerHTML = this.items.map(item => `
-      <span class="pantry-item-chip">
-        <span>${item}</span>
-        <button type="button" data-remove="${item}" aria-label="Remove ${item}">✕</button>
-      </span>
-    `).join('');
+    this.chipsBox.innerHTML = buildPantryChipsHtml(this.items);
 
     this.chipsBox.querySelectorAll('button[data-remove]').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
-        this.removeItem(btn.dataset.remove);
+        this.removeItem(decodeURIComponent(btn.dataset.remove));
       });
     });
   }

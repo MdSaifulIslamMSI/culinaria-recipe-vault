@@ -114,11 +114,11 @@ let curatedFallbackPromise;
 
 async function getCuratedFallbackRecipes() {
   if (!curatedFallbackPromise) {
-    curatedFallbackPromise = import('../data/curated500Recipes.js')
-      .then(({ default: curated500 }) => [
+    curatedFallbackPromise = import('../data/recipeCatalog.js')
+      .then(({ default: catalog }) => [
         ...DEFAULT_TOP_RECIPES,
-        ...(Array.isArray(curated500)
-          ? curated500.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal)))
+        ...(Array.isArray(catalog)
+          ? catalog.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal)))
           : [])
       ])
       .catch(error => {

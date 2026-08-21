@@ -2,7 +2,7 @@
  * Culinaria - Application Orchestrator
  */
 import './utils/zeroTrustDefense.js';
-import { sanitizeHtml } from './utils/securitySanitizer.js';
+import { sanitizeHtml, sanitizeUrl } from './utils/securitySanitizer.js';
 import { initDomWatchdog } from './utils/domWatchdog.js';
 import { initErrorBoundary, renderRecoveryScreen } from './utils/errorBoundary.js';
 import { initNetworkMonitor } from './utils/networkMonitor.js';
@@ -392,11 +392,11 @@ class CulinariaApp {
       }
 
       this.suggestionsDropdown.innerHTML = topFive.map(r => `
-        <div class="suggestion-item" data-id="${r.id}">
-          <img src="${r.thumbnail}" alt="${r.title}" class="suggestion-thumb" />
+        <div class="suggestion-item" data-id="${sanitizeHtml(r.id)}">
+          <img src="${sanitizeUrl(r.thumbnail || '', '')}" alt="${sanitizeHtml(r.title)}" class="suggestion-thumb" />
           <div class="suggestion-info">
-            <div class="suggestion-title">${r.title}</div>
-            <div class="suggestion-meta">🌍 ${r.area} • ${r.category}</div>
+            <div class="suggestion-title">${sanitizeHtml(r.title)}</div>
+            <div class="suggestion-meta">🌍 ${sanitizeHtml(r.area)} • ${sanitizeHtml(r.category)}</div>
           </div>
         </div>
       `).join('');
@@ -484,10 +484,14 @@ class CulinariaApp {
   }
 
   renderCuisineDropdown(areas) {
-    const optionsHtml = areas.map(area => `
-      <option value="${area}">${area}</option>
-    `).join('');
-    this.cuisineSelect.insertAdjacentHTML('beforeend', optionsHtml);
+    const fragment = document.createDocumentFragment();
+    areas.forEach(area => {
+      const option = document.createElement('option');
+      option.value = area;
+      option.textContent = area;
+      fragment.appendChild(option);
+    });
+    this.cuisineSelect.appendChild(fragment);
   }
 
   /* ==========================================================================
@@ -633,16 +637,16 @@ class CulinariaApp {
     }
 
     stripEl.innerHTML = recs.map(item => `
-      <div class="palate-card" data-rec-id="${item.recipe.id || item.recipe.idMeal}">
+      <div class="palate-card" data-rec-id="${sanitizeHtml(item.recipe.id || item.recipe.idMeal)}">
         <div class="palate-thumb-wrap">
-          <img src="${item.recipe.thumbnail || item.recipe.strMealThumb}" alt="${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}" class="palate-img" loading="lazy" />
-          <span class="palate-rationale-pill">${item.rationale}</span>
+          <img src="${sanitizeUrl(item.recipe.thumbnail || item.recipe.strMealThumb || '', '')}" alt="${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}" class="palate-img" loading="lazy" />
+          <span class="palate-rationale-pill">${sanitizeHtml(item.rationale)}</span>
         </div>
         <div class="palate-info">
-          <h4 class="palate-dish-title">${item.recipe.title || item.recipe.strMeal}</h4>
+          <h4 class="palate-dish-title">${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}</h4>
           <div class="palate-meta">
-            <span>🍽️ ${item.recipe.category || item.recipe.strCategory}</span>
-            <span>⏱️ ${item.recipe.estimatedTime || 30}m</span>
+            <span>🍽️ ${sanitizeHtml(item.recipe.category || item.recipe.strCategory)}</span>
+            <span>⏱️ ${sanitizeHtml(item.recipe.estimatedTime || 30)}m</span>
           </div>
         </div>
       </div>
@@ -815,7 +819,9 @@ class CulinariaApp {
   showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<span>${message}</span>`;
+    const span = document.createElement('span');
+    span.textContent = message;
+    toast.appendChild(span);
     this.toastContainer.appendChild(toast);
 
     setTimeout(() => {

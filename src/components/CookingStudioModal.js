@@ -165,27 +165,33 @@ export class CookingStudioModal {
     const fallbackCover = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80';
     const relatedRecipes = await getRelatedRecipes(r, undefined, 3);
 
+    // Display-boundary escaping (defense-in-depth; service layer already sanitizes)
+    const safeTitle = sanitizeHtml(r.title);
+    const safeCategory = sanitizeHtml(r.category);
+    const safeArea = sanitizeHtml(r.area);
+    const safeThumb = sanitizeUrl(r.thumbnail || '', fallbackCover);
+
     this.modalContent.innerHTML = `
       <div class="modal-hero-cover">
-        <img src="${r.thumbnail || fallbackCover}" alt="${r.title}" class="modal-hero-img" />
+        <img src="${safeThumb}" alt="${safeTitle}" class="modal-hero-img" />
         <div class="modal-hero-gradient"></div>
       </div>
 
       <div class="modal-header-meta">
         <div class="modal-tags-row">
-          <span class="modal-tag tag-cat">🍽️ ${r.category}</span>
-          <span class="modal-tag tag-area">🌍 ${r.area} Tradition</span>
-          <span class="modal-tag tag-time">⏱️ ${r.estimatedTime || 30} mins</span>
-          <span class="modal-tag tag-cal">🔥 ~${nutrition.calories} kcal / portion</span>
+          <span class="modal-tag tag-cat">🍽️ ${safeCategory}</span>
+          <span class="modal-tag tag-area">🌍 ${safeArea} Tradition</span>
+          <span class="modal-tag tag-time">⏱️ ${sanitizeHtml(r.estimatedTime || 30)} mins</span>
+          <span class="modal-tag tag-cal">🔥 ~${sanitizeHtml(nutrition.calories)} kcal / portion</span>
           ${r.youtubeId ? '<span class="modal-tag tag-time">🎥 Video Guide</span>' : ''}
         </div>
 
-        <h1 class="modal-dish-title">${r.title}</h1>
+        <h1 class="modal-dish-title">${safeTitle}</h1>
 
         <!-- Flavor Profile Tags -->
         <div class="flavor-profile-bar">
           <span class="flavor-bar-label">Flavor Profile:</span>
-          ${pairing.flavorProfile.map(f => `<span class="flavor-tag">✨ ${f}</span>`).join('')}
+          ${pairing.flavorProfile.map(f => `<span class="flavor-tag">✨ ${sanitizeHtml(f)}</span>`).join('')}
         </div>
       </div>
 
@@ -238,16 +244,17 @@ export class CookingStudioModal {
               const scaledMeasure = scaleMeasurement(ing.measure, ratio, this.unitSystem);
               const isChecked = this.checkedIngredientNames.has(ing.name.toLowerCase());
               const sub = getIngredientSubstitution(ing.name);
-              const subButton = sub ? `<button class="sub-hint-btn" data-ing="${sanitizeHtml(ing.name)}" title="Chef Alternative: ${sanitizeHtml(sub.substitute)}">⇄ Sub</button>` : '';
+              const safeIngName = sanitizeHtml(ing.name);
+              const subButton = sub ? `<button class="sub-hint-btn" data-ing="${safeIngName}" title="Chef Alternative: ${sanitizeHtml(sub.substitute)}">⇄ Sub</button>` : '';
 
               return `
                 <li class="ingredient-item ${isChecked ? 'checked' : ''}">
                   <label class="ing-check-wrap">
-                    <input type="checkbox" class="ing-checkbox" data-name="${ing.name}" ${isChecked ? 'checked' : ''} />
-                    <span class="ing-name">${ing.name}</span>
+                    <input type="checkbox" class="ing-checkbox" data-name="${safeIngName}" ${isChecked ? 'checked' : ''} />
+                    <span class="ing-name">${safeIngName}</span>
                     ${subButton}
                   </label>
-                  <span class="ing-measure">${scaledMeasure}</span>
+                  <span class="ing-measure">${sanitizeHtml(scaledMeasure)}</span>
                 </li>
               `;
             }).join('')}
@@ -266,12 +273,12 @@ export class CookingStudioModal {
               <div class="sommelier-body">
                 <div class="pairing-item">
                   <span class="pairing-label">Wine Selection:</span>
-                  <p class="pairing-text highlight">${pairing.wine}</p>
-                  <small class="pairing-note">${pairing.wineNote}</small>
+                  <p class="pairing-text highlight">${sanitizeHtml(pairing.wine)}</p>
+                  <small class="pairing-note">${sanitizeHtml(pairing.wineNote)}</small>
                 </div>
                 <div class="pairing-item" style="margin-top: 0.75rem;">
                   <span class="pairing-label">Artisanal Beverage:</span>
-                  <p class="pairing-text">${pairing.beverage}</p>
+                  <p class="pairing-text">${sanitizeHtml(pairing.beverage)}</p>
                 </div>
               </div>
             </div>
@@ -282,7 +289,7 @@ export class CookingStudioModal {
             <div class="chef-tip-header">
               <span>👨‍🍳 Chef's Secret Technique</span>
             </div>
-            <p class="chef-tip-text">"${pairing.chefTip}"</p>
+            <p class="chef-tip-text">"${sanitizeHtml(pairing.chefTip)}"</p>
           </div>
 
           <!-- Nutrition Macro Card (Toggled via Chef Preferences) -->
@@ -337,8 +344,8 @@ export class CookingStudioModal {
               </a>
             </div>
             <div class="video-frame-container" id="videoContainer_${r.id || 'current'}">
-              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${r.thumbnail || fallbackCover}'); background-size: cover; background-position: center;" title="Open the cooking guide on YouTube">
-                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : (r.thumbnail || fallbackCover)}" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Video Guide" class="video-facade-img" />
+              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${sanitizeUrl(r.thumbnail || '', fallbackCover)}'); background-size: cover; background-position: center;" title="Open the cooking guide on YouTube">
+                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : sanitizeUrl(r.thumbnail || '', fallbackCover)}" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Video Guide" class="video-facade-img" />
                 <div class="video-facade-overlay">
                   <div class="btn-facade-play">
                     <span class="facade-play-icon">▶</span>
@@ -367,16 +374,16 @@ export class CookingStudioModal {
         </div>
         <div class="modal-rec-cards-grid">
           ${relatedRecipes.map(rel => `
-            <div class="modal-rec-card" data-rec-id="${rel.recipe.id || rel.recipe.idMeal}">
+            <div class="modal-rec-card" data-rec-id="${sanitizeHtml(rel.recipe.id || rel.recipe.idMeal)}">
               <div class="rec-card-thumb-wrap">
-                <img src="${rel.recipe.thumbnail || rel.recipe.strMealThumb}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />
-                <span class="rec-pairing-badge">${rel.pairingBadge}</span>
+                <img src="${sanitizeUrl(rel.recipe.thumbnail || rel.recipe.strMealThumb || '', fallbackCover)}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />
+                <span class="rec-pairing-badge">${sanitizeHtml(rel.pairingBadge)}</span>
               </div>
               <div class="rec-card-info">
-                <h4 class="rec-card-title">${rel.recipe.title || rel.recipe.strMeal}</h4>
+                <h4 class="rec-card-title">${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}</h4>
                 <div class="rec-card-meta">
-                  <span>🍽️ ${rel.recipe.category || rel.recipe.strCategory}</span>
-                  <span>⏱️ ${rel.recipe.estimatedTime || 30} mins</span>
+                  <span>🍽️ ${sanitizeHtml(rel.recipe.category || rel.recipe.strCategory)}</span>
+                  <span>⏱️ ${sanitizeHtml(rel.recipe.estimatedTime || 30)} mins</span>
                 </div>
               </div>
             </div>

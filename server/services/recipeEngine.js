@@ -2,7 +2,7 @@
  * High-Performance In-Memory Search & Indexing Engine for Culinaria Backend
  * Provides O(1) indexed lookups, inverted token indices, and demonym normalization
  */
-import curatedRecipes from '../../src/data/curated500Recipes.js';
+import curatedRecipes from '../../src/data/recipeCatalog.js';
 import { INGREDIENT_SUBSTITUTIONS } from '../../src/services/recommendationEngine.js';
 
 // Demonym Normalization Dictionary
