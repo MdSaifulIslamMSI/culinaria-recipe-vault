@@ -83,6 +83,12 @@ test('CSP omits unsafe-inline and jsdelivr from script-src everywhere', () => {
     assert.ok(scriptSrc, `script-src directive ${i} must exist`);
     assert.doesNotMatch(scriptSrc, /unsafe-inline/, `script-src ${i} must not allow unsafe-inline`);
     assert.doesNotMatch(source, /jsdelivr/, `source ${i} must not reference jsdelivr`);
+
+    // The service worker re-fetches font binaries via fetch(), which is
+    // governed by connect-src. Render serves sw.js with the server CSP, so a
+    // missing fonts.gstatic.com entry blocks every Google Font on that host.
+    const connectSrc = source.match(/connect-src[^;]*/)?.[0] || '';
+    assert.match(connectSrc, /https:\/\/fonts\.gstatic\.com/, `connect-src ${i} must allow fonts.gstatic.com`);
   });
 });
 
