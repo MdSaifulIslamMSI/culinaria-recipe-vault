@@ -72,6 +72,12 @@ export function securityHeaders(req, res, next) {
   if (process.env.NODE_ENV === 'production' || process.env.ENABLE_HSTS === 'true') {
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
+  // Never send CSP to the service worker script: a SW served with the page
+  // policy inherits it as its own document policy, restricting its fetch()
+  // context (e.g. font revalidation) beyond what the page itself allows.
+  if (req.path === '/sw.js') {
+    return next();
+  }
   res.setHeader(
     'Content-Security-Policy',
     "default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com; connect-src 'self' https://www.themealdb.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com; object-src 'none'; base-uri 'self'; form-action 'self';"

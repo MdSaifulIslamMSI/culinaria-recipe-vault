@@ -27,8 +27,13 @@ test('service worker and CSP have valid offline/font failure handling', () => {
   const headers = read('public/_headers');
   const render = read('render.yaml');
 
-  assert.match(serviceWorker, /culinaria-pwa-v2\.1/);
-  assert.match(serviceWorker, /return Response\.error\(\);/);
+  assert.match(serviceWorker, /culinaria-pwa-v2\.2/);
+  // Documents must be network-first so deployments (and CSP fixes) reach
+  // existing clients instead of serving stale cached HTML forever.
+  assert.match(serviceWorker, /NETWORK-FIRST/);
+  assert.match(serviceWorker, /isDocument/);
+  // Failure paths still resolve with explicit error responses.
+  assert.match(serviceWorker, /Response\.error\(\)/);
   assert.match(serviceWorker, /cachedResponse \|\| Response\.error\(\)/);
   assert.match(indexHtml, /connect-src[^>]*https:\/\/fonts\.googleapis\.com/);
   assert.match(serverSecurity, /connect-src[^;]*https:\/\/fonts\.googleapis\.com/);
