@@ -21,8 +21,10 @@ const POLLUTION_KEYS = new Set([
 
 /**
  * W3C Trusted Types Policy Initialization
+ * Exported so the policy reference stays alive for the document lifetime and
+ * remains inspectable from diagnostics.
  */
-let trustedPolicy = null;
+export let trustedPolicy = null;
 if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.createPolicy) {
   try {
     trustedPolicy = window.trustedTypes.createPolicy('culinaria-policy', {
@@ -30,7 +32,7 @@ if (typeof window !== 'undefined' && window.trustedTypes && window.trustedTypes.
       createScriptURL: (string) => sanitizeUrl(string)
     });
     logSecurityEvent(SecurityEventType.TRUSTED_TYPE_INITIALIZED, { policy: 'culinaria-policy' });
-  } catch (e) {
+  } catch {
     // Policy may already be registered
   }
 }
@@ -86,6 +88,7 @@ export function sanitizeIdentifier(id) {
  */
 export function sanitizeTextInput(input, maxLength = 120) {
   if (!input || typeof input !== 'string') return '';
+  // eslint-disable-next-line no-control-regex -- stripping control characters is the purpose
   const noCtrl = input.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '');
   return sanitizeHtml(noCtrl.trim().slice(0, maxLength));
 }
@@ -96,6 +99,7 @@ export function sanitizeTextInput(input, maxLength = 120) {
  */
 export function sanitizeClipboardText(text) {
   if (!text || typeof text !== 'string') return '';
+  // eslint-disable-next-line no-control-regex -- stripping control characters is the purpose
   return text.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '').trim();
 }
 

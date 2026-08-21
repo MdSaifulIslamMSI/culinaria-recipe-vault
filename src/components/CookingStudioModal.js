@@ -12,7 +12,7 @@ import { getChefPreferences } from '../services/preferencesService.js';
 import { activeTimer } from '../services/timerManager.js';
 import { getRelatedRecipes, getIngredientSubstitution } from '../services/recommendationEngine.js';
 import { getRecipeById } from '../services/mealDbApi.js';
-import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
+import { sanitizeHtml } from '../utils/securitySanitizer.js';
 import confetti from 'canvas-confetti';
 
 export class CookingStudioModal {

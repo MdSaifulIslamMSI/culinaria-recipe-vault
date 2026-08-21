@@ -181,7 +181,12 @@ export class ShoppingListDrawer {
       return;
     }
 
-    const rawText = `🛒 Culinaria Grocery List:\n\n${text}`;
+    const lines = list.map(item => {
+      const checkbox = item.checked ? '[x]' : '[ ]';
+      const measure = item.measure ? `${item.measure} ` : '';
+      return `${checkbox} ${measure}${item.name}`;
+    });
+    const rawText = `🛒 Culinaria Grocery List:\n\n${lines.join('\n')}`;
     const safeText = sanitizeClipboardText(rawText);
     navigator.clipboard.writeText(safeText).then(() => {
       window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '📋 Grocery list copied to clipboard!' } }));

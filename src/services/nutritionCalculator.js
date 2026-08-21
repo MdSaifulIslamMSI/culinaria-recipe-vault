@@ -84,11 +84,12 @@ export function estimateNutrition(recipe, currentServings = 4) {
     totalFat = Math.max(totalFat, 35);
   }
 
-  // Per serving calculation
-  const perServingCalories = Math.round(totalCalories / baseServings);
-  const perServingProtein = Math.round(totalProtein / baseServings);
-  const perServingCarbs = Math.round(totalCarbs / baseServings);
-  const perServingFat = Math.round(totalFat / baseServings);
+  // Per serving calculation (recipe totals are divided by the requested serving count)
+  const targetServings = Math.max(1, Number(currentServings) || baseServings);
+  const perServingCalories = Math.round(totalCalories / targetServings);
+  const perServingProtein = Math.round(totalProtein / targetServings);
+  const perServingCarbs = Math.round(totalCarbs / targetServings);
+  const perServingFat = Math.round(totalFat / targetServings);
 
   return {
     calories: perServingCalories,

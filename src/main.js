@@ -13,8 +13,6 @@ import {
   getRecipeById,
   getCategories,
   getAreas,
-  filterByCategory,
-  filterByArea,
   filterByCategoryAndArea
 } from './services/mealDbApi.js';
 import {
@@ -31,8 +29,7 @@ import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
 import { PreferencesDrawer } from './components/PreferencesDrawer.js';
-import { MultiTimerDock } from './components/MultiTimerDock.js';
-import { MealPlannerDrawer, mealPlannerDrawer } from './components/MealPlannerDrawer.js';
+import { mealPlannerDrawer } from './components/MealPlannerDrawer.js';
 import { getActivePaletteId, setActivePalette } from './services/paletteService.js';
 
 // Arm real-time defenses, error boundary, and offline network monitor
@@ -700,35 +697,45 @@ class CulinariaApp {
      Kitchen Timer Dock
      ========================================================================== */
   initTimerDock() {
-    activeTimer.subscribe((state) => {
-      if (state.remainingSeconds > 0 || state.isRunning) {
-        this.floatingTimerBar.classList.remove('hidden');
-        this.timerDishTitle.textContent = state.title;
-        this.timerDigits.textContent = state.formatted;
-        this.timerToggleBtn.textContent = state.isRunning ? '⏸️' : '▶️';
-      }
+    // Id of the timer currently shown in the dock (most urgent running/paused timer).
+    this.dockTimerId = null;
 
-      if (state.event === 'completed') {
-        this.timerDigits.textContent = '00:00';
-        this.timerToggleBtn.textContent = '▶️';
-        this.showToast(`⏰ Timer Complete for "${state.title}"!`);
+    const pickDockTimer = (timers) => {
+      const active = timers.filter(t => t.status === 'running' || t.status === 'paused');
+      if (active.length === 0) return null;
+      return active.reduce((a, b) => (a.remainingSeconds <= b.remainingSeconds ? a : b));
+    };
+
+    activeTimer.subscribe((state) => {
+      const dockTimer = pickDockTimer(state.timers);
+      this.dockTimerId = dockTimer ? dockTimer.id : null;
+
+      if (dockTimer) {
+        this.floatingTimerBar.classList.remove('hidden');
+        this.timerDishTitle.textContent = dockTimer.title;
+        this.timerDigits.textContent = activeTimer.formatTime(dockTimer.remainingSeconds);
+        this.timerToggleBtn.textContent = dockTimer.status === 'running' ? '⏸️' : '▶️';
+      } else {
+        this.floatingTimerBar.classList.add('hidden');
       }
     });
 
     this.timerToggleBtn.addEventListener('click', () => {
-      if (activeTimer.isRunning) {
-        activeTimer.pause();
-      } else {
-        activeTimer.resume();
+      const timer = this.dockTimerId && activeTimer.getAll().find(t => t.id === this.dockTimerId);
+      if (!timer) return;
+      if (timer.status === 'running') {
+        activeTimer.pauseTimer(timer.id);
+      } else if (timer.status === 'paused') {
+        activeTimer.resumeTimer(timer.id);
       }
     });
 
     this.timerResetBtn.addEventListener('click', () => {
-      activeTimer.reset();
+      if (this.dockTimerId) activeTimer.removeTimer(this.dockTimerId);
     });
 
     this.timerDismissBtn.addEventListener('click', () => {
-      activeTimer.stop();
+      if (this.dockTimerId) activeTimer.removeTimer(this.dockTimerId);
       this.floatingTimerBar.classList.add('hidden');
     });
   }

@@ -148,6 +148,7 @@ export function validateRequestInput(req, res, next) {
           });
         }
         // Disallow dangerous control characters and CRLF
+        // eslint-disable-next-line no-control-regex -- rejecting control characters is the purpose
         if (/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F\r\n]/.test(value)) {
           return res.status(400).json({
             error: 'Bad Request',

@@ -109,7 +109,7 @@ export function getActivePaletteId() {
     if (saved && GOURMET_PALETTES.some(p => p.id === saved)) {
       return saved;
     }
-  } catch (e) {
+  } catch {
     // Continue with fallback
   }
   return DEFAULT_PALETTE_ID;

@@ -2,7 +2,7 @@
  * PantryFinder Component
  * "What's in your fridge?" multi-ingredient matching engine
  */
-import { filterByIngredient, getRecipeById } from '../services/mealDbApi.js';
+import { filterByIngredient } from '../services/mealDbApi.js';
 import { getPantryBasket, savePantryBasket } from '../services/storageService.js';
 import { createRecipeCard } from './RecipeCard.js';
 

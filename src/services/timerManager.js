@@ -70,7 +70,7 @@ class MultiTimerManager {
       const now = Date.now();
       let hasChanges = false;
 
-      for (const [id, timer] of this.timers.entries()) {
+      for (const [, timer] of this.timers.entries()) {
         if (timer.status === 'running') {
           const left = Math.max(0, Math.round((timer.endTime - now) / 1000));
           if (left !== timer.remainingSeconds) {

@@ -135,7 +135,7 @@ class RecipeEngine {
   }
 
   search({ q = '', category = '', area = '', limit = 100 } = {}) {
-    let candidateIds = null;
+    let candidateIds = /** @type {Set<string>|null} */ (null);
 
     // Fast keyword lookup via inverted token index
     if (q) {

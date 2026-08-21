@@ -31,8 +31,8 @@ console.log(`📌 Release Commit Target: ${auditLog.commit}\n`);
 // -------------------------------------------------------------
 console.log('🔍 [PASS 01] Secret Exposure & Credential Lifecycle Hygiene...');
 const secretRegexes = [
-  { name: 'Generic API Key', pattern: /api[_-]?key\s*[:=]\s*['"][a-zA-Z0-9_\-]{20,}['"]/gi },
-  { name: 'Generic Secret', pattern: /secret\s*[:=]\s*['"][a-zA-Z0-9_\-]{20,}['"]/gi },
+  { name: 'Generic API Key', pattern: /api[_-]?key\s*[:=]\s*['"][a-zA-Z0-9_-]{20,}['"]/gi },
+  { name: 'Generic Secret', pattern: /secret\s*[:=]\s*['"][a-zA-Z0-9_-]{20,}['"]/gi },
   { name: 'Private Key Token', pattern: /-----BEGIN PRIVATE KEY-----/g },
   { name: 'Render Token Pattern', pattern: /rnd_[a-zA-Z0-9]{20,}/g },
   { name: 'GitHub Personal Token', pattern: /ghp_[a-zA-Z0-9]{20,}/g }

@@ -27,7 +27,13 @@ const STORAGE_KEYS = {
 // In-memory hot cache for instant zero-latency synchronous access
 const memoryCache = new Map();
 
-export function safeGet(key, fallback = []) {
+/**
+ * @template T
+ * @param {string} key
+ * @param {T} [fallback]
+ * @returns {T}
+ */
+export function safeGet(key, fallback = /** @type {any} */ ([])) {
   try {
     if (memoryCache.has(key)) {
       return memoryCache.get(key);
@@ -165,21 +171,10 @@ export function toggleFavorite(recipe) {
     favs.splice(index, 1);
     isFav = false;
   } else {
-    // Save full recipe snapshot for instantaneous offline access in Cookbook
-    favs.unshift({
-      id: recipeId,
-      title: sanitizeTextInput(recipe.title || recipe.strMeal || 'Gourmet Creation', 100),
-      thumbnail: sanitizeUrl(recipe.thumbnail || recipe.strMealThumb || ''),
-      category: sanitizeTextInput(recipe.category || recipe.strCategory || 'Miscellaneous', 50),
-      area: sanitizeTextInput(recipe.area || recipe.strArea || 'Global', 50),
-      estimatedTime: Math.max(5, parseInt(recipe.estimatedTime, 10) || 30),
-      ingredients: sanitizeObject(recipe.ingredients || []),
-      steps: sanitizeObject(recipe.steps || []),
-      instructions: sanitizeTextInput(recipe.instructions || recipe.strInstructions || '', 5000),
-      youtubeId: sanitizeIdentifier(recipe.youtubeId || null),
-      servings: Math.max(1, Math.min(16, parseInt(recipe.servings, 10) || 4)),
-      savedAt: Date.now()
-    });
+    // Save full normalized recipe snapshot for instantaneous offline access in Cookbook
+    const snapshot = normalizeFavoriteRecord(recipe);
+    if (!snapshot) return false;
+    favs.unshift(snapshot);
     isFav = true;
   }
 

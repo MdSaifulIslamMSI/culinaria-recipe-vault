@@ -145,9 +145,9 @@ export function parseInstructionSteps(rawInstructions) {
 
   // If newlines did not split (e.g. single giant paragraph)
   if (steps.length <= 1 && rawInstructions.length > 80) {
-    if (/(?:^|\s)\d+[\.\)]\s+/.test(rawInstructions)) {
+    if (/(?:^|\s)\d+[.)]\s+/.test(rawInstructions)) {
       steps = rawInstructions
-        .split(/(?:^|\s)\d+[\.\)]\s+/)
+        .split(/(?:^|\s)\d+[.)]\s+/)
         .map(s => s.trim())
         .filter(s => s.length > 5);
     } else if (/(?:^|\s)STEP\s*\d+:?\s*/i.test(rawInstructions)) {
@@ -326,7 +326,7 @@ export async function getRecipeById(id) {
     if (favMatch && favMatch.ingredients && favMatch.ingredients.length > 0 && favMatch.steps && favMatch.steps.length > 0) {
       return favMatch;
     }
-  } catch (e) {
+  } catch {
     // Continue
   }
 
