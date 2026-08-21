@@ -26,8 +26,8 @@
   },
   "release": {
     "service": "culinaria-recipe-vault",
-    "commit": "17f59b32ee3800acb64af2af2adb642f325d276a",
-    "generatedAt": "2026-08-15T10:49:14.971Z",
+    "commit": "22ac7ef69f408001e7a89c57d49465e824f7ed8e",
+    "generatedAt": "2026-08-21T10:16:03.494Z",
     "artifact": "dist",
     "checks": [
       "npm test",

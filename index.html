@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.youtube.com; connect-src 'self' https://www.themealdb.com https://*.youtube.com https://fonts.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self';">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://www.youtube.com https://s.ytimg.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://www.themealdb.com https://images.unsplash.com https://img.youtube.com https://i.ytimg.com https://*.ytimg.com https://*.youtube.com; connect-src 'self' https://www.themealdb.com https://*.youtube.com https://fonts.googleapis.com; frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self';">
   <title>Culinaria — Global Recipe Discovery & Cooking Studio</title>
   <meta name="description" content="Explore a curated recipe catalog with ingredient scaling, pantry matching, guided cooking mode, and interactive shopping lists.">
   <meta name="theme-color" content="#e27237">
@@ -16,21 +16,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400;1,9..144,600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍳</text></svg>">
-  <script>
-    (function() {
-      try {
-        var t = localStorage.getItem('culinaria_theme_preference');
-        if (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-          t = 'dark';
-        }
-        document.documentElement.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light');
-
-        var p = localStorage.getItem('culinaria_color_palette_v1') || 'saffron';
-        document.documentElement.setAttribute('data-palette', p);
-      } catch (e) {}
-    })();
-  </script>
-  <script type="module" crossorigin src="./assets/index-QrYVhX57.js"></script>
+  <script src="./theme-init.js"></script>
+  <script type="module" crossorigin src="./assets/index-B69-hbXn.js"></script>
   <link rel="stylesheet" crossorigin href="./assets/index-D3wYEpjy.css">
 </head>
 <body>
@@ -466,7 +453,7 @@
               <span class="pref-desc">Filter dishes ready in under 30 minutes</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" id="prefQuick30">
+              <input type="checkbox" id="prefQuickUnder30">
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -477,7 +464,7 @@
               <span class="pref-desc">Display strictly vegetarian, vegan & meatless recipes</span>
             </div>
             <label class="toggle-switch">
-              <input type="checkbox" id="prefVegetarian">
+              <input type="checkbox" id="prefVegetarianOnly">
               <span class="toggle-slider"></span>
             </label>
           </div>
@@ -656,7 +643,7 @@
     </div>
 
     <!-- Toast Notification Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    <div class="toast-container" id="toastContainer" role="status" aria-live="polite"></div>
 
     <!-- Footer -->
     <footer class="app-footer">
