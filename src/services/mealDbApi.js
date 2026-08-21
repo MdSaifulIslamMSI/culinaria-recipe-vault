@@ -7,7 +7,9 @@ import { getFavorites } from './storageService.js';
 import { sanitizeIdentifier, sanitizeTextInput, sanitizeUrl } from '../utils/securitySanitizer.js';
 
 const BASE_URL = 'https://www.themealdb.com/api/json/v1/1';
-const cache = new Map();
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const CACHE_MAX_ENTRIES = 60;
+const cache = new Map(); // url -> { data, expiresAt }
 
 // Built-in curated gourmet recipes for instantaneous load & offline resilience
 const DEFAULT_TOP_RECIPES = [
@@ -114,11 +116,11 @@ let curatedFallbackPromise;
 
 async function getCuratedFallbackRecipes() {
   if (!curatedFallbackPromise) {
-    curatedFallbackPromise = import('../data/curated500Recipes.js')
-      .then(({ default: curated500 }) => [
+    curatedFallbackPromise = import('../data/recipeCatalog.js')
+      .then(({ default: catalog }) => [
         ...DEFAULT_TOP_RECIPES,
-        ...(Array.isArray(curated500)
-          ? curated500.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal)))
+        ...(Array.isArray(catalog)
+          ? catalog.filter(m => !DEFAULT_TOP_RECIPES.some(d => String(d.idMeal) === String(m.idMeal)))
           : [])
       ])
       .catch(error => {
@@ -145,9 +147,9 @@ export function parseInstructionSteps(rawInstructions) {
 
   // If newlines did not split (e.g. single giant paragraph)
   if (steps.length <= 1 && rawInstructions.length > 80) {
-    if (/(?:^|\s)\d+[\.\)]\s+/.test(rawInstructions)) {
+    if (/(?:^|\s)\d+[.)]\s+/.test(rawInstructions)) {
       steps = rawInstructions
-        .split(/(?:^|\s)\d+[\.\)]\s+/)
+        .split(/(?:^|\s)\d+[.)]\s+/)
         .map(s => s.trim())
         .filter(s => s.length > 5);
     } else if (/(?:^|\s)STEP\s*\d+:?\s*/i.test(rawInstructions)) {
@@ -176,9 +178,23 @@ export function parseInstructionSteps(rawInstructions) {
 }
 
 /**
- * Normalizes raw MealDB recipe object into a clean structured format
+ * Normalizes raw MealDB recipe object into a clean structured format.
+ * Memoized per raw meal object: the curated catalog is re-formatted on many
+ * code paths (empty searches, filters), and regex sanitization of 789 recipes
+ * on every call is wasted work when raw objects are stable references.
  */
+const formatMemo = new WeakMap();
+
 export function formatRecipe(meal) {
+  if (!meal) return null;
+  const cached = formatMemo.get(meal);
+  if (cached) return cached;
+  const formatted = buildFormattedRecipe(meal);
+  formatMemo.set(meal, formatted);
+  return formatted;
+}
+
+function buildFormattedRecipe(meal) {
   if (!meal) return null;
 
   const ingredients = [];
@@ -258,12 +274,16 @@ function formatRecipeSummary(meal, categoryOverride = null, areaOverride = null)
 }
 
 /**
- * Fetch wrapper with cache & error handling
+ * Fetch wrapper with bounded TTL cache & error handling
  */
 async function fetchWithCache(endpoint) {
   const url = `${BASE_URL}/${endpoint}`;
-  if (cache.has(url)) {
-    return cache.get(url);
+  const hit = cache.get(url);
+  if (hit && hit.expiresAt > Date.now()) {
+    return hit.data;
+  }
+  if (hit) {
+    cache.delete(url);
   }
 
   try {
@@ -275,7 +295,12 @@ async function fetchWithCache(endpoint) {
         throw new Error(`MealDB API error: ${response.status}`);
       }
       const data = await response.json();
-      cache.set(url, data);
+      cache.set(url, { data, expiresAt: Date.now() + CACHE_TTL_MS });
+      // FIFO eviction keeps the in-memory cache bounded in long sessions.
+      if (cache.size > CACHE_MAX_ENTRIES) {
+        const oldestKey = cache.keys().next().value;
+        cache.delete(oldestKey);
+      }
       return data;
     } finally {
       clearTimeout(timeoutId);
@@ -326,7 +351,7 @@ export async function getRecipeById(id) {
     if (favMatch && favMatch.ingredients && favMatch.ingredients.length > 0 && favMatch.steps && favMatch.steps.length > 0) {
       return favMatch;
     }
-  } catch (e) {
+  } catch {
     // Continue
   }
 
@@ -338,8 +363,8 @@ export async function getRecipeById(id) {
 
   // 3. Check curated fallback dataset
   const curatedRecipes = await getCuratedFallbackRecipes();
-  const fallback = curatedRecipes.find(m => String(m.idMeal) === strId) || curatedRecipes[0];
-  return formatRecipe(fallback);
+  const fallback = curatedRecipes.find(m => String(m.idMeal) === strId);
+  return fallback ? formatRecipe(fallback) : null;
 }
 
 /**
@@ -347,10 +372,16 @@ export async function getRecipeById(id) {
  */
 export async function getRandomRecipe() {
   try {
-    const response = await fetch(`${BASE_URL}/random.php?_t=${Date.now()}`);
-    const data = await response.json();
-    if (data && data.meals && data.meals[0]) {
-      return formatRecipe(data.meals[0]);
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 6000);
+    try {
+      const response = await fetch(`${BASE_URL}/random.php?_t=${Date.now()}`, { signal: controller.signal });
+      const data = await response.json();
+      if (data && data.meals && data.meals[0]) {
+        return formatRecipe(data.meals[0]);
+      }
+    } finally {
+      clearTimeout(timeoutId);
     }
   } catch (e) {
     console.warn(e);

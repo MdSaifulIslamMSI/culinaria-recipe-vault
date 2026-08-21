@@ -1,45 +1,92 @@
-# 🍲 Culinaria — Global Recipe Finder & Cooking Studio
+# Culinaria
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/MdSaifulIslamMSI/culinaria-recipe-vault)
+A recipe finder and cooking studio built on [TheMealDB](https://www.themealdb.com). No framework, no build-time magic beyond Vite — plain ES modules, a small Express API, and a bundled catalog snapshot so the thing still works when the network doesn't.
 
-A premier, editorial-grade recipe discovery engine and interactive kitchen studio powered by the open-source **TheMealDB API**.
+## Live
 
----
+- **GitHub Pages** (static frontend): https://mdsaifulislammsi.github.io/culinaria-recipe-vault/
+- **Render** (Express server serving the same frontend + REST API): https://culinaria-recipe-vault-server.onrender.com
 
-## 🌟 Live Demo
-* **Live Website**: [https://mdsaifulislammsi.github.io/culinaria-recipe-vault/](https://mdsaifulislammsi.github.io/culinaria-recipe-vault/)
+## What it does
 
----
+- Search and filter recipes by name, category, and cuisine. Live API results when online; a 789-recipe bundled snapshot when not.
+- Cook mode: one step at a time, keyboard-driven, with automatic timer detection in step text ("simmer for 20 minutes" becomes a clickable countdown) and optional voice narration.
+- Servings scaler (1–16) with metric/US unit conversion, applied to ingredients in place.
+- Pantry matcher: enter what you have, get recipes ranked by ingredient overlap.
+- Weekly meal planner with grocery-list aggregation, plus a standalone shopping list.
+- Wine/beverage pairing cards per recipe (heuristic, clearly labeled as such).
+- Installable PWA with offline caching.
 
-## 🚀 1-Click Deploy to Render
+## Stack
 
-Click the button below to deploy this application to your Render account in one click:
+| Layer      | Choice                                              |
+|------------|-----------------------------------------------------|
+| Frontend   | Vanilla ES modules, hand-rolled CSS design tokens   |
+| Build      | Vite 8                                              |
+| Backend    | Express 5, stateless                                |
+| Tests      | `node:test` (unit/integration/security), puppeteer-core (e2e) |
+| Data       | TheMealDB API + build-time catalog snapshot         |
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/MdSaifulIslamMSI/culinaria-recipe-vault)
+The only runtime dependencies are `express`, `cors`, `compression`, and `canvas-confetti`.
 
----
+## Getting started
 
-## ✨ Features
-* **🍷 Master Sommelier & Beverage Pairing Engine**: Curated wine, cocktail, and flavor profile pairings for every dish.
-* **🔊 Hands-Free Voice Cooking Assistant**: Built-in voice narration that reads out each step using the Web Speech Synthesis API.
-* **⚖️ Dynamic Portion Scaler & Unit Converter**: Real-time fractional scaling (1 to 16 servings) and Metric $\leftrightarrow$ US Imperial conversion.
-* **🥕 Zero-Waste Pantry Matcher**: Match recipes against what's currently in your fridge.
-* **⏱️ Floating Kitchen Timers & Grocery Cart**: Auto-detects durations in steps with synthesized Web Audio chimes and offline shopping list.
+Requires Node 20.19+.
 
----
+```bash
+npm install
+npm run dev        # Vite dev server on :5173
+npm start          # Express server on :3000 (serves dist/ if present)
+```
 
-## 🛠️ Tech Stack
-* **Vite** (Blazing fast build system)
-* **Vanilla JavaScript & CSS Design System** (Custom tokens, typography, dark mode)
-* **TheMealDB REST API** (Open-source recipe database)
-* **Canvas Confetti & Web Audio API** (Tactile feedback and notifications)
+### Scripts
 
-## Verification and storage model
+| Command            | What it does                                        |
+|--------------------|-----------------------------------------------------|
+| `npm test`         | Unit, integration, security-penetration suites (60 tests) |
+| `npm run test:e2e` | Browser tests; needs a local Chrome, skips otherwise |
+| `npm run lint`     | ESLint                                              |
+| `npm run typecheck`| TypeScript checking over the JS sources             |
+| `npm run build`    | Production build to `dist/`                         |
+| `npm run doctor`   | All of the above gates in sequence                  |
 
-The release gate runs `npm test`, `npm run build`, and `npm audit --audit-level=high`.
-Successful pushes to `main` publish the verified `dist/` artifact to the configured
-GitHub Pages `gh-pages` branch and write `release.json` with the source commit.
+## How the data layer works
 
-Favorites, pantry items, preferences, and shopping items are sanitized client-local
-data. They are not an encrypted secret store and should not contain passwords, tokens,
-health information, or other sensitive data.
+Recipe lookups go through a deliberate fallback chain: live TheMealDB request → in-memory TTL cache → service-worker cache → bundled catalog → built-in defaults. The catalog is refreshed from TheMealDB with `node scripts/fetch-recipe-catalog.js`, which writes `src/data/recipeCatalog.js`; it is committed so offline mode works out of the box.
+
+Two honesty notes:
+
+- `estimatedTime` on recipes is derived from category (a pasta gets 25 minutes), not real prep data. It drives the "under 30 min" filter and is presented as an estimate everywhere.
+- Nutrition figures are estimates computed client-side from ingredients, with floors applied. Treat them as ballpark.
+
+## Deployment
+
+Merges to `main` run the CI pipeline (lint, typecheck, tests, dependency audit, build). On success:
+
+1. The verified `dist/` artifact is published to the `gh-pages` branch, which serves GitHub Pages.
+2. A Render deploy hook is triggered if `RENDER_DEPLOY_HOOK` is configured.
+
+Render can also be set up from scratch with the repo's deploy button or `render.yaml` (health check: `/api/health`). A multi-stage Dockerfile is included for container hosts; the image runs as non-root with a healthcheck.
+
+## Security posture
+
+Short version, without the marketing:
+
+- CSP allows no inline scripts anywhere — the pre-paint theme bootstrap lives in `public/theme-init.js`. Script sources are limited to self and YouTube assets.
+- All recipe data passes through a sanitize-on-ingest layer (`formatRecipe`) and again through display-boundary escaping before any `innerHTML` interpolation. URLs go through a protocol allowlist.
+- The API validates methods, query length, body depth/array/string sizes, and blocks prototype-pollution keys. Rate limiting is a sliding window at 150 req/min/IP — in-memory, so it resets on restart and does not aggregate across instances. Fine for one box; swap in a shared store before scaling out.
+- localStorage holds preferences, favorites, pantry, and shopping items only. Nothing sensitive belongs there and nothing sensitive is stored there.
+- The security test suite covers XSS polyglots, CRLF/null-byte injection, JSON bombs, and prototype pollution (`tests/securityPenetration.test.js`, `tests/serverHardening.test.js`).
+
+## Project layout
+
+```
+server/          Express app: routes, middleware, recipe engine
+src/
+  components/    One file per UI surface (modal, drawers, cards)
+  services/      API client, storage, planner, timers, recommendations
+  utils/         Sanitizer, overlay coordination, error boundary
+  data/          Generated catalog snapshot (do not edit by hand)
+tests/           node:test suites + puppeteer e2e
+scripts/         Catalog fetch, release metadata, evidence audit
+```

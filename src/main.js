@@ -1,20 +1,15 @@
 /**
  * Culinaria - Application Orchestrator
  */
-import './utils/zeroTrustDefense.js';
-import { sanitizeHtml } from './utils/securitySanitizer.js';
+import { sanitizeHtml, sanitizeUrl } from './utils/securitySanitizer.js';
 import { initDomWatchdog } from './utils/domWatchdog.js';
-import { initErrorBoundary, renderRecoveryScreen } from './utils/errorBoundary.js';
+import { initErrorBoundary } from './utils/errorBoundary.js';
 import { initNetworkMonitor } from './utils/networkMonitor.js';
-import { exportAuditReport, getAuditLedger } from './utils/securityAuditLedger.js';
-import { encryptPayload, decryptPayload } from './utils/cryptoEngine.js';
 import {
   searchRecipes,
   getRecipeById,
   getCategories,
   getAreas,
-  filterByCategory,
-  filterByArea,
   filterByCategoryAndArea
 } from './services/mealDbApi.js';
 import {
@@ -31,25 +26,13 @@ import { PantryFinder } from './components/PantryFinder.js';
 import { ShoppingListDrawer } from './components/ShoppingListDrawer.js';
 import { RouletteModal } from './components/RouletteModal.js';
 import { PreferencesDrawer } from './components/PreferencesDrawer.js';
-import { MultiTimerDock } from './components/MultiTimerDock.js';
-import { MealPlannerDrawer, mealPlannerDrawer } from './components/MealPlannerDrawer.js';
+import { mealPlannerDrawer } from './components/MealPlannerDrawer.js';
 import { getActivePaletteId, setActivePalette } from './services/paletteService.js';
 
 // Arm real-time defenses, error boundary, and offline network monitor
 initErrorBoundary();
 initDomWatchdog();
 initNetworkMonitor();
-
-// Expose security diagnostic interface for audit verification
-if (typeof window !== 'undefined') {
-  window.__CULINARIA_SECURITY__ = {
-    exportAuditReport,
-    getAuditLedger,
-    encryptPayload,
-    decryptPayload,
-    renderRecoveryScreen
-  };
-}
 
 class CulinariaApp {
   constructor() {
@@ -241,8 +224,12 @@ class CulinariaApp {
       if (!query && refreshIfEmpty) {
         this.setGridLoading(true);
         const allRecipes = await filterByCategoryAndArea(this.activeCategory, this.activeArea);
-        // Smart Shuffle for dynamic discovery inspiration
-        const shuffled = [...allRecipes].sort(() => 0.5 - Math.random());
+        // Fisher-Yates shuffle for unbiased dynamic discovery inspiration
+        const shuffled = [...allRecipes];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
         this.currentRecipes = shuffled;
         this.applyLocalFilters();
         this.setGridLoading(false);
@@ -283,10 +270,15 @@ class CulinariaApp {
     this.clearSearchBtn.classList.add('hidden');
     this.suggestionsDropdown?.classList.add('hidden');
     this.cuisineSelect.value = 'all';
-    [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
-    
+    [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => {
+      b.classList.remove('active');
+      b.setAttribute('aria-pressed', 'false');
+    });
+
     this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
-      p.classList.toggle('active', p.dataset.category === 'all');
+      const active = p.dataset.category === 'all';
+      p.classList.toggle('active', active);
+      p.setAttribute('aria-pressed', String(active));
     });
 
     this.executeFilterAndSearch();
@@ -353,14 +345,20 @@ class CulinariaApp {
     });
 
     const setupQuickToggle = (btn, filterKey) => {
+      btn.setAttribute('aria-pressed', 'false');
       btn.addEventListener('click', () => {
         if (this.activeQuickFilter === filterKey) {
           this.activeQuickFilter = null;
           btn.classList.remove('active');
+          btn.setAttribute('aria-pressed', 'false');
         } else {
-          [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => b.classList.remove('active'));
+          [this.filterUnder30, this.filterVeg, this.filterProtein].forEach(b => {
+            b.classList.remove('active');
+            b.setAttribute('aria-pressed', 'false');
+          });
           this.activeQuickFilter = filterKey;
           btn.classList.add('active');
+          btn.setAttribute('aria-pressed', 'true');
         }
         this.applyLocalFilters();
       });
@@ -395,11 +393,11 @@ class CulinariaApp {
       }
 
       this.suggestionsDropdown.innerHTML = topFive.map(r => `
-        <div class="suggestion-item" data-id="${r.id}">
-          <img src="${r.thumbnail}" alt="${r.title}" class="suggestion-thumb" />
+        <div class="suggestion-item" data-id="${sanitizeHtml(r.id)}">
+          <img src="${sanitizeUrl(r.thumbnail || '', '')}" alt="${sanitizeHtml(r.title)}" class="suggestion-thumb" />
           <div class="suggestion-info">
-            <div class="suggestion-title">${r.title}</div>
-            <div class="suggestion-meta">🌍 ${r.area} • ${r.category}</div>
+            <div class="suggestion-title">${sanitizeHtml(r.title)}</div>
+            <div class="suggestion-meta">🌍 ${sanitizeHtml(r.area)} • ${sanitizeHtml(r.category)}</div>
           </div>
         </div>
       `).join('');
@@ -467,7 +465,7 @@ class CulinariaApp {
     const pillsHtml = categories.map(cat => {
       const emoji = categoryEmojis[cat.name] || '🍽️';
       return `
-        <button class="cat-pill" data-category="${cat.name}">
+        <button class="cat-pill" data-category="${cat.name}" aria-pressed="${cat.name === 'all'}">
           <span class="cat-icon">${emoji}</span>
           <span>${cat.name}</span>
         </button>
@@ -478,8 +476,11 @@ class CulinariaApp {
 
     this.categoryNav.querySelectorAll('.cat-pill').forEach(pill => {
       pill.addEventListener('click', () => {
-        this.categoryNav.querySelectorAll('.cat-pill').forEach(p => p.classList.remove('active'));
-        pill.classList.add('active');
+        this.categoryNav.querySelectorAll('.cat-pill').forEach(p => {
+          const active = p === pill;
+          p.classList.toggle('active', active);
+          p.setAttribute('aria-pressed', String(active));
+        });
         this.activeCategory = pill.dataset.category;
         this.executeFilterAndSearch();
       });
@@ -487,10 +488,14 @@ class CulinariaApp {
   }
 
   renderCuisineDropdown(areas) {
-    const optionsHtml = areas.map(area => `
-      <option value="${area}">${area}</option>
-    `).join('');
-    this.cuisineSelect.insertAdjacentHTML('beforeend', optionsHtml);
+    const fragment = document.createDocumentFragment();
+    areas.forEach(area => {
+      const option = document.createElement('option');
+      option.value = area;
+      option.textContent = area;
+      fragment.appendChild(option);
+    });
+    this.cuisineSelect.appendChild(fragment);
   }
 
   /* ==========================================================================
@@ -636,16 +641,16 @@ class CulinariaApp {
     }
 
     stripEl.innerHTML = recs.map(item => `
-      <div class="palate-card" data-rec-id="${item.recipe.id || item.recipe.idMeal}">
+      <div class="palate-card" data-rec-id="${sanitizeHtml(item.recipe.id || item.recipe.idMeal)}">
         <div class="palate-thumb-wrap">
-          <img src="${item.recipe.thumbnail || item.recipe.strMealThumb}" alt="${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}" class="palate-img" loading="lazy" />
-          <span class="palate-rationale-pill">${item.rationale}</span>
+          <img src="${sanitizeUrl(item.recipe.thumbnail || item.recipe.strMealThumb || '', '')}" alt="${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}" class="palate-img" loading="lazy" />
+          <span class="palate-rationale-pill">${sanitizeHtml(item.rationale)}</span>
         </div>
         <div class="palate-info">
-          <h4 class="palate-dish-title">${item.recipe.title || item.recipe.strMeal}</h4>
+          <h4 class="palate-dish-title">${sanitizeHtml(item.recipe.title || item.recipe.strMeal)}</h4>
           <div class="palate-meta">
-            <span>🍽️ ${item.recipe.category || item.recipe.strCategory}</span>
-            <span>⏱️ ${item.recipe.estimatedTime || 30}m</span>
+            <span>🍽️ ${sanitizeHtml(item.recipe.category || item.recipe.strCategory)}</span>
+            <span>⏱️ ${sanitizeHtml(item.recipe.estimatedTime || 30)}m</span>
           </div>
         </div>
       </div>
@@ -700,35 +705,45 @@ class CulinariaApp {
      Kitchen Timer Dock
      ========================================================================== */
   initTimerDock() {
-    activeTimer.subscribe((state) => {
-      if (state.remainingSeconds > 0 || state.isRunning) {
-        this.floatingTimerBar.classList.remove('hidden');
-        this.timerDishTitle.textContent = state.title;
-        this.timerDigits.textContent = state.formatted;
-        this.timerToggleBtn.textContent = state.isRunning ? '⏸️' : '▶️';
-      }
+    // Id of the timer currently shown in the dock (most urgent running/paused timer).
+    this.dockTimerId = null;
 
-      if (state.event === 'completed') {
-        this.timerDigits.textContent = '00:00';
-        this.timerToggleBtn.textContent = '▶️';
-        this.showToast(`⏰ Timer Complete for "${state.title}"!`);
+    const pickDockTimer = (timers) => {
+      const active = timers.filter(t => t.status === 'running' || t.status === 'paused');
+      if (active.length === 0) return null;
+      return active.reduce((a, b) => (a.remainingSeconds <= b.remainingSeconds ? a : b));
+    };
+
+    activeTimer.subscribe((state) => {
+      const dockTimer = pickDockTimer(state.timers);
+      this.dockTimerId = dockTimer ? dockTimer.id : null;
+
+      if (dockTimer) {
+        this.floatingTimerBar.classList.remove('hidden');
+        this.timerDishTitle.textContent = dockTimer.title;
+        this.timerDigits.textContent = activeTimer.formatTime(dockTimer.remainingSeconds);
+        this.timerToggleBtn.textContent = dockTimer.status === 'running' ? '⏸️' : '▶️';
+      } else {
+        this.floatingTimerBar.classList.add('hidden');
       }
     });
 
     this.timerToggleBtn.addEventListener('click', () => {
-      if (activeTimer.isRunning) {
-        activeTimer.pause();
-      } else {
-        activeTimer.resume();
+      const timer = this.dockTimerId && activeTimer.getAll().find(t => t.id === this.dockTimerId);
+      if (!timer) return;
+      if (timer.status === 'running') {
+        activeTimer.pauseTimer(timer.id);
+      } else if (timer.status === 'paused') {
+        activeTimer.resumeTimer(timer.id);
       }
     });
 
     this.timerResetBtn.addEventListener('click', () => {
-      activeTimer.reset();
+      if (this.dockTimerId) activeTimer.removeTimer(this.dockTimerId);
     });
 
     this.timerDismissBtn.addEventListener('click', () => {
-      activeTimer.stop();
+      if (this.dockTimerId) activeTimer.removeTimer(this.dockTimerId);
       this.floatingTimerBar.classList.add('hidden');
     });
   }
@@ -808,7 +823,9 @@ class CulinariaApp {
   showToast(message) {
     const toast = document.createElement('div');
     toast.className = 'toast';
-    toast.innerHTML = `<span>${message}</span>`;
+    const span = document.createElement('span');
+    span.textContent = message;
+    toast.appendChild(span);
     this.toastContainer.appendChild(toast);
 
     setTimeout(() => {

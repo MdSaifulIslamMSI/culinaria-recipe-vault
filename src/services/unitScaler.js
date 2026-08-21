@@ -78,13 +78,13 @@ export function scaleMeasurement(measureStr, ratio = 1, unitSystem = 'metric') {
   }
 
   // Regex pattern matching leading numeric part and trailing unit part
-  const regex = /^([\d\s\/\.\u00BC-\u00BE\u2150-\u215E]+)(.*)$/;
+  const regex = /^([\d\s/.\u00BC-\u00BE\u2150-\u215E]+)(.*)$/;
   const match = trimmed.match(regex);
 
   if (!match) return trimmed;
 
   const numPart = match[1].trim();
-  let unitPart = match[2].trim();
+  const unitPart = match[2].trim();
 
   const parsedVal = parseFraction(numPart);
   if (parsedVal === null) return trimmed;
@@ -142,3 +142,4 @@ export function scaleMeasurement(measureStr, ratio = 1, unitSystem = 'metric') {
 
   return `${formatFraction(scaledVal)} ${unitPart}`.trim();
 }
+

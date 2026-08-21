@@ -11,7 +11,7 @@ let curatedRecipesPromise;
 
 async function getCuratedRecipes() {
   if (!curatedRecipesPromise) {
-    curatedRecipesPromise = import('../data/curated500Recipes.js')
+    curatedRecipesPromise = import('../data/recipeCatalog.js')
       .then(({ default: recipes }) => Array.isArray(recipes) ? recipes.map(formatRecipe).filter(Boolean) : [])
       .catch(error => {
         console.warn('Recommendation catalog unavailable:', error);

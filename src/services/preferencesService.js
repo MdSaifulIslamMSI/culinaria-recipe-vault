@@ -17,7 +17,8 @@ const DEFAULT_PREFERENCES = {
   showMacros: true,
   showSommelier: true,
   autoSubstitutions: false,
-  compactGrid: false
+  compactGrid: false,
+  timerSound: true
 };
 
 let activeWakeLock = null;

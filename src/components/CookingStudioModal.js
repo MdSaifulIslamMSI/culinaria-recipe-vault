@@ -13,6 +13,12 @@ import { activeTimer } from '../services/timerManager.js';
 import { getRelatedRecipes, getIngredientSubstitution } from '../services/recommendationEngine.js';
 import { getRecipeById } from '../services/mealDbApi.js';
 import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 import confetti from 'canvas-confetti';
 
 export class CookingStudioModal {
@@ -48,13 +54,29 @@ export class CookingStudioModal {
 
     this.setOpenState(false);
     this.initEvents();
+    this.registerKeyboardCoordination();
   }
 
   setOpenState(isOpen) {
-    [this.modalBackdrop, this.modal].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
+    setOverlayState([this.modalBackdrop, this.modal], isOpen);
+  }
+
+  /**
+   * Registers both layers (recipe modal + cook mode) with the shared overlay
+   * coordinator. Registration order matters: cook mode sits above the modal.
+   */
+  registerKeyboardCoordination() {
+    registerOverlay({
+      name: 'cooking-studio-modal',
+      getContainer: () => this.modal,
+      isOpen: () => this.modalBackdrop?.classList.contains('open') ?? false,
+      close: () => this.close()
+    });
+    registerOverlay({
+      name: 'cook-mode-overlay',
+      getContainer: () => this.cookOverlay,
+      isOpen: () => this.cookOverlay?.classList.contains('open') ?? false,
+      close: () => this.closeCookMode()
     });
   }
 
@@ -64,29 +86,15 @@ export class CookingStudioModal {
       if (e.target === this.modalBackdrop) this.close();
     });
 
+    // Cook-mode step navigation keys (Escape/Tab are handled centrally).
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        if (this.cookOverlay.classList.contains('open')) {
-          this.closeCookMode();
-        } else if (this.modalBackdrop.classList.contains('open')) {
-          this.close();
-        }
-      }
-      if (this.cookOverlay.classList.contains('open')) {
-        if (e.key === 'ArrowRight' || e.key === ' ') {
-          e.preventDefault();
-          this.nextCookStep();
-        } else if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          this.prevCookStep();
-        }
-      }
-      if (e.key === 'Tab') {
-        if (this.cookOverlay.classList.contains('open')) {
-          this.trapFocus(this.cookOverlay, e);
-        } else if (this.modalBackdrop.classList.contains('open')) {
-          this.trapFocus(this.modal, e);
-        }
+      if (!this.cookOverlay.classList.contains('open')) return;
+      if (e.key === 'ArrowRight' || e.key === ' ') {
+        e.preventDefault();
+        this.nextCookStep();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        this.prevCookStep();
       }
     });
 
@@ -115,20 +123,6 @@ export class CookingStudioModal {
     });
   }
 
-  trapFocus(container, e) {
-    const focusable = Array.from(container.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      last.focus();
-      e.preventDefault();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      first.focus();
-      e.preventDefault();
-    }
-  }
-
   async open(recipe) {
     if (!recipe) return;
     this.previousActiveElement = document.activeElement;
@@ -142,14 +136,14 @@ export class CookingStudioModal {
     await this.render();
     this.setOpenState(true);
     this.modalBackdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
     setTimeout(() => this.closeBtn.focus(), 50);
   }
 
   close() {
     this.setOpenState(false);
     this.modalBackdrop.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }
@@ -165,27 +159,33 @@ export class CookingStudioModal {
     const fallbackCover = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=1200&q=80';
     const relatedRecipes = await getRelatedRecipes(r, undefined, 3);
 
+    // Display-boundary escaping (defense-in-depth; service layer already sanitizes)
+    const safeTitle = sanitizeHtml(r.title);
+    const safeCategory = sanitizeHtml(r.category);
+    const safeArea = sanitizeHtml(r.area);
+    const safeThumb = sanitizeUrl(r.thumbnail || '', fallbackCover);
+
     this.modalContent.innerHTML = `
       <div class="modal-hero-cover">
-        <img src="${r.thumbnail || fallbackCover}" alt="${r.title}" class="modal-hero-img" />
+        <img src="${safeThumb}" alt="${safeTitle}" class="modal-hero-img" />
         <div class="modal-hero-gradient"></div>
       </div>
 
       <div class="modal-header-meta">
         <div class="modal-tags-row">
-          <span class="modal-tag tag-cat">🍽️ ${r.category}</span>
-          <span class="modal-tag tag-area">🌍 ${r.area} Tradition</span>
-          <span class="modal-tag tag-time">⏱️ ${r.estimatedTime || 30} mins</span>
-          <span class="modal-tag tag-cal">🔥 ~${nutrition.calories} kcal / portion</span>
+          <span class="modal-tag tag-cat">🍽️ ${safeCategory}</span>
+          <span class="modal-tag tag-area">🌍 ${safeArea} Tradition</span>
+          <span class="modal-tag tag-time">⏱️ ${sanitizeHtml(r.estimatedTime || 30)} mins</span>
+          <span class="modal-tag tag-cal">🔥 ~${sanitizeHtml(nutrition.calories)} kcal / portion</span>
           ${r.youtubeId ? '<span class="modal-tag tag-time">🎥 Video Guide</span>' : ''}
         </div>
 
-        <h1 class="modal-dish-title">${r.title}</h1>
+        <h1 class="modal-dish-title">${safeTitle}</h1>
 
         <!-- Flavor Profile Tags -->
         <div class="flavor-profile-bar">
           <span class="flavor-bar-label">Flavor Profile:</span>
-          ${pairing.flavorProfile.map(f => `<span class="flavor-tag">✨ ${f}</span>`).join('')}
+          ${pairing.flavorProfile.map(f => `<span class="flavor-tag">✨ ${sanitizeHtml(f)}</span>`).join('')}
         </div>
       </div>
 
@@ -238,16 +238,17 @@ export class CookingStudioModal {
               const scaledMeasure = scaleMeasurement(ing.measure, ratio, this.unitSystem);
               const isChecked = this.checkedIngredientNames.has(ing.name.toLowerCase());
               const sub = getIngredientSubstitution(ing.name);
-              const subButton = sub ? `<button class="sub-hint-btn" data-ing="${sanitizeHtml(ing.name)}" title="Chef Alternative: ${sanitizeHtml(sub.substitute)}">⇄ Sub</button>` : '';
+              const safeIngName = sanitizeHtml(ing.name);
+              const subButton = sub ? `<button class="sub-hint-btn" data-ing="${safeIngName}" title="Chef Alternative: ${sanitizeHtml(sub.substitute)}">⇄ Sub</button>` : '';
 
               return `
                 <li class="ingredient-item ${isChecked ? 'checked' : ''}">
                   <label class="ing-check-wrap">
-                    <input type="checkbox" class="ing-checkbox" data-name="${ing.name}" ${isChecked ? 'checked' : ''} />
-                    <span class="ing-name">${ing.name}</span>
+                    <input type="checkbox" class="ing-checkbox" data-name="${safeIngName}" ${isChecked ? 'checked' : ''} />
+                    <span class="ing-name">${safeIngName}</span>
                     ${subButton}
                   </label>
-                  <span class="ing-measure">${scaledMeasure}</span>
+                  <span class="ing-measure">${sanitizeHtml(scaledMeasure)}</span>
                 </li>
               `;
             }).join('')}
@@ -266,12 +267,12 @@ export class CookingStudioModal {
               <div class="sommelier-body">
                 <div class="pairing-item">
                   <span class="pairing-label">Wine Selection:</span>
-                  <p class="pairing-text highlight">${pairing.wine}</p>
-                  <small class="pairing-note">${pairing.wineNote}</small>
+                  <p class="pairing-text highlight">${sanitizeHtml(pairing.wine)}</p>
+                  <small class="pairing-note">${sanitizeHtml(pairing.wineNote)}</small>
                 </div>
                 <div class="pairing-item" style="margin-top: 0.75rem;">
                   <span class="pairing-label">Artisanal Beverage:</span>
-                  <p class="pairing-text">${pairing.beverage}</p>
+                  <p class="pairing-text">${sanitizeHtml(pairing.beverage)}</p>
                 </div>
               </div>
             </div>
@@ -282,7 +283,7 @@ export class CookingStudioModal {
             <div class="chef-tip-header">
               <span>👨‍🍳 Chef's Secret Technique</span>
             </div>
-            <p class="chef-tip-text">"${pairing.chefTip}"</p>
+            <p class="chef-tip-text">"${sanitizeHtml(pairing.chefTip)}"</p>
           </div>
 
           <!-- Nutrition Macro Card (Toggled via Chef Preferences) -->
@@ -337,8 +338,8 @@ export class CookingStudioModal {
               </a>
             </div>
             <div class="video-frame-container" id="videoContainer_${r.id || 'current'}">
-              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${r.thumbnail || fallbackCover}'); background-size: cover; background-position: center;" title="Open the cooking guide on YouTube">
-                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : (r.thumbnail || fallbackCover)}" onerror="this.style.display='none'" alt="${sanitizeHtml(r.title)} Video Guide" class="video-facade-img" />
+              <a href="${r.youtubeId ? `https://www.youtube.com/watch?v=${encodeURIComponent(r.youtubeId)}` : `https://www.youtube.com/results?search_query=${encodeURIComponent(r.title + ' recipe cooking tutorial')}`}" target="_blank" rel="noopener noreferrer" class="video-facade-card" style="background-image: url('${sanitizeUrl(r.thumbnail || '', fallbackCover)}'); background-size: cover; background-position: center;" title="Open the cooking guide on YouTube">
+                <img src="${r.youtubeId ? `https://img.youtube.com/vi/${encodeURIComponent(r.youtubeId)}/hqdefault.jpg` : sanitizeUrl(r.thumbnail || '', fallbackCover)}" alt="${sanitizeHtml(r.title)} Video Guide" class="video-facade-img" />
                 <div class="video-facade-overlay">
                   <div class="btn-facade-play">
                     <span class="facade-play-icon">▶</span>
@@ -367,16 +368,16 @@ export class CookingStudioModal {
         </div>
         <div class="modal-rec-cards-grid">
           ${relatedRecipes.map(rel => `
-            <div class="modal-rec-card" data-rec-id="${rel.recipe.id || rel.recipe.idMeal}">
+            <div class="modal-rec-card" data-rec-id="${sanitizeHtml(rel.recipe.id || rel.recipe.idMeal)}">
               <div class="rec-card-thumb-wrap">
-                <img src="${rel.recipe.thumbnail || rel.recipe.strMealThumb}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />
-                <span class="rec-pairing-badge">${rel.pairingBadge}</span>
+                <img src="${sanitizeUrl(rel.recipe.thumbnail || rel.recipe.strMealThumb || '', fallbackCover)}" alt="${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}" class="rec-card-img" />
+                <span class="rec-pairing-badge">${sanitizeHtml(rel.pairingBadge)}</span>
               </div>
               <div class="rec-card-info">
-                <h4 class="rec-card-title">${rel.recipe.title || rel.recipe.strMeal}</h4>
+                <h4 class="rec-card-title">${sanitizeHtml(rel.recipe.title || rel.recipe.strMeal)}</h4>
                 <div class="rec-card-meta">
-                  <span>🍽️ ${rel.recipe.category || rel.recipe.strCategory}</span>
-                  <span>⏱️ ${rel.recipe.estimatedTime || 30} mins</span>
+                  <span>🍽️ ${sanitizeHtml(rel.recipe.category || rel.recipe.strCategory)}</span>
+                  <span>⏱️ ${sanitizeHtml(rel.recipe.estimatedTime || 30)} mins</span>
                 </div>
               </div>
             </div>
@@ -396,6 +397,15 @@ export class CookingStudioModal {
       }, { once: true });
     }
 
+    // Video facade image hides itself gracefully on load failure.
+    // (Attached via JS: the DOM watchdog strips inline on* attributes.)
+    const facadeImg = this.modalContent.querySelector('.video-facade-img');
+    if (facadeImg) {
+      facadeImg.addEventListener('error', () => {
+        facadeImg.style.display = 'none';
+      }, { once: true });
+    }
+
     const scaleUp = document.getElementById('btnScaleUp');
     const scaleDown = document.getElementById('btnScaleDown');
     const unitMetric = document.getElementById('btnUnitMetric');
@@ -410,29 +420,23 @@ export class CookingStudioModal {
     scaleUp?.addEventListener('click', () => {
       if (this.currentServings < 16) {
         this.currentServings += 1;
-        this.render();
+        this.updateScaling();
       }
     });
 
     scaleDown?.addEventListener('click', () => {
       if (this.currentServings > 1) {
         this.currentServings -= 1;
-        this.render();
+        this.updateScaling();
       }
     });
 
     unitMetric?.addEventListener('click', () => {
-      if (this.unitSystem !== 'metric') {
-        this.unitSystem = 'metric';
-        this.render();
-      }
+      this.setUnitSystem('metric');
     });
 
     unitImperial?.addEventListener('click', () => {
-      if (this.unitSystem !== 'imperial') {
-        this.unitSystem = 'imperial';
-        this.render();
-      }
+      this.setUnitSystem('imperial');
     });
 
     btnModalFav?.addEventListener('click', () => {
@@ -559,6 +563,51 @@ export class CookingStudioModal {
     });
   }
 
+  /**
+   * Surgical in-place update for servings/unit changes. Avoids the expensive
+   * full re-render (hero image flicker, listener churn) for ±1 serving or a
+   * unit-system flip.
+   */
+  updateScaling() {
+    const r = this.currentRecipe;
+    if (!r) return;
+    const ratio = this.currentServings / this.baseServings;
+
+    const servingsText = document.getElementById('currentServingsText');
+    if (servingsText) servingsText.textContent = String(this.currentServings);
+
+    const scaleUp = document.getElementById('btnScaleUp');
+    const scaleDown = document.getElementById('btnScaleDown');
+    if (scaleUp) scaleUp.disabled = this.currentServings >= 16;
+    if (scaleDown) scaleDown.disabled = this.currentServings <= 1;
+
+    this.modalContent.querySelectorAll('#ingredientsListContainer .ingredient-item').forEach((item, idx) => {
+      const ing = r.ingredients[idx];
+      if (!ing) return;
+      const measureEl = item.querySelector('.ing-measure');
+      if (measureEl) measureEl.textContent = scaleMeasurement(ing.measure, ratio, this.unitSystem);
+    });
+
+    const nutrition = estimateNutrition(r, this.currentServings);
+    const calTag = this.modalContent.querySelector('.tag-cal');
+    if (calTag) calTag.textContent = `🔥 ~${nutrition.calories} kcal / portion`;
+    const nutriVals = this.modalContent.querySelectorAll('.nutri-val');
+    if (nutriVals.length >= 4) {
+      nutriVals[0].textContent = nutrition.calories;
+      nutriVals[1].textContent = `${nutrition.protein}g`;
+      nutriVals[2].textContent = `${nutrition.carbs}g`;
+      nutriVals[3].textContent = `${nutrition.fat}g`;
+    }
+  }
+
+  setUnitSystem(system) {
+    if (this.unitSystem === system) return;
+    this.unitSystem = system;
+    document.getElementById('btnUnitMetric')?.classList.toggle('active', system === 'metric');
+    document.getElementById('btnUnitImperial')?.classList.toggle('active', system === 'imperial');
+    this.updateScaling();
+  }
+
   highlightTimers(text) {
     if (!text || typeof text !== 'string') return '';
     return sanitizeHtml(text).replace(/\b(\d+)\s*(minutes?|mins?|hours?|hrs?)\b/gi, (match, count, unit) => {
@@ -572,6 +621,7 @@ export class CookingStudioModal {
      Guided Hands-Free Cook Mode with Voice
      ========================================================================== */
   openCookMode() {
+    this.cookModePreviousFocus = document.activeElement;
     this.currentCookStepIndex = 0;
     this.cookTitle.textContent = this.currentRecipe.title;
     this.cookOverlay.classList.add('open');
@@ -581,6 +631,8 @@ export class CookingStudioModal {
     this.btnToggleVoice.querySelector('.voice-label').textContent = 'Voice On';
     this.voiceActive = true;
     this.renderCurrentCookStep();
+    // Move focus into the overlay so keyboard users start inside cook mode.
+    this.btnCookNext?.focus();
   }
 
   closeCookMode() {
@@ -588,6 +640,9 @@ export class CookingStudioModal {
     this.cookOverlay.setAttribute('aria-hidden', 'true');
     this.cookOverlay.inert = true;
     this.cookOverlay.classList.remove('open');
+    if (this.cookModePreviousFocus && typeof this.cookModePreviousFocus.focus === 'function') {
+      this.cookModePreviousFocus.focus();
+    }
   }
 
   renderCurrentCookStep() {

@@ -150,10 +150,16 @@ app.use((err, req, res, next) => {
 // Process-Level Exception Protection
 process.on('unhandledRejection', (reason, promise) => {
   console.error('[FATAL] Unhandled Rejection at:', promise, 'reason:', reason);
+  // Match Node's default crash semantics so the platform supervisor restarts
+  // a clean instance instead of continuing in an undefined state.
+  process.exit(1);
 });
 
 process.on('uncaughtException', (err) => {
   console.error('[FATAL] Uncaught Exception:', err);
+  // An uncaught exception leaves the process in an undefined state.
+  // Exit so the platform supervisor can restart a clean instance.
+  process.exit(1);
 });
 
 // Start Server if executed directly

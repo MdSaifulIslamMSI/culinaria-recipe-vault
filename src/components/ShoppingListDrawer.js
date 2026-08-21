@@ -10,6 +10,12 @@ import {
   addToShoppingList
 } from '../services/storageService.js';
 import { sanitizeClipboardText } from '../utils/securitySanitizer.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 
 function escapeHtml(str) {
   if (!str) return '';
@@ -40,11 +46,7 @@ export class ShoppingListDrawer {
   }
 
   setOpenState(isOpen) {
-    [this.drawer, this.overlay].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
-    });
+    setOverlayState([this.drawer, this.overlay], isOpen);
   }
 
   init() {
@@ -73,15 +75,12 @@ export class ShoppingListDrawer {
       window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '🗑️ Cleared grocery list' } }));
     });
 
-    // Keyboard controls
-    document.addEventListener('keydown', (e) => {
-      if (this.drawer.classList.contains('open')) {
-        if (e.key === 'Escape') {
-          this.close();
-        } else if (e.key === 'Tab') {
-          this.trapFocus(e);
-        }
-      }
+    // Keyboard controls (Escape/Tab handled centrally by overlayManager)
+    registerOverlay({
+      name: 'shopping-list-drawer',
+      getContainer: () => this.drawer,
+      isOpen: () => this.drawer?.classList.contains('open') ?? false,
+      close: () => this.close()
     });
 
     // Global cart updated event listener
@@ -90,26 +89,12 @@ export class ShoppingListDrawer {
     });
   }
 
-  trapFocus(e) {
-    const focusable = Array.from(this.drawer.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter(el => el.offsetParent !== null);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      last.focus();
-      e.preventDefault();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      first.focus();
-      e.preventDefault();
-    }
-  }
-
   open() {
     this.previousActiveElement = document.activeElement;
     this.setOpenState(true);
     this.drawer.classList.add('open');
     this.overlay.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
     setTimeout(() => this.manualInput.focus(), 50);
   }
 
@@ -117,7 +102,7 @@ export class ShoppingListDrawer {
     this.setOpenState(false);
     this.drawer.classList.remove('open');
     this.overlay.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }
@@ -181,7 +166,12 @@ export class ShoppingListDrawer {
       return;
     }
 
-    const rawText = `🛒 Culinaria Grocery List:\n\n${text}`;
+    const lines = list.map(item => {
+      const checkbox = item.checked ? '[x]' : '[ ]';
+      const measure = item.measure ? `${item.measure} ` : '';
+      return `${checkbox} ${measure}${item.name}`;
+    });
+    const rawText = `🛒 Culinaria Grocery List:\n\n${lines.join('\n')}`;
     const safeText = sanitizeClipboardText(rawText);
     navigator.clipboard.writeText(safeText).then(() => {
       window.dispatchEvent(new CustomEvent('culinaria:toast', { detail: { message: '📋 Grocery list copied to clipboard!' } }));

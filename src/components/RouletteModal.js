@@ -3,6 +3,13 @@
  * Chef's Surprise Dish Roulette with race-condition prevention & image fallback
  */
 import { getRandomRecipe } from '../services/mealDbApi.js';
+import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 
 export class RouletteModal {
   constructor() {
@@ -22,11 +29,7 @@ export class RouletteModal {
   }
 
   setOpenState(isOpen) {
-    [this.backdrop, this.modal].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
-    });
+    setOverlayState([this.backdrop, this.modal], isOpen);
   }
 
   init() {
@@ -46,35 +49,20 @@ export class RouletteModal {
       }
     });
 
-    document.addEventListener('keydown', (e) => {
-      if (!this.backdrop.classList.contains('open')) return;
-      if (e.key === 'Escape') {
-        this.close();
-      } else if (e.key === 'Tab') {
-        this.trapFocus(e);
-      }
+    // Escape/Tab handled centrally by overlayManager
+    registerOverlay({
+      name: 'roulette-modal',
+      getContainer: () => this.modal,
+      isOpen: () => this.backdrop?.classList.contains('open') ?? false,
+      close: () => this.close()
     });
-  }
-
-  trapFocus(e) {
-    const focusable = Array.from(this.modal.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')).filter((el) => el.offsetParent !== null);
-    if (focusable.length === 0) return;
-    const first = focusable[0];
-    const last = focusable[focusable.length - 1];
-    if (e.shiftKey && document.activeElement === first) {
-      last.focus();
-      e.preventDefault();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      first.focus();
-      e.preventDefault();
-    }
   }
 
   open() {
     this.previousActiveElement = document.activeElement;
     this.setOpenState(true);
     this.backdrop.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
     this.closeBtn.focus();
     this.spin();
   }
@@ -82,7 +70,7 @@ export class RouletteModal {
   close() {
     this.setOpenState(false);
     this.backdrop.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
     }
@@ -105,19 +93,23 @@ export class RouletteModal {
 
       this.currentRecipe = recipe;
       const fallbackThumb = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80';
+      const safeThumb = sanitizeUrl(recipe.thumbnail || '', fallbackThumb);
+      const safeTitle = sanitizeHtml(recipe.title);
+      const safeArea = sanitizeHtml(recipe.area || 'Global');
+      const safeCategory = sanitizeHtml(recipe.category || 'Specialty');
 
       setTimeout(() => {
         if (currentRequestId !== this.spinRequestId || !this.currentRecipe) return;
         this.stage.innerHTML = `
           <div style="text-align: center; width: 100%;">
             <div style="width: 140px; height: 140px; margin: 0 auto 1rem; border-radius: 50%; overflow: hidden; box-shadow: var(--shadow-md); border: 3px solid var(--accent-primary);">
-              <img src="${recipe.thumbnail || fallbackThumb}" alt="${recipe.title}" class="roulette-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" />
+              <img src="${safeThumb}" alt="${safeTitle}" class="roulette-thumb-img" style="width: 100%; height: 100%; object-fit: cover;" />
             </div>
             <span style="font-size: 0.8rem; font-weight: 700; background: var(--accent-primary-light); color: var(--accent-primary); padding: 0.2rem 0.6rem; border-radius: var(--radius-full);">
-              🌍 ${recipe.area || 'Global'} • ${recipe.category || 'Specialty'}
+              🌍 ${safeArea} • ${safeCategory}
             </span>
-            <h4 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">${recipe.title}</h4>
-            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${recipe.estimatedTime || 30} minutes</p>
+            <h4 style="font-family: var(--font-serif); font-size: 1.4rem; font-weight: 700; margin: 0.5rem 0 0.25rem;">${safeTitle}</h4>
+            <p style="font-size: 0.85rem; color: var(--text-secondary);">Ready in approx ${sanitizeHtml(recipe.estimatedTime || 30)} minutes</p>
           </div>
         `;
 

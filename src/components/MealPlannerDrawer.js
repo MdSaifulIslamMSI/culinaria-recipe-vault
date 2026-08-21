@@ -3,7 +3,13 @@
  * 7-Day interactive gourmet meal planner with grocery aggregation
  */
 import { mealPlannerService } from '../services/mealPlannerService.js';
-import { sanitizeHtml } from '../utils/securitySanitizer.js';
+import { sanitizeHtml, sanitizeUrl } from '../utils/securitySanitizer.js';
+import {
+  registerOverlay,
+  setOverlayState,
+  acquireScrollLock,
+  releaseScrollLock
+} from '../utils/overlayManager.js';
 
 export class MealPlannerDrawer {
   constructor() {
@@ -58,20 +64,17 @@ export class MealPlannerDrawer {
       if (this.isOpen) this.render();
     });
 
-    // Keyboard navigation
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && this.isOpen) {
-        this.close();
-      }
+    // Keyboard navigation (Escape/Tab handled centrally by overlayManager)
+    registerOverlay({
+      name: 'meal-planner-drawer',
+      getContainer: () => this.drawerEl,
+      isOpen: () => this.isOpen,
+      close: () => this.close()
     });
   }
 
   setOpenState(isOpen) {
-    [this.drawerEl, this.overlayEl].forEach((element) => {
-      if (!element) return;
-      element.setAttribute('aria-hidden', String(!isOpen));
-      element.inert = !isOpen;
-    });
+    setOverlayState([this.drawerEl, this.overlayEl], isOpen);
   }
 
   open(recipe = null) {
@@ -82,7 +85,7 @@ export class MealPlannerDrawer {
     this.setOpenState(true);
     this.drawerEl.classList.add('open');
     this.overlayEl.classList.add('open');
-    document.body.style.overflow = 'hidden';
+    acquireScrollLock();
 
     // Focus close button
     const closeBtn = this.drawerEl.querySelector('#btnClosePlannerDrawer');
@@ -94,7 +97,7 @@ export class MealPlannerDrawer {
     this.setOpenState(false);
     this.drawerEl.classList.remove('open');
     this.overlayEl.classList.remove('open');
-    document.body.style.overflow = '';
+    releaseScrollLock();
 
     if (this.previousActiveElement && typeof this.previousActiveElement.focus === 'function') {
       this.previousActiveElement.focus();
@@ -170,7 +173,7 @@ export class MealPlannerDrawer {
                   <div class="slot-type-tag">☀️ Lunch</div>
                   ${lunch ? `
                     <div class="slot-recipe-card">
-                      <img src="${lunch.thumbnail || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100'}" alt="${sanitizeHtml(lunch.title)}" class="slot-recipe-img" />
+                      <img src="${sanitizeUrl(lunch.thumbnail || '', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100')}" alt="${sanitizeHtml(lunch.title)}" class="slot-recipe-img" />
                       <div class="slot-recipe-info">
                         <h4 class="slot-recipe-title" title="${sanitizeHtml(lunch.title)}">${sanitizeHtml(lunch.title)}</h4>
                         <span class="slot-recipe-cat">${sanitizeHtml(lunch.category)}</span>
@@ -192,7 +195,7 @@ export class MealPlannerDrawer {
                   <div class="slot-type-tag">🌙 Dinner</div>
                   ${dinner ? `
                     <div class="slot-recipe-card">
-                      <img src="${dinner.thumbnail || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100'}" alt="${sanitizeHtml(dinner.title)}" class="slot-recipe-img" />
+                      <img src="${sanitizeUrl(dinner.thumbnail || '', 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100')}" alt="${sanitizeHtml(dinner.title)}" class="slot-recipe-img" />
                       <div class="slot-recipe-info">
                         <h4 class="slot-recipe-title" title="${sanitizeHtml(dinner.title)}">${sanitizeHtml(dinner.title)}</h4>
                         <span class="slot-recipe-cat">${sanitizeHtml(dinner.category)}</span>

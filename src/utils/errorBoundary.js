@@ -26,7 +26,6 @@ export function initErrorBoundary() {
 
 function handleFatalError(type, error, source = 'app') {
   const message = error instanceof Error ? error.message : String(error);
-  const stack = error instanceof Error ? error.stack : '';
 
   logSecurityEvent(
     SecurityEventType.DOM_MUTATION_TRAPPED,
@@ -76,7 +75,9 @@ export function renderRecoveryScreen(errorMsg = '') {
       localStorage.removeItem('culinaria_favorites_v1');
       localStorage.removeItem('culinaria_shopping_list_v1');
       localStorage.removeItem('culinaria_pantry_basket_v1');
-    } catch (e) {}
+    } catch {
+      // Storage may be unavailable (private mode); reload regardless.
+    }
     window.location.reload();
   });
 }

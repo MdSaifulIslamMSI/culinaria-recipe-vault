@@ -75,7 +75,8 @@ export function initDomWatchdog() {
         }
       } else if (mutation.type === 'attributes') {
         if (INLINE_EVENT_REGEX.test(mutation.attributeName)) {
-          mutation.target.removeAttribute(mutation.attributeName);
+          const targetEl = /** @type {Element} */ (mutation.target);
+          targetEl.removeAttribute(mutation.attributeName);
           logSecurityEvent(SecurityEventType.DOM_MUTATION_TRAPPED, { attr: mutation.attributeName }, SecuritySeverity.MEDIUM);
         }
       }
